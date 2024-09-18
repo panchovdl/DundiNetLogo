@@ -71,7 +71,7 @@ to setup
   clear-all
   resize-world -11 11 -11 11  ; Fixer les limites du monde à -11 à 11 en x et y
   set-patch-size 20  ; Ajuster la taille des patches
-  load-environment "/home/vendel/Documents/these/Database/SIG/velingara_DB/environment_vel.txt"
+  load-environment "environment_vel.txt"
   set current-season "Nduungu"  ; Initialiser à la première saison
   set season-counter 0  ; Compteur de saison initialisé à 0
   set max-grass 200000
@@ -396,8 +396,9 @@ end
 to go
   update-season
   grow-grass
+  move-and-eat
   ask turtles [
-    move-and-eat
+
     manage-water-points
  ;   come-back
   ]
@@ -451,14 +452,17 @@ end
 
 to move-and-eat
   ask cattles [
-    let best-patch max-one-of known-space with [current-grass > 0] [current-grass]
+    ;let best-patch max-one-of known-space with [current-grass > 0]
+    let MySpace known-space with [current-grass > 0]
+    let best-patch  one-of MySpace with-max [current-grass]
     if best-patch != nobody [
       move-to best-patch
       let grass-eaten min (list [current-grass] of best-patch daily-needs-per-head)
       set corporal-condition (corporal-condition + grass-eaten - daily-needs-per-head)
-    ]
-    ask best-patch [
-      set current-grass current-grass - (grass-eaten)
+
+      ask best-patch [
+        set current-grass current-grass - (grass-eaten)
+      ]
     ]
   ]
 
@@ -552,10 +556,10 @@ NIL
 0
 
 SLIDER
-11
-45
-209
-78
+9
+83
+207
+116
 initial-number-of-camps
 initial-number-of-camps
 0
@@ -567,10 +571,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-10
-152
-208
-185
+8
+190
+206
+223
 space-camp-mean
 space-camp-mean
 space-camp-min
@@ -582,10 +586,10 @@ foyers
 HORIZONTAL
 
 SLIDER
-11
-81
-209
-114
+9
+119
+207
+152
 space-camp-min
 space-camp-min
 0
@@ -597,10 +601,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-11
-117
-208
-150
+9
+155
+206
+188
 space-camp-max
 space-camp-max
 space-camp-min
@@ -612,10 +616,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-11
-189
-207
-222
+9
+227
+205
+260
 space-camp-standard-deviation
 space-camp-standard-deviation
 0
@@ -627,10 +631,10 @@ NIL
 HORIZONTAL
 
 MONITOR
-11
-227
-98
-272
+9
+265
+96
+310
 Total Foyers
 count foyers
 17
@@ -638,10 +642,10 @@ count foyers
 11
 
 MONITOR
-12
-327
-98
-372
+10
+365
+96
+410
 Total cattles
 sum [head] of cattles
 17
@@ -649,10 +653,10 @@ sum [head] of cattles
 11
 
 MONITOR
-11
-277
-98
-322
+9
+315
+96
+360
 Total Sheeps
 sum [head] of sheeps
 17
@@ -723,7 +727,7 @@ CHOOSER
 visualization-mode
 visualization-mode
 "soil-type" "tree-cover" "grass-cover"
-1
+2
 
 BUTTON
 689
@@ -732,6 +736,23 @@ BUTTON
 532
 visualize
   update-visualization
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+145
+45
+208
+78
+NIL
+go
 NIL
 1
 T
@@ -1084,7 +1105,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.0.4
+NetLogo 6.4.0
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
