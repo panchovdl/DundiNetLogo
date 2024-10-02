@@ -7,6 +7,12 @@ globals [
   herd-gain-from-food
   max-grass ; pour visualisation
   max-trees ; pour visualisation
+  year-types  ; Liste qui stocke les types d'années
+  current-year-type  ; Le type d'année en cours (bonne, moyenne, mauvaise)
+  nduungu-duration ; nombre de ticks pour la saison des pluies
+  dabbuunde-duration ; nombre de ticks pour la saison sèche froide
+  ceedu-duration ; nombre de ticks pour la saison sèche chaude
+  ceetcelde-duration ; nombre de ticks pour la période de soudure
 ]
 
 breed [camps camp]
@@ -22,10 +28,17 @@ patches-own [
 
   current-grass  ; Couverture d'herbe
   K  ; montant maximum d'herbe
-  grass-quality ; Qualité de l'herbe
+  grass-quality-ceedu
+  grass-quality-ceetcelde
+  grass-quality-nduungu
+  grass-quality-dabbuunde
+  prev-grass-quality-ceedu
+  prev-grass-quality-ceetcelde
+  prev-grass-quality-nduungu
+  prev-grass-quality-dabbuunde
+  biomass-end-nduungu
 
   tree-cover  ; Couverture d'arbres
-  max-tree ; nombre maximum d'arbres
   num-nutritious
   num-less-nutritious
   num-fruity
@@ -80,6 +93,7 @@ cattles-own [
 ]
 
 fruityTrees-own [
+  pop-size
   age
   sensibility
   fruit-stock
@@ -88,6 +102,7 @@ fruityTrees-own [
 ]
 
 nutritiousTrees-own [
+  pop-size
   age
   sensibility
   fruit-stock
@@ -96,6 +111,7 @@ nutritiousTrees-own [
 ]
 
 lessNutritiousTrees-own [
+  pop-size
   age
   sensibility
   fruit-stock
@@ -119,7 +135,6 @@ to setup
   setup-foyers ; Créer les foyers
   setup-herds  ; Créer les troupeaux
   ;;setup-trees  ; Initialiser les arbres
-  assign-grass-quality  ;; Assigner la qualité de l'herbe une première fois
   ;ask turtles [hide-turtle]
   update-visualization
   display-labels
@@ -143,6 +158,28 @@ to load-environment [filename]
       set init-camp-pref low-topo-zone]
     ]
   file-close
+end
+
+to set-season-durations
+  if current-year-type = "bonne" [
+    ;; Par exemple : les bonnes années peuvent avoir une plus longue saison de croissance
+    set nduungu-duration 10
+    set dabbuunde-duration 5
+    set ceedu-duration 8
+    set ceetcelde-duration 9
+  ]
+  if current-year-type = "moyenne" [
+    set nduungu-duration 8
+    set dabbuunde-duration 6
+    set ceedu-duration 6
+    set ceetcelde-duration 9
+  ]
+  if current-year-type = "mauvaise" [
+    set nduungu-duration 6
+    set dabbuunde-duration 8
+    set ceedu-duration 4
+    set ceetcelde-duration 9
+  ]
 end
 
 to setup-landscape
@@ -471,19 +508,19 @@ end
 
 to update-season
   set season-counter season-counter + 1
-  if current-season = "Ceedu" and season-counter >= 120 [
+  if current-season = "Ceedu" and season-counter >= ceedu-duration [
     set current-season "Ceetcelde"
     set season-counter 0
   ]
-  if current-season = "Ceetcelde" and season-counter >= 90 [
+  if current-season = "Ceetcelde" and season-counter >= ceetcelde-duration [
     set current-season "Nduungu"
     set season-counter 0
   ]
-   if current-season = "Nduungu" and season-counter >= 60 [
+  if current-season = "Nduungu" and season-counter >= nduungu-duration [
     set current-season "Dabbuunde"
     set season-counter 0
   ]
-  if current-season = "Dabbuunde" and season-counter >= 60 [
+  if current-season = "Dabbuunde" and season-counter >= dabbuunde-duration [
     set current-season "Ceedu"
     set season-counter 0
   ]
@@ -491,112 +528,173 @@ end
 
 to assign-grass-quality
   ask patches [
-    if soil-type = "Baldiol" [
-      let rand random-float 1
-      if current-season = "Ceedu" [
-        ifelse rand < 0.5 [set grass-quality "good"]
-        [ifelse rand < 0.75 [set grass-quality "average"]
-          [set grass-quality "poor"]]
+    if (any? patches with [prev-grass-quality-ceetcelde = 0 and grass-quality-ceetcelde = 0]) [  ; Vérifie si c'est la première année
+      if soil-type = "Baldiol" [
+        let rand random-float 1
+        if current-season = "Ceedu" [
+          ifelse rand < 0.5 [set grass-quality-ceedu "good"]
+          [ifelse rand < 0.75 [set grass-quality-ceedu "average"]
+            [set grass-quality-ceedu "poor"]]
+        ]
+        if current-season = "Nduungu" [
+          ifelse rand < 0.25 [set grass-quality-nduungu "good"]
+          [ifelse rand < 0.5 [set grass-quality-nduungu "average"]
+            [set grass-quality-nduungu "poor"]]
+        ]
+        if current-season = "Dabbuunde" [
+          ifelse rand < 0.1 [set grass-quality-dabbuunde "good"]
+          [ifelse rand < 0.3 [set grass-quality-dabbuunde "average"]
+            [set grass-quality-dabbuunde "poor"]]
+        ]
+        if current-season = "Ceetcelde" [
+          ifelse rand < 0.4 [set grass-quality-ceetcelde "good"]
+          [ifelse rand < 0.7 [set grass-quality-ceetcelde "average"]
+            [set grass-quality-ceetcelde "poor"]]
+        ]
       ]
-      if current-season = "Nduungu" [
-        ifelse rand < 0.25 [set grass-quality "good"]
-        [ifelse rand < 0.5 [set grass-quality "average"]
-          [set grass-quality "poor"]]
+      if soil-type = "Caangol" [
+        let rand random-float 1
+        if current-season = "Ceedu" [
+          ifelse rand < 0.5 [set grass-quality-ceedu "good"]
+          [ifelse rand < 0.75 [set grass-quality-ceedu "average"]
+            [set grass-quality-ceedu "poor"]]
+        ]
+        if current-season = "Nduungu" [
+          ifelse rand < 0.25 [set grass-quality-nduungu "good"]
+          [ifelse rand < 0.5 [set grass-quality-nduungu "average"]
+            [set grass-quality-nduungu "poor"]]
+        ]
+        if current-season = "Dabbuunde" [
+          ifelse rand < 0.1 [set grass-quality-dabbuunde "good"]
+          [ifelse rand < 0.3 [set grass-quality-dabbuunde "average"]
+            [set grass-quality-dabbuunde "poor"]]
+        ]
+        if current-season = "Ceetcelde" [
+          ifelse rand < 0.4 [set grass-quality-ceetcelde "good"]
+          [ifelse rand < 0.7 [set grass-quality-ceetcelde "average"]
+            [set grass-quality-ceetcelde "poor"]]
+        ]
       ]
-      if current-season = "Dabbuunde" [
-        ifelse rand < 0.1 [set grass-quality "good"]
-        [ifelse rand < 0.3 [set grass-quality "average"]
-          [set grass-quality "poor"]]
+      if soil-type = "Sangre" [
+        let rand random-float 1
+        if current-season = "Ceedu" [
+          ifelse rand < 0.5 [set grass-quality-ceedu "good"]
+          [ifelse rand < 0.75 [set grass-quality-ceedu "average"]
+            [set grass-quality-ceedu "poor"]]
+        ]
+        if current-season = "Nduungu" [
+          ifelse rand < 0.25 [set grass-quality-nduungu "good"]
+          [ifelse rand < 0.5 [set grass-quality-nduungu "average"]
+            [set grass-quality-nduungu "poor"]]
+        ]
+        if current-season = "Dabbuunde" [
+          ifelse rand < 0.1 [set grass-quality-dabbuunde "good"]
+          [ifelse rand < 0.3 [set grass-quality-dabbuunde "average"]
+            [set grass-quality-dabbuunde "poor"]]
+        ]
+        if current-season = "Ceetcelde" [
+          ifelse rand < 0.4 [set grass-quality-ceetcelde "good"]
+          [ifelse rand < 0.7 [set grass-quality-ceetcelde "average"]
+            [set grass-quality-ceetcelde "poor"]]
+        ]
       ]
-      if current-season = "Ceetcelde" [
-        ifelse rand < 0.4 [set grass-quality "good"]
-        [ifelse rand < 0.7 [set grass-quality "average"]
-          [set grass-quality "poor"]]
+      if soil-type = "Seeno" [
+        let rand random-float 1
+        if current-season = "Ceedu" [
+          ifelse rand < 0.5 [set grass-quality-ceedu "good"]
+          [ifelse rand < 0.75 [set grass-quality-ceedu "average"]
+            [set grass-quality-ceedu "poor"]]
+        ]
+        if current-season = "Nduungu" [
+          ifelse rand < 0.25 [set grass-quality-nduungu "good"]
+          [ifelse rand < 0.5 [set grass-quality-nduungu "average"]
+            [set grass-quality-nduungu "poor"]]
+        ]
+        if current-season = "Dabbuunde" [
+          ifelse rand < 0.1 [set grass-quality-dabbuunde "good"]
+          [ifelse rand < 0.3 [set grass-quality-dabbuunde "average"]
+            [set grass-quality-dabbuunde "poor"]]
+        ]
+        if current-season = "Ceetcelde" [
+          ifelse rand < 0.4 [set grass-quality-ceetcelde "good"]
+          [ifelse rand < 0.7 [set grass-quality-ceetcelde "average"]
+            [set grass-quality-ceetcelde "poor"]]
+        ]
       ]
+      set prev-grass-quality-ceedu grass-quality-ceedu
+      set prev-grass-quality-nduungu grass-quality-nduungu
+      set prev-grass-quality-dabbuunde grass-quality-dabbuunde
+      set prev-grass-quality-ceetcelde grass-quality-ceetcelde
     ]
-    if soil-type = "Caangol" [
-      let rand random-float 1
-      if current-season = "Ceedu" [
-        ifelse rand < 0.4 [set grass-quality "good"]
-        [ifelse rand < 0.75 [set grass-quality "average"]
-          [set grass-quality "poor"]]
-      ]
-      if current-season = "Nduungu" [
-        ifelse rand < 0.2 [set grass-quality "good"]
-        [ifelse rand < 0.6 [set grass-quality "average"]
-          [set grass-quality "poor"]]
-      ]
-      if current-season = "Dabbuunde" [
-        ifelse rand < 0.05 [set grass-quality "good"]
-        [ifelse rand < 0.3 [set grass-quality "average"]
-          [set grass-quality "poor"]]
-      ]
-      if current-season = "Ceetcelde" [
-        ifelse rand < 0.3 [set grass-quality "good"]
-        [ifelse rand < 0.6 [set grass-quality "average"]
-          [set grass-quality "poor"]]
-      ]
-    ]
-    if soil-type = "Sangre" [
-      let rand random-float 1
-      if current-season = "Ceedu" [
-        ifelse rand < 0.4 [set grass-quality "good"]
-        [ifelse rand < 0.75 [set grass-quality "average"]
-          [set grass-quality "poor"]]
-      ]
-      if current-season = "Nduungu" [
-        ifelse rand < 0.2 [set grass-quality "good"]
-        [ifelse rand < 0.6 [set grass-quality "average"]
-          [set grass-quality "poor"]]
-      ]
-      if current-season = "Dabbuunde" [
-        ifelse rand < 0.05 [set grass-quality "good"]
-        [ifelse rand < 0.3 [set grass-quality "average"]
-          [set grass-quality "poor"]]
-      ]
-      if current-season = "Ceetcelde" [
-        ifelse rand < 0.3 [set grass-quality "good"]
-        [ifelse rand < 0.6 [set grass-quality "average"]
-          [set grass-quality "poor"]]
-      ]
-    ]
-    if soil-type = "Seeno" [
-      let rand random-float 1
-      if current-season = "Ceedu" [
-        ifelse rand < 0.4 [set grass-quality "good"]
-        [ifelse rand < 0.75 [set grass-quality "average"]
-          [set grass-quality "poor"]]
-      ]
-      if current-season = "Nduungu" [
-        ifelse rand < 0.2 [set grass-quality "good"]
-        [ifelse rand < 0.6 [set grass-quality "average"]
-          [set grass-quality "poor"]]
-      ]
-      if current-season = "Dabbuunde" [
-        ifelse rand < 0.05 [set grass-quality "good"]
-        [ifelse rand < 0.3 [set grass-quality "average"]
-          [set grass-quality "poor"]]
-      ]
-      if current-season = "Ceetcelde" [
-        ifelse rand < 0.3 [set grass-quality "good"]
-        [ifelse rand < 0.6 [set grass-quality "average"]
-          [set grass-quality "poor"]]
-      ]
-    ]
-  ]
-end
-to grow-grass
-  let r 0
-  if current-season = "Ceedu" [set r 0.00001]
-  if current-season = "Ceetcelde" [set r 0.000005]
-  if current-season = "Dabbuunde" [set r 0.000002]
-  if current-season = "Nduungu" [set r 0.01]
 
+  ;; Pour les années suivantes, réutilise la qualité de l'herbe de l'année précédente
+  if current-season = "Ceedu" [set grass-quality-ceedu prev-grass-quality-ceedu]
+  if current-season = "Nduungu" [set grass-quality-nduungu prev-grass-quality-nduungu]
+  if current-season = "Dabbuunde" [set grass-quality-dabbuunde prev-grass-quality-dabbuunde]
+  if current-season = "Ceetcelde" [set grass-quality-ceetcelde prev-grass-quality-ceetcelde]
+]
+
+end
+
+;to grow-grass
+;  let r 0
+;  if current-season = "Ceedu" [set r 0.00001]
+;  if current-season = "Ceetcelde" [set r 0.000005]
+;  if current-season = "Dabbuunde" [set r 0.000002]
+;  if current-season = "Nduungu" [set r 0.01]
+
+to grow-grass
   ask patches [
-    let new-current-grass current-grass + r * current-grass * (K - current-grass) / K
-    set current-grass min (list new-current-grass K)  ; Assurez-vous que la couverture d'herbe ne dépasse pas K
+    if current-season = "Nduungu" [
+      ; Croissance logistique pendant Nduungu
+      let r 0.01  ; Taux de croissance pendant Nduungu
+      let new-current-grass current-grass + r * current-grass * (K - current-grass) / K
+      set current-grass min (list new-current-grass K)
+
+      ; À la fin de Nduungu, stocker la biomasse pour référence future
+      if season-counter = nduungu-duration [
+        set biomass-at-end-of-nduungu current-grass
+      ]
+    ]
+
+    if current-season = "Dabbuunde" or current-season = "Ceedu" [
+      ; Perte de biomasse du début de Dabbuunde jusqu'à la mi-Ceedu
+      let total_loss_duration (duration-of-dabbuunde + (duration-of-ceedu / 2))  ; 60 + 60 = 120 ticks
+      ; Calculer le temps écoulé depuis le début de Dabbuunde
+      let time_elapsed season-counter + (if current-season = "Ceedu" [duration-of-dabbuunde] [0])
+      ; S'assurer que le temps écoulé ne dépasse pas la durée totale de perte
+      if time_elapsed <= total_loss_duration [
+        ; Calculer le ratio de temps écoulé
+        let time_ratio time_elapsed / total_loss_duration
+        ; Définir le pourcentage de perte désiré entre 20% et 50%
+        let min_loss_percentage 0.20
+        let max_loss_percentage 0.50
+        let desired_loss_percentage (min_loss_percentage + max_loss_percentage) / 2  ; 35% en moyenne
+        let total_biomass_loss desired_loss_percentage * biomass-at-end-of-nduungu
+        ; Calculer le taux de perte initial par tick
+        let initial_loss_rate (2 * total_biomass_loss) / total_loss_duration
+        ; Calculer la perte de biomasse par tick, diminuant avec le temps
+        let biomass_loss_per_tick initial_loss_rate * (1 - (time_elapsed / total_loss_duration))
+        ; Appliquer la perte
+        set current-grass current-grass - biomass_loss_per_tick
+        if current-grass < 0 [ set current-grass 0 ]
+      ]
+    ]
+
+    if current-season = "Ceetcelde" [
+      ; Réduction constante de 10% par tick
+      let biomass_loss current-grass * 0.10
+      set current-grass current-grass - biomass_loss
+      if current-grass < 0 [ set current-grass 0 ]
+    ]
   ]
 end
+
+;  ask patches [
+;    let new-current-grass current-grass + r * current-grass * (K - current-grass) / K
+;    set current-grass min (list new-current-grass K)  ; Assurez-vous que la couverture d'herbe ne dépasse pas K
+;  ]
+;end
 
 to color-grass  ;; patch procedure
   set pcolor scale-color yellow current-grass max-grass 0
