@@ -2,6 +2,7 @@ globals [
   size-x  ; Taille horizontale du monde
   size-y  ; Taille verticale du monde
   current-season  ; Saison actuelle
+  last-season ;
   season-counter  ; Compteur de saison
   herd-gain-from-food
   max-grass ; pour visualisation
@@ -12,16 +13,27 @@ breed [camps camp]
 breed [foyers foyer]
 breed [cattles cattle]
 breed [sheeps sheep]
-
+breed [fruityTrees fruityTree]
+breed [nutritiousTrees nutritiousTree]
+breed [lessNutritiousTrees lessNutritiousTree]
 
 patches-own [
   soil-type  ; Type de sol
+
   current-grass  ; Couverture d'herbe
+  K  ; montant maximum d'herbe
+  grass-quality ; Qualité de l'herbe
+
   tree-cover  ; Couverture d'arbres
-  water-point  ; Point d'eau (booléen)
-  K  ; Capacité de charge pour l'herbe
+  max-tree ; nombre maximum d'arbres
+  num-nutritious
+  num-less-nutritious
+  num-fruity
+
+
   park-restriction ; cellule protégée (parcelle de reforestation)
-  preference  ; Préférence pour l'installation des campements (1 ou 2)
+  init-camp-pref  ; Préférence pour l'installation des campements (1 ou 2)
+  water-point  ; Point d'eau (booléen)
   has-pond ; Booléen, détermine s'il y a une mare
   water-stock ; Stock d'eau dans la mare
 ]
@@ -50,9 +62,9 @@ foyers-own [
   sheep-herd-size ; Taille du troupeau d'ovins associé
   pasture-strategy  ; Stratégies de pâturage
   home-camp ; Campement du foyer
-  home-patch ;
+  home-patch ; patch du campement du foyer
   herder-type ; Caractéristique d'élevage du foyer (grand moyen petit)
-
+  owned-trees-pop ; population d'arbres associée
 ]
 
 sheeps-own [
@@ -67,12 +79,37 @@ cattles-own [
   home-patch ;
 ]
 
+fruityTrees-own [
+  age
+  sensibility
+  fruit-stock
+  leaf-stock
+  wood-stock
+]
+
+nutritiousTrees-own [
+  age
+  sensibility
+  fruit-stock
+  leaf-stock
+  wood-stock
+]
+
+lessNutritiousTrees-own [
+  age
+  sensibility
+  fruit-stock
+  leaf-stock
+  wood-stock
+]
+
 to setup
   clear-all
   resize-world -11 11 -11 11  ; Fixer les limites du monde à -11 à 11 en x et y
   set-patch-size 20  ; Ajuster la taille des patches
   load-environment "environment_vel.txt"
   set current-season "Nduungu"  ; Initialiser à la première saison
+  set last-season "none"  ;; Initialiser last-season
   set season-counter 0  ; Compteur de saison initialisé à 0
   set max-grass 200000
   set max-trees 15000
@@ -81,6 +118,8 @@ to setup
   setup-camps  ; Créer les campements
   setup-foyers ; Créer les foyers
   setup-herds  ; Créer les troupeaux
+  ;;setup-trees  ; Initialiser les arbres
+  assign-grass-quality  ;; Assigner la qualité de l'herbe une première fois
   ;ask turtles [hide-turtle]
   update-visualization
   display-labels
@@ -101,33 +140,48 @@ to load-environment [filename]
     ask patch px py [
       set soil-type nom_puular
       set tree-cover tree-count
-      set preference low-topo-zone]
+      set init-camp-pref low-topo-zone]
     ]
   file-close
 end
 
 to setup-landscape
   ask patches [
-
     if soil-type = "Baldiol" [
       set current-grass 150000
       set K 150000  ; Stock de production maximal de Matière Sèche (MS - DM[en]) sur 1 km² pour "Baldiol"
+      set num-nutritious round (tree-cover * 0.5)
+      set num-less-nutritious round (tree-cover * 0.25)
+      set num-fruity round (tree-cover * 0.25)
     ]
     if soil-type = "Caangol" [
       set current-grass 120000
       set K 120000  ; Stock de production maximal de Matière Sèche (MS - DM[en]) sur 1 km² pour Caangol
+      set num-nutritious round (tree-cover * 0.5)
+      set num-less-nutritious round (tree-cover * 0.25)
+      set num-fruity round (tree-cover * 0.25)
     ]
     if soil-type = "Sangre" [
       set current-grass 90000
       set K 90000  ; Stock de production maximal de Matière Sèche (MS - DM[en]) sur 1 km² pour Sangre
+      set num-nutritious round (tree-cover * 0.5)
+      set num-less-nutritious round (tree-cover * 0.25)
+      set num-fruity round (tree-cover * 0.25)
     ]
     if soil-type = "Seeno" [
       set current-grass 200000
       set K 200000  ; Stock de production maximal de Matière Sèche (MS - DM[en]) sur 1 km² pour Seeno
+      set num-nutritious round (tree-cover * 0.5)
+      set num-less-nutritious round (tree-cover * 0.25)
+      set num-fruity round (tree-cover * 0.25)
     ]
     if soil-type = "" [
       set current-grass 1
       set K 1  ; Stock de production maximal de Matière Sèche (MS - DM[en]) sur 1 km² pour Seeno
+;     if current-season = "Nduungu" [set grass-quality "average"] ;; A garder si jamais on simplifie la règle
+;     if current-season = "Dabbuunde" [set grass-quality "poor"] ;; A garder si jamais on simplifie la règle
+;     if current-season = "Ceedu" [set grass-quality "good"] ;; A garder si jamais on simplifie la règle
+;     if current-season = "Ceetcelde" [set grass-quality "average"] ;; A garder si jamais on simplifie la règle
     ]
     set water-point false  ; Initialement, aucun point d'eau
     set has-pond false  ; Initialement, aucune mare
@@ -136,7 +190,7 @@ to setup-landscape
 end
 
 to setup-water-patches
-  let eligible-patches patches with [preference >= 2]
+  let eligible-patches patches with [init-camp-pref >= 2]
 
   let ponds-4-months-count 0
   let ponds-5-months-count 0
@@ -161,41 +215,18 @@ to setup-water-patches
         ]
       ]
     ]
-    set eligible-patches patches with [preference >= 2 and not any? patches in-radius 5 with [has-pond]]
+    set eligible-patches patches with [init-camp-pref >= 2 and not any? patches in-radius 5 with [has-pond]]
 
 end
-
-to update-visualization
-  if visualization-mode = "soil-type" [
-    ask patches [
-      if soil-type = "Baldiol" [set pcolor green]
-      if soil-type = "Caangol" [set pcolor orange]
-      if soil-type = "Sangre" [set pcolor red]
-      if soil-type = "Seeno" [set pcolor yellow]
-      if soil-type = "" [set pcolor grey]
-    ]
-  ]
-  if visualization-mode = "tree-cover" [
-    ask patches [
-      set pcolor scale-color green tree-cover max-trees 0
-    ]
-  ]
-  if visualization-mode = "grass-cover" [
-    ask patches [
-      set pcolor scale-color yellow current-grass max-grass 0
-    ]
-  ]
-end
-
 
 to setup-camps
  ask patches [
     if soil-type != "caangol" [
      if any? neighbors with [soil-type = "caangol"] [
-       set preference 1
+       set init-camp-pref 1
      ]
-     if any? neighbors with [any? neighbors with [soil-type = "Caangol"]] and preference = 0 [
-       set preference 2
+     if any? neighbors with [any? neighbors with [soil-type = "Caangol"]] and init-camp-pref = 0 [
+       set init-camp-pref 2
      ]    ]
   ]
   let eligible-patches patches with [soil-type != "Caangol" and has-pond = false]
@@ -203,11 +234,11 @@ to setup-camps
   ; Boucle de création des campements
   while [camp-counter < initial-number-of-camps] [
     ; Sélectionner un patch éligible avec préférence 1
-    let selected-patch one-of eligible-patches with [preference = 2]
+    let selected-patch one-of eligible-patches with [init-camp-pref = 2]
 
     ; Si aucun patch avec préférence 1 n'est disponible, sélectionner un patch avec préférence 2
     if selected-patch = nobody [
-      set selected-patch one-of eligible-patches with [preference = 1]
+      set selected-patch one-of eligible-patches with [init-camp-pref = 1]
     ]
 
     ; Si un patch a été trouvé
@@ -393,12 +424,40 @@ to setup-herds
   ]
 end
 
+
+
+to update-visualization
+  if visualization-mode = "soil-type" [
+    ask patches [
+      if soil-type = "Baldiol" [set pcolor green]
+      if soil-type = "Caangol" [set pcolor orange]
+      if soil-type = "Sangre" [set pcolor red]
+      if soil-type = "Seeno" [set pcolor yellow]
+      if soil-type = "" [set pcolor grey]
+    ]
+  ]
+  if visualization-mode = "tree-cover" [
+    ask patches [
+      set pcolor scale-color green tree-cover max-trees 0
+    ]
+  ]
+  if visualization-mode = "grass-cover" [
+    ask patches [
+      set pcolor scale-color yellow current-grass max-grass 0
+    ]
+  ]
+end
+
 to go
   update-season
+  if current-season != last-season [
+    assign-grass-quality
+    set last-season current-season
+  ]
   grow-grass
   move-and-eat
-  ask turtles [
 
+  ask turtles [
     manage-water-points
  ;   come-back
   ]
@@ -430,6 +489,102 @@ to update-season
   ]
 end
 
+to assign-grass-quality
+  ask patches [
+    if soil-type = "Baldiol" [
+      let rand random-float 1
+      if current-season = "Ceedu" [
+        ifelse rand < 0.5 [set grass-quality "good"]
+        [ifelse rand < 0.75 [set grass-quality "average"]
+          [set grass-quality "poor"]]
+      ]
+      if current-season = "Nduungu" [
+        ifelse rand < 0.25 [set grass-quality "good"]
+        [ifelse rand < 0.5 [set grass-quality "average"]
+          [set grass-quality "poor"]]
+      ]
+      if current-season = "Dabbuunde" [
+        ifelse rand < 0.1 [set grass-quality "good"]
+        [ifelse rand < 0.3 [set grass-quality "average"]
+          [set grass-quality "poor"]]
+      ]
+      if current-season = "Ceetcelde" [
+        ifelse rand < 0.4 [set grass-quality "good"]
+        [ifelse rand < 0.7 [set grass-quality "average"]
+          [set grass-quality "poor"]]
+      ]
+    ]
+    if soil-type = "Caangol" [
+      let rand random-float 1
+      if current-season = "Ceedu" [
+        ifelse rand < 0.4 [set grass-quality "good"]
+        [ifelse rand < 0.75 [set grass-quality "average"]
+          [set grass-quality "poor"]]
+      ]
+      if current-season = "Nduungu" [
+        ifelse rand < 0.2 [set grass-quality "good"]
+        [ifelse rand < 0.6 [set grass-quality "average"]
+          [set grass-quality "poor"]]
+      ]
+      if current-season = "Dabbuunde" [
+        ifelse rand < 0.05 [set grass-quality "good"]
+        [ifelse rand < 0.3 [set grass-quality "average"]
+          [set grass-quality "poor"]]
+      ]
+      if current-season = "Ceetcelde" [
+        ifelse rand < 0.3 [set grass-quality "good"]
+        [ifelse rand < 0.6 [set grass-quality "average"]
+          [set grass-quality "poor"]]
+      ]
+    ]
+    if soil-type = "Sangre" [
+      let rand random-float 1
+      if current-season = "Ceedu" [
+        ifelse rand < 0.4 [set grass-quality "good"]
+        [ifelse rand < 0.75 [set grass-quality "average"]
+          [set grass-quality "poor"]]
+      ]
+      if current-season = "Nduungu" [
+        ifelse rand < 0.2 [set grass-quality "good"]
+        [ifelse rand < 0.6 [set grass-quality "average"]
+          [set grass-quality "poor"]]
+      ]
+      if current-season = "Dabbuunde" [
+        ifelse rand < 0.05 [set grass-quality "good"]
+        [ifelse rand < 0.3 [set grass-quality "average"]
+          [set grass-quality "poor"]]
+      ]
+      if current-season = "Ceetcelde" [
+        ifelse rand < 0.3 [set grass-quality "good"]
+        [ifelse rand < 0.6 [set grass-quality "average"]
+          [set grass-quality "poor"]]
+      ]
+    ]
+    if soil-type = "Seeno" [
+      let rand random-float 1
+      if current-season = "Ceedu" [
+        ifelse rand < 0.4 [set grass-quality "good"]
+        [ifelse rand < 0.75 [set grass-quality "average"]
+          [set grass-quality "poor"]]
+      ]
+      if current-season = "Nduungu" [
+        ifelse rand < 0.2 [set grass-quality "good"]
+        [ifelse rand < 0.6 [set grass-quality "average"]
+          [set grass-quality "poor"]]
+      ]
+      if current-season = "Dabbuunde" [
+        ifelse rand < 0.05 [set grass-quality "good"]
+        [ifelse rand < 0.3 [set grass-quality "average"]
+          [set grass-quality "poor"]]
+      ]
+      if current-season = "Ceetcelde" [
+        ifelse rand < 0.3 [set grass-quality "good"]
+        [ifelse rand < 0.6 [set grass-quality "average"]
+          [set grass-quality "poor"]]
+      ]
+    ]
+  ]
+end
 to grow-grass
   let r 0
   if current-season = "Ceedu" [set r 0.00001]
@@ -564,7 +719,7 @@ initial-number-of-camps
 initial-number-of-camps
 0
 200
-92.0
+0.0
 1
 1
 NIL
@@ -579,7 +734,7 @@ space-camp-mean
 space-camp-mean
 space-camp-min
 space-camp-max
-1.0
+12.0
 1
 1
 foyers
@@ -594,7 +749,7 @@ space-camp-min
 space-camp-min
 0
 100
-1.0
+0.0
 1
 1
 NIL
@@ -609,7 +764,7 @@ space-camp-max
 space-camp-max
 space-camp-min
 50
-12.0
+0.0
 1
 1
 NIL
@@ -672,7 +827,7 @@ max-ponds-4-months
 max-ponds-4-months
 0
 10
-5.0
+0.0
 1
 1
 NIL
@@ -687,7 +842,7 @@ max-ponds-5-months
 max-ponds-5-months
 0
 10
-3.0
+0.0
 1
 1
 NIL
@@ -1105,7 +1260,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.4.0
+NetLogo 6.0.4
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
