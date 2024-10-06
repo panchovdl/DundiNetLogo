@@ -1,28 +1,30 @@
 extensions [csv]
 
 globals [
-  size-x  ; Taille horizontale du monde
-  size-y  ; Taille verticale du monde
-  current-season  ; Saison actuelle
-  last-season ;
-  season-counter  ; Compteur de saison
+  size-x                 ; Taille horizontale du monde
+  size-y                 ; Taille verticale du monde
+
+  current-season         ; Saison actuelle
+  last-season            ; Saison précédente
+  season-counter         ; Compteur de saison
+  renewal-flag           ; Flag pour indiquer si la saison de renouvellement a eu lieu
+  year-types             ; Liste qui stocke les types d'années
+  current-year-type      ; Le type d'année en cours (bonne, moyenne, mauvaise)
+  total-ticks-per-year   ; Nombre total de ticks par année
+  year-counter           ; Compteur de ticks dans l'année
+  year-index             ; Indice de l'année en cours
+  total-dry-season-ticks ; Nombre de jours de saison sèche hors période de soudure
+
   herd-gain-from-food
-  max-grass ; pour visualisation
-  max-trees ; pour visualisation
+  max-grass              ; pour visualisation
+  max-trees              ; pour visualisation
 
-  tree-data ; liste qui stocke les valeurs max de fruits, feuilles, bois et sensibilité pour cette catégorie d'arbres
+  tree-data              ; liste qui stocke les valeurs max de fruits, feuilles, bois et sensibilité pour cette catégorie d'arbres
 
-  year-types  ; Liste qui stocke les types d'années
-  current-year-type  ; Le type d'année en cours (bonne, moyenne, mauvaise)
-  total-ticks-per-year  ; Nombre total de ticks par année
-  year-counter  ; Compteur de ticks dans l'année
-  year-index  ; Indice de l'année en cours
-  total-dry-season-ticks
-
-  nduungu-duration ; nombre de ticks pour la saison des pluies
-  dabbuunde-duration ; nombre de ticks pour la saison sèche froide
-  ceedu-duration ; nombre de ticks pour la saison sèche chaude
-  ceetcelde-duration ; nombre de ticks pour la période de soudure
+  nduungu-duration       ; nombre de ticks pour la saison des pluies
+  dabbuunde-duration     ; nombre de ticks pour la saison sèche froide
+  ceedu-duration         ; nombre de ticks pour la saison sèche chaude
+  ceetcelde-duration     ; nombre de ticks pour la période de soudure
 ]
 
 breed [camps camp]
@@ -40,6 +42,7 @@ patches-own [
   patch-sensitivity ; sensibilité à la dégradation
   degradation-level ; niveau de dégradation
 
+  grass-quality ; qualité actuelle de l'herbe
   grass-quality-ceedu ; qualité de l'herbe en ceedu de l'année actuelle
   grass-quality-ceetcelde ; qualité de l'herbe en ceetcelde de l'année actuelle
   grass-quality-nduungu ; qualité de l'herbe en nduungu de l'année actuelle
@@ -120,50 +123,23 @@ cattles-own [
 ]
 
 tree-populations-own [
-  tree-type         ; "nutritive", "less-nutritive", "fruit"
-  tree-pop-age          ; Âge de la population (1 à 8)
-  population-size   ; Nombre d'arbres dans cette population
-  current-fruit-stock       ; Stock de fruits
-  current-leaf-stock        ; Stock de feuilles
-  current-wood-stock        ; Stock de bois
-  max-fruit-stock
-  max-leaf-stock
-  max-wood-stock
+  tree-type              ; "nutritive", "less-nutritive", "fruit"
+  tree-pop-age           ; Âge de la population (1 à 8)
+  population-size        ; Nombre d'arbres dans cette population
+  current-fruit-stock    ; Stock de fruits
+  current-leaf-stock     ; Stock de feuilles
+  current-wood-stock     ; Stock de bois
+  max-fruit-stock        ; Stock maximal de fruit pour la population
+  max-leaf-stock         ; Stock maximal de fruit pour la population
+  max-wood-stock         ; Stock maximal de fruit pour la population
+  wood-ratio             ; Ratio entre le stock actuel et le stock maximal de bois
   tree-sensitivity
 ]
-
-to report-tree-populations
-  ask patches [
-    ; Vérifier si le patch a des populations d'arbres
-    ifelse any? tree-populations-here [
-      ; Afficher les coordonnées du patch
-      show (word "Patch (" pxcor ", " pycor "):")
-
-      ; Itérer sur chaque population d'arbres dans le patch
-      ask tree-populations-here [
-        ; Afficher les détails de la population
-        show (word "  Type d'arbre: " tree-type
-                   ", Âge: " tree-pop-age
-                   ", Taille de la population: " population-size
-                   ", Fruits actuels: " current-fruit-stock
-                   ", Feuilles actuelles: " current-leaf-stock
-                   ", Bois actuels: " current-wood-stock
-                   ", Sensibilité: " tree-sensitivity)
-      ]
-    ] [
-      ; Indiquer si le patch n'a pas de populations d'arbres
-      show (word "Patch (" pxcor ", " pycor "): Aucune population d'arbre.")
-    ]
-  ]
-end
-
 
 to setup
   clear-all
   resize-world -11 11 -11 11  ; Fixer les limites du monde à -11 à 11 en x et y
   set-patch-size 20  ; Ajuster la taille des patches
-
-
 
   load-environment "environment_vel.txt"
   set current-season "Nduungu"  ; Initialiser à la première saison
@@ -566,22 +542,6 @@ to setup-herds
   ]
 end
 
-to-report get-age-data [trees-type ages]
-  ; Filtrer les données en utilisant une variable nommée 'x' pour chaque élément
-  let data-filtered filter [ x -> (item 0 x) = trees-type and (item 1 x) = ages ] tree-data
-
-  ; Vérifier s'il y a des données filtrées
-  ifelse (length data-filtered > 0)  [
-    let age-data first data-filtered
-    ; Retourner une liste sans le type et l'âge, seulement les stocks et la sensibilité
-    report (list (item 2 age-data) (item 3 age-data) (item 4 age-data) (item 5 age-data))
-  ] [
-    ; Si aucune donnée trouvée, retourner des valeurs par défaut
-    report (list 0 0 0 0)
-  ]
-end
-
-
 to setup-trees
 
   ask patches [
@@ -672,9 +632,10 @@ to setup-trees
             set max-fruit-stock init-patch-max-fruit-stock
             set max-leaf-stock init-patch-max-leaf-stock
             set max-wood-stock init-patch-max-wood-stock
+            set current-wood-stock max-wood-stock
             set current-fruit-stock (max-fruit-stock / 2)
             set current-leaf-stock (max-leaf-stock / 2)
-            set current-wood-stock max-wood-stock
+
             set tree-sensitivity init-patch-sensitivity
 
             hide-turtle
@@ -727,6 +688,7 @@ to setup-trees
             set current-leaf-stock (max-leaf-stock / 2)
             set current-wood-stock max-wood-stock
             set tree-sensitivity init-patch-sensitivity
+            set wood-ratio calculate-wood-ratio
 
             hide-turtle
           ]
@@ -734,6 +696,12 @@ to setup-trees
       ]
     ]
   ]
+end
+
+to-report calculate-wood-ratio
+
+  report current-wood-stock / max-wood-stock
+
 end
 
 to-report split-population [total-population]
@@ -775,6 +743,20 @@ to-report split-population [total-population]
 end
 ; Fonctions pour calculer les populations initiales en fonction du type d'arbre, de l'âge et de la taille de la population
 
+to-report get-age-data [trees-type ages]
+  ; Filtrer les données en utilisant une variable nommée 'x' pour chaque élément
+  let data-filtered filter [ x -> (item 0 x) = trees-type and (item 1 x) = ages ] tree-data
+
+  ; Vérifier s'il y a des données filtrées
+  ifelse (length data-filtered > 0)  [
+    let age-data first data-filtered
+    ; Retourner une liste sans le type et l'âge, seulement les stocks et la sensibilité
+    report (list (item 2 age-data) (item 3 age-data) (item 4 age-data) (item 5 age-data))
+  ] [
+    ; Si aucune donnée trouvée, retourner des valeurs par défaut
+    report (list 0 0 0 0)
+  ]
+end
 
 to update-visualization
   if visualization-mode = "soil-type" [
@@ -804,7 +786,13 @@ to go
     assign-grass-quality
     set last-season current-season
   ]
+
+  if current-season = "Nduungu" [
+    renew-tree-population
+  ]
+
   grow-grass
+  grow-tree-resources
   move-and-eat
 
   ask turtles [
@@ -820,8 +808,9 @@ to go
   if year-counter >= total-ticks-per-year [
     update-tree-age
     update-year-type
-    set year-counter 0
     set-season-durations
+    set year-counter 0
+    set renewal-flag false
   ]
 
   tick
@@ -858,7 +847,7 @@ end
 
 to assign-grass-quality
   ask patches [
-    if (any? patches with [prev-grass-quality-ceetcelde = 0 and grass-quality-ceetcelde = 0]) [  ; Vérifie si c'est la première année
+    ifelse (any? patches with [grass-quality-nduungu = 0 and grass-quality-ceetcelde = 0]) [  ; Vérifie si c'est la première année
       if soil-type = "Baldiol" [
         let rand random-float 1
         if current-season = "Ceedu" [
@@ -951,17 +940,17 @@ to assign-grass-quality
             [set grass-quality-ceetcelde "poor"]]
         ]
       ]
-      set prev-grass-quality-ceedu grass-quality-ceedu
-      set prev-grass-quality-nduungu grass-quality-nduungu
-      set prev-grass-quality-dabbuunde grass-quality-dabbuunde
-      set prev-grass-quality-ceetcelde grass-quality-ceetcelde
+      if current-season = "Ceedu" [set grass-quality grass-quality-ceedu]
+      if current-season = "Nduungu" [set grass-quality grass-quality-nduungu]
+      if current-season = "Dabbuunde" [set grass-quality grass-quality-dabbuunde]
+      if current-season = "Ceetcelde" [set grass-quality grass-quality-ceetcelde]
+    ] [
+      ;; Pour les années suivantes, réutilise la qualité de l'herbe de l'année précédente
+      if current-season = "Ceedu" [set grass-quality grass-quality-ceedu]
+      if current-season = "Nduungu" [set grass-quality grass-quality-nduungu]
+      if current-season = "Dabbuunde" [set grass-quality grass-quality-dabbuunde]
+      if current-season = "Ceetcelde" [set grass-quality grass-quality-ceetcelde]
     ]
-
-    ;; Pour les années suivantes, réutilise la qualité de l'herbe de l'année précédente
-    if current-season = "Ceedu" [set grass-quality-ceedu prev-grass-quality-ceedu]
-    if current-season = "Nduungu" [set grass-quality-nduungu prev-grass-quality-nduungu]
-    if current-season = "Dabbuunde" [set grass-quality-dabbuunde prev-grass-quality-dabbuunde]
-    if current-season = "Ceetcelde" [set grass-quality-ceetcelde prev-grass-quality-ceetcelde]
   ]
 
 end
@@ -1004,140 +993,277 @@ to grow-grass
   ]
 end
 
-to grow-trees
-
-
-
-end
-
-
 to update-tree-age
-; Si une année s'est écoulée
+  ; Si une année s'est écoulée
   let advancing-populations []
-    ; 2. Incrémenter l'âge de toutes les populations d'arbres
-    ask tree-populations [
-      if tree-pop-age < 8 [
-        set tree-pop-age tree-pop-age + 1
-        ; Mettre à jour les stocks maximaux pour le nouvel âge
-        let age-data get-age-data tree-type tree-pop-age
-        let max-fruit item 0 age-data
-        let max-leaf item 1 age-data
-        let max-wood item 2 age-data
-        let sensitivity item 3 age-data
+  ; 2. Incrémenter l'âge de toutes les populations d'arbres
+  ask tree-populations [
+    if tree-pop-age < 8 [
+      set tree-pop-age tree-pop-age + 1
+      ; Mettre à jour les stocks maximaux pour le nouvel âge
+      let age-data get-age-data tree-type tree-pop-age
+      let max-fruit item 0 age-data
+      let max-leaf item 1 age-data
+      let max-wood item 2 age-data
+      let sensitivity item 3 age-data
+      set max-wood-stock max-wood * population-size
+      set max-fruit-stock max-fruit * population-size
+      set max-leaf-stock max-leaf * population-size
+      set tree-sensitivity sensitivity
 
-        set max-fruit-stock max-fruit * population-size
-        set max-leaf-stock max-leaf * population-size
-        set max-wood-stock max-wood * population-size
-        set current-fruit-stock (max-fruit-stock / 2)
-        set current-leaf-stock (max-leaf-stock / 2)
-        set current-wood-stock max-wood-stock
-            print (word "Population mise à jour - Patch: " [pxcor] of patch-here
-             ", Type: " tree-type
-             ", Âge: " tree-pop-age
-             ", Taille: " population-size)
-        ; Vous pouvez également mettre à jour les stocks actuels si nécessaire
       if tree-pop-age = 8 [
-        set advancing-populations lput (list patch-here tree-type population-size) advancing-populations
-        print (word "Population avancée ajoutée - Patch: " [pxcor] of patch-here
-               ", Type: " tree-type
-               ", Taille: " population-size)
+        set advancing-populations lput (list patch-here tree-type population-size current-fruit-stock current-leaf-stock current-wood-stock) advancing-populations
+        die
       ]
     ]
   ]
 
   ; Traiter les populations avancées
-  foreach advancing-populations [ ?adv-population ->
-    let adv-patch item 0 ?adv-population
-    let adv-tree-type item 1 ?adv-population
-    let adv-pop-size item 2 ?adv-population
-
+  foreach advancing-populations [ any-adv-population ->
+    let adv-patch item 0 any-adv-population
+    let adv-tree-type item 1 any-adv-population
+    let adv-pop-size item 2 any-adv-population
+    let adv-fruit-stock item 3 any-adv-population
+    let adv-leaf-stock item 4 any-adv-population
+    let adv-wood-stock item 5 any-adv-population
     let existing-population one-of tree-populations with [
       patch-here = adv-patch and tree-type = adv-tree-type and tree-pop-age = 8
     ]
+    ifelse existing-population != nobody [
+      ; Ajouter la taille de la population qui passe à l'âge 8
+      ask existing-population [
+        set population-size population-size + adv-pop-size
+        ; Mettre à jour les stocks maximaux
+        let age-data get-age-data tree-type tree-pop-age
+        let max-fruit item 0 age-data
+        let max-leaf item 1 age-data
+        let max-wood item 2 age-data
+        set max-wood-stock max-wood * population-size
+        set max-fruit-stock max-fruit * population-size
+        set max-leaf-stock max-leaf * population-size
 
-      ifelse existing-population != nobody [
-        ; Ajouter la taille de la population qui passe à l'âge 8
-        ask existing-population [
-          set population-size population-size + adv-pop-size
-          ; Mettre à jour les stocks maximaux
+        set current-fruit-stock current-fruit-stock + adv-fruit-stock
+        set current-leaf-stock current-leaf-stock + adv-leaf-stock
+        set current-wood-stock current-wood-stock + adv-wood-stock
+        ; Mettre à jour les stocks actuels si nécessaire
+      ]
+
+
+    ] [
+      ; Créer une nouvelle population d'arbres à l'âge 8
+      ask adv-patch [
+        sprout-tree-populations 1 [
+          set tree-type adv-tree-type
+          set tree-pop-age 8
+          set population-size adv-pop-size
+          ; Initialiser les stocks
           let age-data get-age-data tree-type tree-pop-age
           let max-fruit item 0 age-data
           let max-leaf item 1 age-data
           let max-wood item 2 age-data
-          set max-fruit-stock max-fruit * population-size
-          set max-leaf-stock max-leaf * population-size
-          set max-wood-stock max-wood * population-size
-          ; Mettre à jour les stocks actuels si nécessaire
+          set max-fruit-stock item 0 max-fruit * population-size
+          set max-leaf-stock item 1 max-leaf * population-size
+          set max-wood-stock item 2 max-wood  * population-size
+          ; Initialiser les stocks actuels
+          set current-fruit-stock adv-fruit-stock
+          set current-leaf-stock adv-leaf-stock
+          set current-wood-stock adv-wood-stock
+          hide-turtle
         ]
-      ] [
-        ; Créer une nouvelle population d'arbres à l'âge 8
-        ask adv-patch [
+      ]
+    ]
+  ]
+end
+
+; Fonction de renouvellement des arbres
+to renew-tree-population
+  let total-new-trees 0
+  ; Cette procédure sera appelée uniquement en Nduungu une fois par saison
+  if renewal-flag = false [
+    ask patches [
+      let new-trees-by-type []
+
+      ; Calculer le nombre de nouvelles pousses pour chaque type d'arbre sur le patch
+      ask tree-populations-here [
+        ; Récupérer le taux de germination pour le type d'arbre et la qualité de l'année
+        let germination-rate get-germination-rate tree-type current-year-type
+        ; Calculer les nouvelles pousses
+        let new-trees floor (current-fruit-stock * germination-rate)
+
+        ; Ajouter les nouvelles pousses au total pour ce type d'arbre
+        let current-type-entry filter [x -> item 0 x = tree-type] new-trees-by-type
+        ifelse length current-type-entry > 0 [
+          ; Si le type existe déjà, additionner les nouvelles pousses à la quantité existante
+          let existing-entry first current-type-entry
+          set new-trees-by-type replace-item (position existing-entry new-trees-by-type) new-trees-by-type
+          (list tree-type (item 1 existing-entry + new-trees))
+        ] [
+          ; Sinon, créer une nouvelle entrée pour ce type d'arbre
+          set new-trees-by-type lput (list tree-type new-trees) new-trees-by-type
+        ]
+      ]
+
+      ; Créer de nouvelles populations d'arbres pour chaque type d'arbre en fonction des nouvelles pousses calculées
+      foreach new-trees-by-type [ [type-and-count] ->
+        let new-tree-type item 0 type-and-count
+        let number item 1 type-and-count
+        if number > 0 [
           sprout-tree-populations 1 [
-            set tree-type adv-tree-type
-            set tree-pop-age 8
-            set population-size adv-pop-size
-            ; Initialiser les stocks
-            let age-data get-age-data tree-type tree-pop-age
-            let max-fruit item 0 age-data
-            let max-leaf item 1 age-data
-            let max-wood item 2 age-data
-            set max-fruit-stock item 0 max-fruit * population-size
-            set max-leaf-stock item 1 max-leaf * population-size
-            set max-wood-stock item 2 max-wood  * population-size
+            set tree-type new-tree-type
+            set tree-pop-age 1
+            set population-size number
             ; Initialiser les stocks actuels
-            set current-fruit-stock max-fruit-stock
-            set current-leaf-stock max-leaf-stock
+            let age-data get-age-data tree-type tree-pop-age
+            set max-fruit-stock item 0 age-data * population-size
+            set max-leaf-stock item 1 age-data * population-size
+            set max-wood-stock item 2 age-data * population-size
+            set current-fruit-stock (max-fruit-stock / 2)
+            set current-leaf-stock (max-leaf-stock / 2)
             set current-wood-stock max-wood-stock
+            set tree-sensitivity item 3 age-data
             hide-turtle
           ]
         ]
       ]
+      ; Marquer le renouvellement comme effectué pour cette saison
+      set renewal-flag true
     ]
-
-
+  ]
 end
 
-; Fonctions pour calculer la croissance des stocks
-to-report growth-fruit [input-tree-type tree-age pop-size]
-  let growth 0
-  if input-tree-type = "nutritive" [
-    set growth tree-pop-age * 1.5
+; Obtenir le taux de germination en fonction du type d'arbre et de la qualité de l'année
+to-report get-germination-rate [tree-types year-type]
+  let rate 0
+  if tree-type = "nutritive" [
+    if year-type = "bonne" [set rate 0.2]
+    if year-type = "moyenne" [set rate 0.1]
+    if year-type = "mauvaise" [set rate 0.05]
   ]
-  if input-tree-type = "less-nutritive" [
-    set growth tree-pop-age * 1
+  if tree-type = "lessNutritive" [
+    if year-type = "bonne" [set rate 0.15]
+    if year-type = "moyenne" [set rate 0.08]
+    if year-type = "mauvaise" [set rate 0.04]
   ]
-  if input-tree-type = "fruit" [
-    set growth tree-pop-age * 2
+  if tree-type = "fruity" [
+    if year-type = "bonne" [set rate 0.25]
+    if year-type = "moyenne" [set rate 0.15]
+    if year-type = "mauvaise" [set rate 0.1]
   ]
-  report growth * pop-size
+  report rate
 end
 
-to-report growth-leaf [input-tree-type tree-age pop-size]
-  let growth tree-pop-age * 1.2
-  if input-tree-type = "nutritive" [
-    set growth tree-pop-age * 1.5
+to grow-tree-resources
+  ask tree-populations [
+
+
+    ; Réactualiser le max de bois en fonction de la population restante
+
+    let age-data get-age-data tree-type tree-pop-age
+    set max-wood-stock item 2 age-data * population-size
+
+    ; Croissance ou décroissance logistique du bois
+    let wood-growth growth-wood-logistic tree-type tree-pop-age population-size
+    let new-wood-stock current-wood-stock + wood-growth
+    set current-wood-stock min (list new-wood-stock max-wood-stock)
+    ; Ratio de bois par population
+
+    set wood-ratio calculate-wood-ratio
+
+
+
+    ; Réactualiser le max de fruits et feuilles  en fonction de la population restante et du bois
+
+    set max-fruit-stock item 0 age-data * population-size * wood-ratio
+    set max-leaf-stock item 1 age-data * population-size * wood-ratio
+
+
+    ; Croissance ou décroissance logistique des fruits
+    let fruit-growth growth-fruit-logistic tree-type tree-pop-age population-size
+    let new-fruit-stock current-fruit-stock + fruit-growth
+    set current-fruit-stock min (list new-fruit-stock max-fruit-stock)
+
+    ; Croissance ou décroissance logistique des feuilles
+    let leaf-growth growth-leaf-logistic tree-type tree-pop-age population-size
+    let new-leaf-stock current-leaf-stock + leaf-growth
+    set current-leaf-stock min (list new-leaf-stock max-leaf-stock)
   ]
-  if input-tree-type = "less-nutritive" [
-    set growth tree-pop-age * 1
-  ]
-  if input-tree-type = "fruit" [
-    set growth tree-pop-age * 2
-  ]
-  report growth * pop-size
 end
 
-to-report growth-wood [input-tree-type tree-age pop-size]
-  let growth tree-pop-age  * 0.8
+; Fonction pour calculer la croissance logistique des fruits
+to-report growth-fruit-logistic [input-tree-type tree-age pop-size]
+  let r 0
   if input-tree-type = "nutritive" [
-    set growth tree-pop-age * 1.5
+    if current-season = "Nduungu" [set r 0.05]
+    if current-season = "Ceedu" [set r 0.03]
+    if current-season = "Dabbuunde" [set r 0.01]
+    if current-season = "Ceetcelde" [set r 0.005]
   ]
   if input-tree-type = "less-nutritive" [
-    set growth tree-pop-age * 1
+    if current-season = "Nduungu" [set r 0.04]
+    if current-season = "Ceedu" [set r 0.025]
+    if current-season = "Dabbuunde" [set r 0.01]
+    if current-season = "Ceetcelde" [set r 0.005]
   ]
   if input-tree-type = "fruit" [
-    set growth tree-pop-age * 2
+    if current-season = "Nduungu" [set r 0.06]
+    if current-season = "Ceedu" [set r 0.04]
+    if current-season = "Dabbuunde" [set r 0.02]
+    if current-season = "Ceetcelde" [set r 0.01]
   ]
-  report growth * pop-size
+  let growth r * current-fruit-stock * (1 - (current-fruit-stock / max-fruit-stock))
+  report growth
+end
+
+ ;Fonction pour calculer la croissance logistique des feuilles
+to-report growth-leaf-logistic [input-tree-type tree-age pop-size]
+  let r 0
+  if input-tree-type = "nutritive" [
+    if current-season = "Nduungu" [set r 0.05]
+    if current-season = "Ceedu" [set r 0.03]
+    if current-season = "Dabbuunde" [set r 0.01]
+    if current-season = "Ceetcelde" [set r 0.005]
+  ]
+  if input-tree-type = "less-nutritive" [
+    if current-season = "Nduungu" [set r 0.04]
+    if current-season = "Ceedu" [set r 0.025]
+    if current-season = "Dabbuunde" [set r 0.01]
+    if current-season = "Ceetcelde" [set r 0.005]
+  ]
+  if input-tree-type = "fruit" [
+    if current-season = "Nduungu" [set r 0.06]
+    if current-season = "Ceedu" [set r 0.04]
+    if current-season = "Dabbuunde" [set r 0.02]
+    if current-season = "Ceetcelde" [set r 0.01]
+  ]
+  let growth r * current-leaf-stock * (1 - (current-leaf-stock / max-leaf-stock))
+  report growth
+end
+
+;Fonction pour calculer la croissance logistique du bois
+to-report growth-wood-logistic [input-tree-type tree-age pop-size]
+  let r 0
+  if input-tree-type = "nutritive" [
+    if current-season = "Nduungu" [set r 0.05]
+    if current-season = "Ceedu" [set r 0.03]
+    if current-season = "Dabbuunde" [set r 0.01]
+    if current-season = "Ceetcelde" [set r 0.005]
+  ]
+  if input-tree-type = "less-nutritive" [
+    if current-season = "Nduungu" [set r 0.04]
+    if current-season = "Ceedu" [set r 0.025]
+    if current-season = "Dabbuunde" [set r 0.01]
+    if current-season = "Ceetcelde" [set r 0.005]
+  ]
+  if input-tree-type = "fruit" [
+    if current-season = "Nduungu" [set r 0.06]
+    if current-season = "Ceedu" [set r 0.04]
+    if current-season = "Dabbuunde" [set r 0.02]
+    if current-season = "Ceetcelde" [set r 0.01]
+  ]
+
+    let growth r * current-wood-stock * (1 - (current-wood-stock / max-wood-stock))
+  report growth
+
 end
 
 ;  ask patches [
@@ -1146,37 +1272,62 @@ end
 ;  ]
 ;end
 
-
 ;to color-trees  ;; patch procedure
 ;  set pcolor scale-color (green - 1) trees 0 (2 * max-grass-height)
-
 to move-and-eat
+  ; Mouvement et consommation des bovins
   ask cattles [
-    ;let best-patch max-one-of known-space with [current-grass > 0]
-    let MySpace known-space with [current-grass > 0]
-    let best-patch  one-of MySpace with-max [current-grass]
+    let best-patch find-best-nearest-patch known-space
     if best-patch != nobody [
       move-to best-patch
-      let grass-eaten min (list [current-grass] of best-patch daily-needs-per-head)
-      set corporal-condition (corporal-condition + grass-eaten - daily-needs-per-head)
-
-      ask best-patch [
-        set current-grass current-grass - (grass-eaten)
-      ]
+      let grass-eaten consume-grass best-patch daily-needs-per-head
+      update-condition grass-eaten daily-needs-per-head
     ]
   ]
 
+  ; Mouvement et consommation des ovins
   ask sheeps [
-    let best-patch max-one-of known-space with [current-grass > 0] [current-grass]
+    let best-patch find-best-nearest-patch known-space
     if best-patch != nobody [
       move-to best-patch
-      let grass-eaten min (list [current-grass] of best-patch daily-needs-per-head)
-      ask best-patch [
-        set current-grass current-grass - (grass-eaten)
-      ]
-      set corporal-condition (corporal-condition + grass-eaten - daily-needs-per-head)
+      let grass-eaten consume-grass best-patch daily-needs-per-head
+      update-condition grass-eaten daily-needs-per-head
     ]
   ]
+end
+
+; Trouver le meilleur patch : d'abord la qualité, ensuite la quantité, enfin la proximité
+to-report find-best-nearest-patch [known-spaces]
+  let viable-patches known-space with [current-grass > 0]
+
+  ifelse any? viable-patches [
+    ; Étape 1 : Sélectionner les patches avec la meilleure qualité d'herbe
+    let best-quality-patches viable-patches with-max [grass-quality]
+
+    ; Étape 2 : Parmi les patches avec la meilleure qualité, sélectionner ceux avec la plus grande quantité d'herbe
+    let max-grass-patches best-quality-patches with-max [current-grass]
+
+    ; Étape 3 : Choisir le patch le plus proche parmi ceux avec la meilleure qualité et la plus grande quantité d'herbe
+    report min-one-of max-grass-patches [distance myself]
+  ] [
+    report nobody  ; Si aucun patch viable n'est trouvé
+  ]
+
+end
+
+; Consommer de l'herbe sur un patch donné
+to-report consume-grass [patch-to-eat amount]
+  let grass-available [current-grass] of patch-to-eat
+  let grass-eaten min list grass-available amount  ; La quantité d'herbe consommée est limitée par ce qui est disponible
+  ask patch-to-eat [
+    set current-grass current-grass - grass-eaten
+  ]
+  report grass-eaten  ; Retourner la quantité d'herbe consommée
+end
+
+; Mettre à jour la condition corporelle en fonction de la nourriture consommée
+to update-condition [grass-eaten daily-needs]
+  set corporal-condition corporal-condition + (grass-eaten - daily-needs)
 end
 
 to manage-water-points
