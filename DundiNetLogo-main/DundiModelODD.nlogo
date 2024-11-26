@@ -481,7 +481,7 @@ to setup-camps
           ; Créer un nouveau campement
           sprout-camps 1 [
             set color brown
-            set size 1.5
+            set size 0.5
             set is-temporary false
             set shape "house"
             set wood-needs 100
@@ -561,6 +561,10 @@ to setup-foyers
       set herder-type determine-herder-type
       set-herd-sizes
       set known-space patches in-radius 3
+      set close-known-space known-space with [
+        distance [current-home-patch] of myself <= 12
+      ]
+      set original-camp-known-space close-known-space
       set cattle-low-threshold-cc 2
       set cattle-low-threshold-pc 2
       set sheep-low-threshold-cc 3
@@ -692,7 +696,9 @@ to setup-herds ; Valeurs à définir
       set known-space [known-space] of foyer-owner
       set original-camp-known-space known-space
       set close-known-space known-space in-radius 12
-      set distant-known-space known-space - close-known-space
+      set distant-known-space known-space with [
+        distance [current-home-patch] of myself > 12
+      ]
       set have-left false
 
     ]
@@ -747,7 +753,9 @@ to setup-herds ; Valeurs à définir
       set known-space [known-space] of foyer-owner
       set original-camp-known-space known-space
       set close-known-space known-space in-radius 12
-      set distant-known-space known-space - close-known-space
+      set distant-known-space known-space with [
+        distance [current-home-patch] of myself > 12
+      ]
       set have-left false
 
     ]
@@ -1045,7 +1053,7 @@ to go
     set-season-durations              ; Au premier jour de chaque nouvelle année et en fonction de l'année, redéfinit les durées pour chacune des siaosn pour l'année en cours
     update-tree-age                   ; Au premier jour de chaque nouvelle année, fait grandir les populations d'arbres d'un an
     renew-tree-population             ; Au premier jour de chaque nouvelle année, crée une nouvelle population d'arbres d'un an
-    assign-grass-proportions         ; Au premier jour de chaque nouvelle année, relance la génération aléatoire des proportions en monocotylédone et dicotylédone
+    ask patches [assign-grass-proportions  ]        ; Au premier jour de chaque nouvelle année, relance la génération aléatoire des proportions en monocotylédone et dicotylédone
     call-back-herds
   ]
 
@@ -1055,21 +1063,16 @@ to go
 
   ; Activités des agents
   move-and-eat                        ; Activités quotidiennes du couple Berger-Troupeau
-  choose-strategy                   ; Choix stratégiques pastoraux du chef de ménage
+  choose-strategy                     ; Choix stratégiques pastoraux du chef de ménage
 
-;  ask turtles [
- ;   manage-water-points
-    ;   come-back
-;  ]
+  ; Visuel
   ask patches [
     color-grass
-   ;color-trees
+    ;color-trees
   ]
-
 
   update-visualization
   tick
-
 end
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1663,11 +1666,6 @@ to grow-tree-resources
     set max-fruit-stock max-fruit * population-size * wood-ratio
     set max-leaf-stock max-leaf * population-size * wood-ratio
 
-    if max-leaf-stock <= 0 [
-      print (word "Erreur : max-leaf-stock invalide pour tree-population " who)
-      print (word "Tree-population " who " - type: " tree-type ", âge: " tree-pop-age ", population-size: " population-size)
-      print (word "max-leaf: " max-leaf ", max-leaf-stock: " max-leaf-stock ", wood-ratio: " wood-ratio)
-    ]
     ; Croissance ou décroissance logistique des fruits
     let fruit-growth growth-fruit-logistic tree-type tree-pop-age population-size current-fruit-stock max-fruit-stock
     let new-fruit-stock current-fruit-stock + fruit-growth
@@ -1690,63 +1688,103 @@ to move-and-eat ; Mouvement et consommation des troupeaux - bovins puis ovins
 
   ask cattles with [have-left = false] [
 
-    ;; Maintenant, trouver le best-patch pour le tick courant avec le known-space mis à jour
+    ;; Find the best patch within known space
     let best-patch find-best-nearest-patch known-space
     let my-home-patch current-home-patch
-
+    move-to current-home-patch
     set DM-ingested 0
     set UF-ingested 0
     set MAD-ingested 0
 
-    if any? distant-known-space [
-      ;; Find good patches in distant-known-space
-      let good-distant-patches distant-known-space with [
-        (grass-quality = "good" or grass-quality = "average")
-      ]
-
-    ;; Filter those within 12 units of my-home-patch
-
-    ]
     if best-patch != nobody [
-      ;; Check if the best-patch is more than 12 units away from current-home-patch
-      let distant-best-patch best-patch with [
-        distance my-home-patch >= 12]
-      let nearby-best-patch best-patch with [
-        distance my-home-patch >= 12]
-      ;; If the best-patch is in the original-home-known-space, return to original camp
-      ifelse member? distant-best-patch original-camp-known-space and (self is-in-temporary-camp = true) [
-        set current-home-patch original-home-patch
-        set current-home-camp original-home-camp
-        set is-in-temporary-camp false
-        set close-known-space [close-known-space] of foyer-owner
-      ] [
-        ;; Else, change camp
-        change-camp
+
+      ;; Calculate the distance between the best patch and the current home patch
+      let distance-to-home distance best-patch
+
+      ;; If the best patch is more than 12 units away from the current home patch
+      ifelse distance-to-home >= 12 [
+
+        ;; Check if the herd is not already in a temporary camp
+        ifelse not is-in-temporary-camp [
+
+          ;; Create a temporary camp if not already in one
+          set current-home-patch best-patch
+          set is-in-temporary-camp true
+          move-to current-home-patch
+          set xcor xcor + (random-float 0.9 - 0.45)
+          set ycor ycor + (random-float 0.9 - 0.45)
+
+          ;; Add patches within a radius of 3 cells around the camp to known-space
+          let nearby-patches [patches in-radius 3] of current-home-patch
+          set known-space (patch-set known-space nearby-patches)
+          set distant-known-space known-space with [
+            distance [current-home-patch] of myself > 12
+          ]
+          ;; Update close-known-space
+          set close-known-space known-space in-radius 12
+
+        ] [ ;; The herd is already in a temporary camp
+
+          ;; Check if the best patch is in the original camp known space
+          ifelse member? best-patch original-camp-known-space [
+
+            ;; Move to the best patch
+            move-to best-patch
+            set xcor xcor + (random-float 0.9 - 0.45)
+            set ycor ycor + (random-float 0.9 - 0.45)
+
+            ;; Return to the original camp
+            set current-home-patch original-home-patch
+            set current-home-camp original-home-camp
+            set is-in-temporary-camp false
+            set known-space [known-space] of foyer-owner
+            set close-known-space [close-known-space] of foyer-owner
+            set distant-known-space [distant-known-space] of foyer-owner
+
+          ] [
+            ;; Create a temporary camp
+            set current-home-patch best-patch
+            set is-in-temporary-camp true
+            move-to current-home-patch
+            set xcor xcor + (random-float 0.9 - 0.45)
+            set ycor ycor + (random-float 0.9 - 0.45)
+
+            ;; Add patches within a radius of 3 cells around the camp to known-space
+            let nearby-patches [patches in-radius 3] of current-home-patch
+            set known-space (patch-set known-space nearby-patches)
+            set distant-known-space known-space with [
+              distance [current-home-patch] of myself > 12
+            ]
+            ;; Update close-known-space
+            set close-known-space known-space in-radius 12
+          ]
+        ]
+      ] [ ;; The best patch is within 12 units of the current home patch
+
+        ;; Move to the best patch
+        move-to best-patch
+        set xcor xcor + (random-float 0.9 - 0.45)
+        set ycor ycor + (random-float 0.9 - 0.45)
       ]
-    ] [
-      move-to best-patch pxcor pycor
-      set xcor xcor + (random-float 0.9 - 0.45)  ;; Décalage entre -0.45 et +0.45
-      set ycor ycor + (random-float 0.9 - 0.45)
-      ;; Stocker le best-patch pour le prochain tick
-    ]
+  ]
 
-    ; Déterminer la préférence pour les monocotylédones
-    let preference-mono 0.5  ; Valeur par défaut
+  ; Déterminer la préférence pour les monocotylédones
+  let preference-mono 0.5  ; Valeur par défaut
 
-    ifelse current-season = "Nduungu" [
-      ; En Nduungu, préférence de 80% pour les monocotylédones
+  ifelse current-season = "Nduungu" [
+    ; En Nduungu, préférence de 80% pour les monocotylédones
+    set preference-mono 0.8
+  ] [
+    ; Pendant les autres saisons, préférence de 80% pour l'espèce avec le ratio MAD/UF le plus élevé
+    let monocot-MAD-UF-ratio [monocot-MAD-per-kg-MS] of patch-here / [monocot-UF-per-kg-MS] of patch-here
+    let dicot-MAD-UF-ratio [dicot-MAD-per-kg-MS] of patch-here / [dicot-UF-per-kg-MS] of patch-here
+
+    ifelse monocot-MAD-UF-ratio >= dicot-MAD-UF-ratio [
       set preference-mono 0.8
     ] [
-      ; Pendant les autres saisons, préférence de 80% pour l'espèce avec le ratio MAD/UF le plus élevé
-      let monocot-MAD-UF-ratio [monocot-MAD-per-kg-MS] of patch-here / [monocot-UF-per-kg-MS] of patch-here
-      let dicot-MAD-UF-ratio [dicot-MAD-per-kg-MS] of patch-here / [dicot-UF-per-kg-MS] of patch-here
-
-      ifelse monocot-MAD-UF-ratio >= dicot-MAD-UF-ratio [
-        set preference-mono 0.8
-      ] [
-        set preference-mono 0.5
-      ]
+      set preference-mono 0.5
     ]
+  ]
 
     ; Calculer l'UF/kg MS moyen du fourrage disponible
     let monocot-prop [current-monocot-grass] of patch-here / [current-grass] of patch-here
@@ -1781,20 +1819,88 @@ to move-and-eat ; Mouvement et consommation des troupeaux - bovins puis ovins
   ;; Mouvement et consommation des ovins (à adapter de manière similaire)
 
   ask sheeps with [have-left = false] [
-
-    ;; Maintenant, trouver le best-patch pour le tick courant avec le known-space mis à jour
+    ;; Find the best patch within known space
     let best-patch find-best-nearest-patch known-space
-
-
+    let my-home-patch current-home-patch
+    move-to current-home-patch
     set DM-ingested 0
     set UF-ingested 0
     set MAD-ingested 0
 
     if best-patch != nobody [
-      move-to best-patch
-      ;; Stocker le best-patch pour le prochain tick
-    ]
+      ;; Calculate the distance between the best patch and the current home patch
+      let distance-to-home distance best-patch
 
+      ;; If the best patch is more than 12 units away from the current home patch
+      ifelse distance-to-home >= 12 [
+
+        ;; Check if the herd is not already in a temporary camp
+        ifelse not is-in-temporary-camp [
+
+          ;; Create a temporary camp if not already in one
+          set current-home-patch best-patch
+          set is-in-temporary-camp true
+          move-to current-home-patch
+          set xcor xcor + (random-float 0.9 - 0.45)
+          set ycor ycor + (random-float 0.9 - 0.45)
+
+          ;; Add patches within a radius of 3 cells around the camp to known-space
+          let nearby-patches [patches in-radius 3] of current-home-patch
+          set known-space (patch-set known-space nearby-patches)
+          set distant-known-space known-space with [
+            distance current-home-patch > 12
+          ]
+          ;; Update close-known-space
+          set close-known-space known-space with [
+            distance current-home-patch <= 12
+          ]
+
+        ] [ ;; The herd is already in a temporary camp
+
+          ;; Check if the best patch is in the original camp known space
+          ifelse member? best-patch original-camp-known-space [
+
+            ;; Move to the best patch
+            move-to best-patch
+            set xcor xcor + (random-float 0.9 - 0.45)
+            set ycor ycor + (random-float 0.9 - 0.45)
+
+            ;; Return to the original camp
+            set current-home-patch original-home-patch
+            set current-home-camp original-home-camp
+            set is-in-temporary-camp false
+            set known-space [known-space] of foyer-owner
+            set close-known-space [close-known-space] of foyer-owner
+            set distant-known-space [distant-known-space] of foyer-owner
+
+          ] [
+            ;; Create a temporary camp
+            set current-home-patch best-patch
+            set is-in-temporary-camp true
+            move-to current-home-patch
+            set xcor xcor + (random-float 0.9 - 0.45)
+            set ycor ycor + (random-float 0.9 - 0.45)
+
+            ;; Add patches within a radius of 3 cells around the camp to known-space
+            let nearby-patches [patches in-radius 3] of current-home-patch
+            set known-space (patch-set known-space nearby-patches)
+            set distant-known-space known-space with [
+              distance current-home-patch > 12
+            ]
+            ;; Update close-known-space
+            set close-known-space known-space with [
+              distance current-home-patch <= 12
+            ]
+          ]
+        ]
+      ] [ ;; The best patch is within 12 units of the current home patch
+
+        ;; Move to the best patch
+        move-to best-patch
+        set xcor xcor + (random-float 0.9 - 0.45)
+        set ycor ycor + (random-float 0.9 - 0.45)
+      ]
+    ]
     ; Déterminer la préférence pour les monocotylédones
     let preference-mono 0.5  ; Valeur par défaut
 
@@ -2207,8 +2313,8 @@ end
 
 
 ; Trouver le meilleur patch : d'abord la qualité, ensuite la quantité, enfin la proximité
-to-report find-best-nearest-patch [close-known-spaces]
-  let viable-patches known-spaces with [current-grass > 1]
+to-report find-best-nearest-patch [known-spaces]
+  let viable-patches known-space with [current-grass > 1]
 
   ifelse any? viable-patches [
     ifelse shepherd-type = "good" [
@@ -2256,15 +2362,9 @@ to choose-strategy
     ;; Si **une des deux** conditions des troupeaux est en dessous du seuil, exécuter `do-first-strategy`
     if cattle-one-starving [
       do-first-strategy
-      ask cattle-herd [
-        change-camp
-      ]
     ]
      if sheep-one-starving [
       do-first-strategy
-      ask sheep-herd [
-        change-camp
-      ]
     ]
 
     ;; Si **les deux** conditions des deux troupea sont en dessous des seuils, quitter le modèle
@@ -2287,7 +2387,7 @@ to do-first-strategy
   ;; Store the foyer's variables in local variables
   let home-patch original-home-patch
   let my-known-space known-space
-  let my-distant-know-space distant-know-space
+  let my-distant-known-space distant-known-space
   ;; Find patches within 12 units of home-patch and not in known-space
   let undiscovered-patches patches with [
     distance home-patch <= 12 and not member? self my-known-space
@@ -2300,78 +2400,67 @@ to do-first-strategy
     let line-patches patches-between patch-here home-patch
     ;; Ajouter ces patches au known-space du foyer
     set known-space (patch-set known-space line-patches)
-    set close-known-space (patch-set close-known-space line-patches)
+    ;; Retourner au campement principal
+    move-to home-patch
+    ;; ajouter les patches aux catégories d'espaces connus
+    set close-known-space known-space in-radius 12
+    set original-camp-known-space close-known-space
     ;; Partager le known-space mis à jour avec les troupeaux
     ask cattle-herd [
       set known-space [known-space] of foyer-owner
-      set close-known-space [close-known-space] of foyer-owner
+      set original-camp-known-space [original-camp-known-space] of foyer-owner
       if is-in-temporary-camp = false [
-        set original-camp-known-space (patch-set known-space line-patches)
+        set close-known-space [close-known-space] of foyer-owner
       ]
     ]
     ask sheep-herd [
       set known-space [known-space] of foyer-owner
+      set original-camp-known-space [original-camp-known-space] of foyer-owner
       if is-in-temporary-camp = false [
-        set original-camp-known-space (patch-set known-space line-patches)
+        set close-known-space [close-known-space] of foyer-owner
       ]
     ]
   ] [
-    ifelse any? distant-known-space [
-
-    ifelse any? friends [
+    if any? friends [
       call-one-friend
-    ] [
-      let further-undiscovered-patches patches with [distance home-patch > 12 and not member? self my-known-space]
-      let line-patches patches-between patch-here current-home-patch
-      let undiscovered-line-patches line-patches with [not known-space]
+    ]
+    let further-undiscovered-patches patches with [distance home-patch > 12 and not member? self my-known-space]
+    if any? further-undiscovered-patches [
+      move-to further-undiscovered-patches
+      let line-patches patches-between patch-here home-patch
       ;; Ajouter ces patches au known-space du foyer
-      set known-space (patch-set known-space undiscovered-line-patches)
-      set distant-known-space (patch-set distant-known-space line-patches)
-      ;; Partager le known-space mis à jour avec les troupeaux
+      set known-space (patch-set known-space line-patches)
+      ;; Retourner au campement principal
+      move-to home-patch
+      ;; ajouter les patches aux catégories d'espaces connus
+      set close-known-space known-space in-radius 12
+      set original-camp-known-space close-known-space
+      set distant-known-space known-space with [distance home-patch > 12]
       ask cattle-herd [
         set known-space [known-space] of foyer-owner
-        set distant-known-space [distant-known-space] of foyer-owner
+        set original-camp-known-space [original-camp-known-space] of foyer-owner
+        ifelse is-in-temporary-camp = false [
+          set close-known-space [close-known-space] of foyer-owner
+          set distant-known-space [distant-known-space] of foyer-owner
+        ] [
+          set close-known-space known-space in-radius 12
+          set distant-known-space known-space with [distance home-patch > 12]
+        ]
       ]
       ask sheep-herd [
         set known-space [known-space] of foyer-owner
-        set distant-known-space [distant-known-space] of foyer-owner
+        set original-camp-known-space [original-camp-known-space] of foyer-owner
+        ifelse is-in-temporary-camp = false [
+          set close-known-space [close-known-space] of foyer-owner
+          set distant-known-space [distant-known-space] of foyer-owner
+        ] [
+          set close-known-space known-space in-radius 12
+          set distant-known-space known-space with [distance home-patch > 12]
+        ]
       ]
     ]
   ]
 end
-to change-camp
-  ;; Store the herd's current-home-patch in a local variable
-  let my-home-patch current-home-patch
-
-  if any? distant-known-space [
-    ;; Find good patches in distant-known-space
-    let good-distant-patches distant-known-space with [
-      (grass-quality = "good" or grass-quality = "average")
-    ]
-
-    ;; Filter those within 12 units of my-home-patch
-    let nearby-good-distant-patches good-distant-patches with [
-      distance my-home-patch => 12
-    ]
-
-    if any? nearby-good-distant-patches [
-      ;; Create a temporary camp if not already in one
-      set current-home-patch one-of nearby-good-distant-patches
-      set is-in-temporary-camp true
-      move-to current-home-patch
-
-      ;; Add patches within a radius of 3 cells around the camp to known-space
-      let nearby-patches patches in-radius 3 of current-home-patch
-      set known-space (patch-set known-space nearby-patches)
-
-      ;; Update close-known-space
-      set close-known-space known-space with [
-        distance current-home-patch <= 12
-      ]
-    ]
-  ]
-end
-
 
 to do-second-strategy
   set live-weight initial-live-weight  ; Réinitialiser le poids vif
@@ -2382,16 +2471,7 @@ to do-second-strategy
   hide-turtle
 end
 
-
-to do-third-strategy
-
-
-
-end
-
 to call-one-friend
-
-
 
 
 end
@@ -2425,7 +2505,6 @@ to display-grass-quality
       set pcolor scale-color green q max-q 0
     ]
   ]
-  print "display-grass-quality"
 end
 
 to color-grass  ;; patch procedure
@@ -2558,18 +2637,17 @@ end
 
 to-report determine-herder-type
   ;; Ensure the sum of the proportions is 100
+  let proportion-small-herders (100 - (proportion-big-herders + proportion-medium-herders))
   let total-proportion proportion-big-herders + proportion-medium-herders + proportion-small-herders
-  if total-proportion != 100 [
-    user-message "The sum of the herder type proportions must equal 100%."
-    stop
-  ]
   let r random-float 100
-  ifelse r < proportion-grand-herders [
+  ifelse r < proportion-big-herders [
     report "grand"
-  ] ifelse r < (proportion-grand-herders + proportion-moyen-herders) [
-    report "moyen"
   ] [
-    report "petit"
+    ifelse r < (proportion-big-herders + proportion-medium-herders) [
+      report "moyen"
+    ] [
+      report "petit"
+    ]
   ]
 end
 
@@ -2668,7 +2746,6 @@ end
 to-report calculate-wood-ratio
 
   if max-wood-stock = 0 [
-    print (word "Erreur : max-wood-stock est égal à zéro pour tree-population " who)
     report 1  ; Éviter la division par zéro
   ]
   ifelse max-wood-stock = 0 [
@@ -2678,14 +2755,14 @@ to-report calculate-wood-ratio
   ]
 end
 
-to-report calculate-tree-icon-size [population]
+to-report calculate-tree-icon-size [populations]
   ;; Définir les valeurs minimales et maximales pour le mapping
   let minPopulation 0
-  let maxPopulation 2000  ;; Ajustez cette valeur en fonction de vos données réelles
+  let maxPopulation 10000  ;; Ajustez cette valeur en fonction de vos données réelles
   let minSize 0.1
   let maxSize 1.5
   ;; Assurer que population est dans les limites
-  let adjusted-population max list minPopulation (min list population maxPopulation)
+  let adjusted-population max list minPopulation (min list populations maxPopulation)
   report minSize + ((adjusted-population - minPopulation) / (maxPopulation - minPopulation)) * (maxSize - minSize)
 end
 
@@ -2782,12 +2859,10 @@ to-report growth-leaf-logistic [input-tree-type tree-age pop-size current-leaf m
 
     ; Vérifier que max-leaf n'est pas égal à zéro
     if max-leaf = 0 [
-      print "Erreur : max-leaf est égal à zéro."
       report 0  ; Éviter la division par zéro
   ]
     let growth precision (r * (precision current-leaf 5) * (precision (1 - (current-leaf / max-leaf)) 5)) 5
     if abs(growth) > 1e10 [
-    print (word "Erreur : growth trop grand (" growth ") pour tree-population de type " input-tree-type ", âge " tree-age ", population-size " pop-size)
     report 0
   ]report growth
   ]
@@ -3181,11 +3256,11 @@ SLIDER
 191
 1238
 224
-proportion-good-herders
-proportion-good-herders
+proportion-big-herders
+proportion-big-herders
 0
 100
-66.0
+22.0
 1
 1
 NIL
