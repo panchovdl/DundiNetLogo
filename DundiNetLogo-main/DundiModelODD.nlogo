@@ -350,6 +350,7 @@ to setup
   ;Visualiser l'environnement
   update-visualization
   display-labels
+
   reset-ticks
 
 end
@@ -700,12 +701,10 @@ to setup-herds ; Valeurs à définir
         distance [current-home-patch] of myself > 12
       ]
       set have-left false
-
     ]
 
     ; Attribuer le troupeau créé à son propriétaire
     set cattle-herd my-cattles
-
     ; Créer un troupeau de petits ruminants pour le foyer
     let my-sheeps []
     hatch-sheeps 1 [
@@ -1063,6 +1062,7 @@ to go
 
   ; Activités des agents
   move-and-eat                        ; Activités quotidiennes du couple Berger-Troupeau
+
   choose-strategy                     ; Choix stratégiques pastoraux du chef de ménage
 
   ; Visuel
@@ -1687,8 +1687,7 @@ end
 to move-and-eat ; Mouvement et consommation des troupeaux - bovins puis ovins
 
   ask cattles with [have-left = false] [
-
-    ;; Find the best patch within known space
+  ;; Find the best patch within known space
     let best-patch find-best-nearest-patch known-space
     let my-home-patch current-home-patch
     move-to current-home-patch
@@ -1697,7 +1696,6 @@ to move-and-eat ; Mouvement et consommation des troupeaux - bovins puis ovins
     set MAD-ingested 0
 
     if best-patch != nobody [
-
       ;; Calculate the distance between the best patch and the current home patch
       let distance-to-home distance best-patch
 
@@ -1717,11 +1715,10 @@ to move-and-eat ; Mouvement et consommation des troupeaux - bovins puis ovins
           ;; Add patches within a radius of 3 cells around the camp to known-space
           let nearby-patches [patches in-radius 3] of current-home-patch
           set known-space (patch-set known-space nearby-patches)
-          set distant-known-space known-space with [
-            distance [current-home-patch] of myself > 12
-          ]
-          ;; Update close-known-space
+
+          ;; Update close-known-space and distant
           set close-known-space known-space in-radius 12
+          set distant-known-space known-space who-are-not close-known-space
 
         ] [ ;; The herd is already in a temporary camp
 
@@ -1752,145 +1749,10 @@ to move-and-eat ; Mouvement et consommation des troupeaux - bovins puis ovins
             ;; Add patches within a radius of 3 cells around the camp to known-space
             let nearby-patches [patches in-radius 3] of current-home-patch
             set known-space (patch-set known-space nearby-patches)
-            set distant-known-space known-space with [
-              distance [current-home-patch] of myself > 12
-            ]
-            ;; Update close-known-space
+
+            ;; Update close-known-space and distant
             set close-known-space known-space in-radius 12
-          ]
-        ]
-      ] [ ;; The best patch is within 12 units of the current home patch
-
-        ;; Move to the best patch
-        move-to best-patch
-        set xcor xcor + (random-float 0.9 - 0.45)
-        set ycor ycor + (random-float 0.9 - 0.45)
-      ]
-  ]
-
-  ; Déterminer la préférence pour les monocotylédones
-  let preference-mono 0.5  ; Valeur par défaut
-
-  ifelse current-season = "Nduungu" [
-    ; En Nduungu, préférence de 80% pour les monocotylédones
-    set preference-mono 0.8
-  ] [
-    ; Pendant les autres saisons, préférence de 80% pour l'espèce avec le ratio MAD/UF le plus élevé
-    let monocot-MAD-UF-ratio [monocot-MAD-per-kg-MS] of patch-here / [monocot-UF-per-kg-MS] of patch-here
-    let dicot-MAD-UF-ratio [dicot-MAD-per-kg-MS] of patch-here / [dicot-UF-per-kg-MS] of patch-here
-
-    ifelse monocot-MAD-UF-ratio >= dicot-MAD-UF-ratio [
-      set preference-mono 0.8
-    ] [
-      set preference-mono 0.5
-    ]
-  ]
-
-    ; Calculer l'UF/kg MS moyen du fourrage disponible
-    let monocot-prop [current-monocot-grass] of patch-here / [current-grass] of patch-here
-    let average-UF-per-kg-MS ([monocot-UF-per-kg-MS] of patch-here * monocot-prop) + ([dicot-UF-per-kg-MS] of patch-here * (1 - monocot-prop))
-
-    ; Calculer la MAD/kg MS moyenne du fourrage disponible
-    let dicot-prop [current-monocot-grass] of patch-here / [current-grass] of patch-here
-    let average-MAD-per-kg-MS ([monocot-MAD-per-kg-MS] of patch-here * preference-mono) + ([dicot-MAD-per-kg-MS] of patch-here * (1 - preference-mono))
-
-    ; Calculer la quantité de MS à consommer en fonction de la valeur moyenne du fourrage disponible en UF. Plus la valeur est forte, plus il en mangera
-    let desired-MS-intake-per-head (max-daily-DM-ingestible-per-head * 0.5  + (max-daily-DM-ingestible-per-head * 0.5)  * average-UF-per-kg-MS)
-    ; Assurer que la consommation ne dépasse pas max-daily-DM-ingestible-per-head
-    set desired-MS-intake-per-head min list desired-MS-intake-per-head max-daily-DM-ingestible-per-head
-
-    ; Calculer les besoins énergétiques (UF) et protéiques (MAD) qui peut évoluer à chaque step en fonction du nombre de tête dans le troupeau
-    let daily-needs-UF daily-min-UF-needed-head * head
-    let daily-needs-MAD daily-min-UF-needed-head * head
-
-    ; Consommer l'herbe
-    consume-grass patch-here (desired-MS-intake-per-head * head) p preference-mono
-
-    ; Calculer le reste de MS à consommer en fonction de la consommation journalière maximale et la quantité voulue à consommer par le troupeau
-    let remaining-DM-to-consume (max-daily-DM-ingestible-per-head * head) - (desired-MS-intake-per-head * head)
-
-    if remaining-DM-to-consume > 0 [
-      consume-tree-resources patch-here remaining-DM-to-consume
-    ]
-
-    ; Mettre à jour la condition corporelle en fonction des UF et MAD ingérées
-    update-corporal-conditions head UF-ingested MAD-ingested daily-needs-UF daily-needs-MAD preference-mono
-  ]
-  ;; Mouvement et consommation des ovins (à adapter de manière similaire)
-
-  ask sheeps with [have-left = false] [
-    ;; Find the best patch within known space
-    let best-patch find-best-nearest-patch known-space
-    let my-home-patch current-home-patch
-    move-to current-home-patch
-    set DM-ingested 0
-    set UF-ingested 0
-    set MAD-ingested 0
-
-    if best-patch != nobody [
-      ;; Calculate the distance between the best patch and the current home patch
-      let distance-to-home distance best-patch
-
-      ;; If the best patch is more than 12 units away from the current home patch
-      ifelse distance-to-home >= 12 [
-
-        ;; Check if the herd is not already in a temporary camp
-        ifelse not is-in-temporary-camp [
-
-          ;; Create a temporary camp if not already in one
-          set current-home-patch best-patch
-          set is-in-temporary-camp true
-          move-to current-home-patch
-          set xcor xcor + (random-float 0.9 - 0.45)
-          set ycor ycor + (random-float 0.9 - 0.45)
-
-          ;; Add patches within a radius of 3 cells around the camp to known-space
-          let nearby-patches [patches in-radius 3] of current-home-patch
-          set known-space (patch-set known-space nearby-patches)
-          set distant-known-space known-space with [
-            distance current-home-patch > 12
-          ]
-          ;; Update close-known-space
-          set close-known-space known-space with [
-            distance current-home-patch <= 12
-          ]
-
-        ] [ ;; The herd is already in a temporary camp
-
-          ;; Check if the best patch is in the original camp known space
-          ifelse member? best-patch original-camp-known-space [
-
-            ;; Move to the best patch
-            move-to best-patch
-            set xcor xcor + (random-float 0.9 - 0.45)
-            set ycor ycor + (random-float 0.9 - 0.45)
-
-            ;; Return to the original camp
-            set current-home-patch original-home-patch
-            set current-home-camp original-home-camp
-            set is-in-temporary-camp false
-            set known-space [known-space] of foyer-owner
-            set close-known-space [close-known-space] of foyer-owner
-            set distant-known-space [distant-known-space] of foyer-owner
-
-          ] [
-            ;; Create a temporary camp
-            set current-home-patch best-patch
-            set is-in-temporary-camp true
-            move-to current-home-patch
-            set xcor xcor + (random-float 0.9 - 0.45)
-            set ycor ycor + (random-float 0.9 - 0.45)
-
-            ;; Add patches within a radius of 3 cells around the camp to known-space
-            let nearby-patches [patches in-radius 3] of current-home-patch
-            set known-space (patch-set known-space nearby-patches)
-            set distant-known-space known-space with [
-              distance current-home-patch > 12
-            ]
-            ;; Update close-known-space
-            set close-known-space known-space with [
-              distance current-home-patch <= 12
-            ]
+            set distant-known-space known-space who-are-not close-known-space
           ]
         ]
       ] [ ;; The best patch is within 12 units of the current home patch
@@ -1949,6 +1811,134 @@ to move-and-eat ; Mouvement et consommation des troupeaux - bovins puis ovins
     ; Mettre à jour la condition corporelle en fonction des UF et MAD ingérées
     update-corporal-conditions head UF-ingested MAD-ingested daily-needs-UF daily-needs-MAD preference-mono
   ]
+
+  ;; Mouvement et consommation des ovins (à adapter de manière similaire)
+  ask sheeps with [have-left = false] [
+    ;; Find the best patch within known space
+    let best-patch find-best-nearest-patch known-space
+    let my-home-patch current-home-patch
+    move-to current-home-patch
+    set DM-ingested 0
+    set UF-ingested 0
+    set MAD-ingested 0
+
+    if best-patch != nobody [
+      ;; Calculate the distance between the best patch and the current home patch
+      let distance-to-home distance best-patch
+
+      ;; If the best patch is more than 12 units away from the current home patch
+      ifelse distance-to-home >= 12 [
+
+        ;; Check if the herd is not already in a temporary camp
+        ifelse not is-in-temporary-camp [
+
+          ;; Create a temporary camp if not already in one
+          set current-home-patch best-patch
+          set is-in-temporary-camp true
+          move-to current-home-patch
+          set xcor xcor + (random-float 0.9 - 0.45)
+          set ycor ycor + (random-float 0.9 - 0.45)
+
+          ;; Add patches within a radius of 3 cells around the camp to known-space
+          let nearby-patches [patches in-radius 3] of current-home-patch
+          set known-space (patch-set known-space nearby-patches)
+
+          ;; Update close-known-space and distant
+          set close-known-space known-space in-radius 12
+          set distant-known-space known-space who-are-not close-known-space
+
+        ] [ ;; The herd is already in a temporary camp
+
+          ;; Check if the best patch is in the original camp known space
+          ifelse member? best-patch original-camp-known-space [
+
+            ;; Move to the best patch
+            move-to best-patch
+            set xcor xcor + (random-float 0.9 - 0.45)
+            set ycor ycor + (random-float 0.9 - 0.45)
+
+            ;; Return to the original camp
+            set current-home-patch original-home-patch
+            set current-home-camp original-home-camp
+            set is-in-temporary-camp false
+            set known-space [known-space] of foyer-owner
+            set close-known-space [close-known-space] of foyer-owner
+            set distant-known-space [distant-known-space] of foyer-owner
+
+          ] [
+            ;; Create a temporary camp
+            set current-home-patch best-patch
+            set is-in-temporary-camp true
+            move-to current-home-patch
+            set xcor xcor + (random-float 0.9 - 0.45)
+            set ycor ycor + (random-float 0.9 - 0.45)
+
+            ;; Add patches within a radius of 3 cells around the camp to known-space
+            let nearby-patches [patches in-radius 3] of current-home-patch
+            set known-space (patch-set known-space nearby-patches)
+
+            ;; Update close-known-space and distant
+            set close-known-space known-space in-radius 12
+            set distant-known-space known-space who-are-not close-known-space
+          ]
+        ]
+      ] [ ;; The best patch is within 12 units of the current home patch
+
+        ;; Move to the best patch
+        move-to best-patch
+        set xcor xcor + (random-float 0.9 - 0.45)
+        set ycor ycor + (random-float 0.9 - 0.45)
+      ]
+    ]
+    ; Déterminer la préférence pour les monocotylédones
+    let preference-mono 0.5  ; Valeur par défaut
+
+    ifelse current-season = "Nduungu" [
+      ; En Nduungu, préférence de 80% pour les monocotylédones
+      set preference-mono 0.8
+    ] [
+      ; Pendant les autres saisons, préférence de 80% pour l'espèce avec le ratio MAD/UF le plus élevé
+      let monocot-MAD-UF-ratio [monocot-MAD-per-kg-MS] of patch-here / [monocot-UF-per-kg-MS] of patch-here
+      let dicot-MAD-UF-ratio [dicot-MAD-per-kg-MS] of patch-here / [dicot-UF-per-kg-MS] of patch-here
+
+      ifelse monocot-MAD-UF-ratio >= dicot-MAD-UF-ratio [
+        set preference-mono 0.8
+      ] [
+        set preference-mono 0.5
+      ]
+    ]
+
+    ; Calculer l'UF/kg MS moyen du fourrage disponible
+    let monocot-prop [current-monocot-grass] of patch-here / [current-grass] of patch-here
+    let average-UF-per-kg-MS ([monocot-UF-per-kg-MS] of patch-here * monocot-prop) + ([dicot-UF-per-kg-MS] of patch-here * (1 - monocot-prop))
+
+    ; Calculer la MAD/kg MS moyenne du fourrage disponible
+    let dicot-prop [current-monocot-grass] of patch-here / [current-grass] of patch-here
+    let average-MAD-per-kg-MS ([monocot-MAD-per-kg-MS] of patch-here * preference-mono) + ([dicot-MAD-per-kg-MS] of patch-here * (1 - preference-mono))
+
+    ; Calculer la quantité de MS à consommer en fonction de la valeur moyenne du fourrage disponible en UF. Plus la valeur est forte, plus il en mangera
+    let desired-MS-intake-per-head (max-daily-DM-ingestible-per-head * 0.5  + (max-daily-DM-ingestible-per-head * 0.5)  * average-UF-per-kg-MS)
+    ; Assurer que la consommation ne dépasse pas max-daily-DM-ingestible-per-head
+    set desired-MS-intake-per-head min list desired-MS-intake-per-head max-daily-DM-ingestible-per-head
+
+    ; Calculer les besoins énergétiques (UF) et protéiques (MAD) qui peut évoluer à chaque step en fonction du nombre de tête dans le troupeau
+    let daily-needs-UF daily-min-UF-needed-head * head
+    let daily-needs-MAD daily-min-UF-needed-head * head
+
+    ; Consommer l'herbe
+    consume-grass patch-here (desired-MS-intake-per-head * head) p preference-mono
+
+    ; Calculer le reste de MS à consommer en fonction de la consommation journalière maximale et la quantité voulue à consommer par le troupeau
+    let remaining-DM-to-consume (max-daily-DM-ingestible-per-head * head) - (desired-MS-intake-per-head * head)
+
+    if remaining-DM-to-consume > 0 [
+      consume-tree-resources patch-here remaining-DM-to-consume
+    ]
+
+    ; Mettre à jour la condition corporelle en fonction des UF et MAD ingérées
+    update-corporal-conditions head UF-ingested MAD-ingested daily-needs-UF daily-needs-MAD preference-mono
+  ]
+
 end
 
 
@@ -2141,35 +2131,41 @@ to update-corporal-conditions [heads total-UF-ingested total-MAD-ingested daily-
   ; Calcul de l'UFL/kg MS du fourrage consommé
   ; Nous considérons UF/kg MS ≈ UFL/kg MS pour les bovins
   ; Calcul de l'UFL/kg MS moyen du fourrage consommé
+  set weight-gain 0
   let daily-needs-ratio-MAD-UF  daily-needs-MAD / daily-needs-UF
   let MAD-UF-ratio total-MAD-ingested / total-UF-ingested
-
-  ifelse (total-UF-ingested < daily-needs-UF) and (MAD-UF-ratio < daily-needs-ratio-MAD-UF) [
-
-    ; Calculer le déficit énergétique
-    let energy-deficit-factor (daily-needs-UF - total-UF-ingested) / ((0.80 * heads) - daily-needs-UF)
-
-    ; Calculer le déficit protéique
-    let mad-uf-deficit-factor (daily-needs-ratio-MAD-UF - MAD-UF-ratio) / ((52 * head) - daily-needs-ratio-MAD-UF)
-
-    ; Calculer le facteur combiné de déficit
-    let combined-deficit-factor (energy-deficit-factor + mad-uf-deficit-factor) / 2
-    set combined-deficit-factor max list 0 (min list combined-deficit-factor 1)
-
-    ; Calculer la perte de poids maximale possible (par exemple, 500 g/jour)
-    let maximum-weight-loss 500  ; en grammes par jour
-
-    ; Calculer la perte de poids
-    let weight-loss combined-deficit-factor * maximum-weight-loss
-
-    ; Mettre à jour le poids vif en soustrayant la perte (convertie en kg)
-    set weight-gain (- weight-loss / 1000) * head  ; Convertir en kg et multiplier par le nombre de têtes
-
-  ] [
+;  perte de poids
+;  ifelse (total-UF-ingested < daily-needs-UF) or (MAD-UF-ratio < daily-needs-ratio-MAD-UF) [
+;    show "plop"
+;    ; Calculer le déficit énergétique
+;    let energy-deficit-factor (daily-needs-UF - total-UF-ingested) / ((0.80 * heads) - daily-needs-UF)
+;
+;    ; Calculer le déficit protéique
+;    let mad-uf-deficit-factor (daily-needs-ratio-MAD-UF - MAD-UF-ratio) / ((52 * head) - daily-needs-ratio-MAD-UF)
+;
+;    ; Calculer le facteur combiné de déficit
+;    let combined-deficit-factor (energy-deficit-factor + mad-uf-deficit-factor) / 2
+;    set combined-deficit-factor max list 0 (min list combined-deficit-factor 1)
+;
+;show word "energy def fact " energy-deficit-factor
+;
+;show word "MAD UF def fact " mad-uf-deficit-factor
+;    ; Calculer la perte de poids maximale possible (par exemple, 500 g/jour)
+;    let maximum-weight-loss 500  ; en grammes par jour
+;
+;    ; Calculer la perte de poids
+;    let weight-loss combined-deficit-factor * maximum-weight-loss
+;show word "def fact " combined-deficit-factor
+;    show word "max weight loss " maximum-weight-loss
+;    ; Mettre à jour le poids vif en soustrayant la perte (convertie en kg)
+;    set weight-gain (- weight-loss / 1000) * head  ; Convertir en kg et multiplier par le nombre de têtes
+;show word "weight loss " weight-loss
+;
+;  ] [
     ; Calculer le facteur d'énergie
     let energy-factor (total-UF-ingested - daily-needs-UF) / ((0.80 * heads) - daily-needs-UF)
     ; Assurer que le facteur est entre 0 et 1
-    set energy-factor max list 0 (min list energy-factor 1)
+    set energy-factor max list -1 (min list energy-factor 1)
 
     let daily-ratio-need daily-needs-MAD / daily-needs-UF
 
@@ -2183,9 +2179,9 @@ to update-corporal-conditions [heads total-UF-ingested total-MAD-ingested daily-
 
     ; L'animal gagne du poids
     set weight-gain (potential-weight-gain / 1000) * head  ; Convertir en kg et multiplier par le nombre de têtes
-  ]
 
-  ; Mettre à jour le poids vif
+;  ]
+;show word "weight gain " weight-gain  ; Mettre à jour le poids vif
   set live-weight live-weight + weight-gain
 
 
@@ -2209,6 +2205,7 @@ to update-corporal-conditions [heads total-UF-ingested total-MAD-ingested daily-
   ; Assurer que la condition protéique reste entre 0 et 10
   if protein-condition < 0 [ set protein-condition 0 ]
   if protein-condition > 100 [ set protein-condition 100 ]
+
 end
 
 
@@ -3030,7 +3027,7 @@ space-camp-mean
 space-camp-mean
 space-camp-min
 space-camp-max
-6.0
+19.0
 1
 1
 foyers
@@ -3045,7 +3042,7 @@ space-camp-min
 space-camp-min
 0
 100
-5.0
+8.0
 1
 1
 NIL
@@ -3060,7 +3057,7 @@ space-camp-max
 space-camp-max
 space-camp-min
 50
-14.0
+37.0
 1
 1
 NIL
@@ -3075,7 +3072,7 @@ space-camp-standard-deviation
 space-camp-standard-deviation
 0
 20
-1.0
+6.0
 1
 1
 NIL
@@ -3237,10 +3234,10 @@ current-year-type
 11
 
 SLIDER
-749
-375
-951
-408
+690
+307
+932
+340
 good-shepherd-percentage
 good-shepherd-percentage
 0
@@ -3252,10 +3249,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-1051
-191
-1238
-224
+689
+236
+931
+269
 proportion-big-herders
 proportion-big-herders
 0
@@ -3267,10 +3264,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-1137
-267
-1338
-300
+689
+271
+932
+304
 proportion-medium-herders
 proportion-medium-herders
 0
@@ -3280,6 +3277,83 @@ proportion-medium-herders
 1
 NIL
 HORIZONTAL
+
+PLOT
+945
+160
+1145
+310
+Weight-gain
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+true
+"" ""
+PENS
+"cattles" 1.0 0 -16777216 true "" "plot mean [weight-gain] of cattles"
+"sheeps" 1.0 0 -5516827 true "" "plot mean [weight-gain] of sheeps"
+"0" 1.0 0 -5298144 true "" "plot 0"
+
+PLOT
+945
+10
+1145
+160
+Parti en demi transhumance
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"sheeps" 1.0 0 -5516827 true "" "plot count sheeps with [is-in-temporary-camp = true]"
+"cattles" 1.0 0 -16449023 true "" "plot count cattles with [is-in-temporary-camp = true]"
+
+PLOT
+1145
+10
+1345
+160
+partis dans le saloum
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -5516827 true "" "plot count sheeps with [have-left = true]"
+"pen-1" 1.0 0 -16777216 true "" "plot count cattles with [have-left = true]"
+
+PLOT
+1145
+160
+1345
+310
+Live-weight
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"Cattles" 1.0 0 -16777216 true "" "plot mean [live-weight] of cattles / count cattles"
+"Sheeps" 1.0 0 -5516827 true "" "plot mean [live-weight] of sheeps / count sheeps"
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -3645,5 +3719,5 @@ true
 Line -7500403 true 150 150 90 180
 Line -7500403 true 150 150 210 180
 @#$#@#$#@
-0
+1
 @#$#@#$#@
