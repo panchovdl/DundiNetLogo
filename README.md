@@ -76,4 +76,5 @@ Si vous souhaitez des précisions supplémentaires sur une entité, un processus
 # Références 
 
 - Aubert S., Dutilly C. 2024. Une approche par les communs pour faire valoir le pastoralisme dans les politiques publiques. Nat. Sci. Soc.,https://doi.org/10.1051/nss/2023045
+- CTFD, 2023, Préserver le pastoralisme Les défis de la reconnaissance des communs pastoraux dans un contexte de crise multidimensionnelle en Afrique de l’Ouest, Les notes de Synthèse, Foncier et développement, https://www.foncier-developpement.fr/wp-content/uploads/Note-de-synthese_Numero35_Pastoralisme.pdf
 
