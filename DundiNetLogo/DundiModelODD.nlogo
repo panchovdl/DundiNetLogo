@@ -1783,21 +1783,21 @@ to move-and-eat ; Mouvement et consommation des troupeaux - bovins puis ovins
 
     ; Calculer l'UF/kg MS moyen du fourrage disponible
     let monocot-prop [current-monocot-grass] of patch-here / [current-grass] of patch-here
+
     let average-UF-per-kg-MS ([monocot-UF-per-kg-MS] of patch-here * monocot-prop) + ([dicot-UF-per-kg-MS] of patch-here * (1 - monocot-prop))
 
     ; Calculer la MAD/kg MS moyenne du fourrage disponible
-    let dicot-prop [current-monocot-grass] of patch-here / [current-grass] of patch-here
-    let average-MAD-per-kg-MS ([monocot-MAD-per-kg-MS] of patch-here * preference-mono) + ([dicot-MAD-per-kg-MS] of patch-here * (1 - preference-mono))
+    let dicot-prop [current-dicot-grass] of patch-here / [current-grass] of patch-here
+
+    let average-MAD-per-kg-MS ([monocot-MAD-per-kg-MS] of patch-here * monocot-prop) + ([dicot-MAD-per-kg-MS] of patch-here * (1 - monocot-prop))
 
     ; Calculer la quantité de MS à consommer en fonction de la valeur moyenne du fourrage disponible en UF. Plus la valeur est forte, plus il en mangera
     let desired-MS-intake-per-head (max-daily-DM-ingestible-per-head * 0.5  + (max-daily-DM-ingestible-per-head * 0.5)  * average-UF-per-kg-MS)
     ; Assurer que la consommation ne dépasse pas max-daily-DM-ingestible-per-head
     set desired-MS-intake-per-head min list desired-MS-intake-per-head max-daily-DM-ingestible-per-head
-
     ; Calculer les besoins énergétiques (UF) et protéiques (MAD) qui peut évoluer à chaque step en fonction du nombre de tête dans le troupeau
     let daily-needs-UF daily-min-UF-needed-head * head
-    let daily-needs-MAD daily-min-UF-needed-head * head
-
+    let daily-needs-MAD daily-min-MAD-needed-head * head
     ; Consommer l'herbe
     consume-grass patch-here (desired-MS-intake-per-head * head) p preference-mono
 
@@ -1811,7 +1811,6 @@ to move-and-eat ; Mouvement et consommation des troupeaux - bovins puis ovins
     ; Mettre à jour la condition corporelle en fonction des UF et MAD ingérées
     update-corporal-conditions head UF-ingested MAD-ingested daily-needs-UF daily-needs-MAD preference-mono
   ]
-
   ;; Mouvement et consommation des ovins (à adapter de manière similaire)
   ask sheeps with [have-left = false] [
     ;; Find the best patch within known space
@@ -1913,8 +1912,8 @@ to move-and-eat ; Mouvement et consommation des troupeaux - bovins puis ovins
     let average-UF-per-kg-MS ([monocot-UF-per-kg-MS] of patch-here * monocot-prop) + ([dicot-UF-per-kg-MS] of patch-here * (1 - monocot-prop))
 
     ; Calculer la MAD/kg MS moyenne du fourrage disponible
-    let dicot-prop [current-monocot-grass] of patch-here / [current-grass] of patch-here
-    let average-MAD-per-kg-MS ([monocot-MAD-per-kg-MS] of patch-here * preference-mono) + ([dicot-MAD-per-kg-MS] of patch-here * (1 - preference-mono))
+    let dicot-prop [current-dicot-grass] of patch-here / [current-grass] of patch-here
+    let average-MAD-per-kg-MS ([monocot-MAD-per-kg-MS] of patch-here * monocot-prop) + ([dicot-MAD-per-kg-MS] of patch-here * (1 - monocot-prop))
 
     ; Calculer la quantité de MS à consommer en fonction de la valeur moyenne du fourrage disponible en UF. Plus la valeur est forte, plus il en mangera
     let desired-MS-intake-per-head (max-daily-DM-ingestible-per-head * 0.5  + (max-daily-DM-ingestible-per-head * 0.5)  * average-UF-per-kg-MS)
@@ -1923,7 +1922,7 @@ to move-and-eat ; Mouvement et consommation des troupeaux - bovins puis ovins
 
     ; Calculer les besoins énergétiques (UF) et protéiques (MAD) qui peut évoluer à chaque step en fonction du nombre de tête dans le troupeau
     let daily-needs-UF daily-min-UF-needed-head * head
-    let daily-needs-MAD daily-min-UF-needed-head * head
+    let daily-needs-MAD daily-min-MAD-needed-head * head
 
     ; Consommer l'herbe
     consume-grass patch-here (desired-MS-intake-per-head * head) p preference-mono
@@ -1985,9 +1984,9 @@ to consume-grass [patch-to-eat amount monocot-prop preference-mono]
     set current-monocot-grass current-monocot-grass - (mono-ingested + (trampling-effect * monocot-prop))
     set current-dicot-grass current-dicot-grass - (dicot-ingested + (trampling-effect * (1 - monocot-prop)))
     set current-grass current-monocot-grass + current-dicot-grass
-    if current-monocot-grass < 0 [ set current-monocot-grass 0 ]
-    if current-dicot-grass < 0 [ set current-dicot-grass 0 ]
-    if current-grass < 0 [ set current-grass 0 ]
+    if current-monocot-grass < 0 [ set current-monocot-grass 0.000001 ]
+    if current-dicot-grass < 0 [ set current-dicot-grass 0.000001 ]
+    if current-grass < 0 [ set current-grass 0.000001 ]
   ]
 end
 
@@ -2165,7 +2164,7 @@ to update-corporal-conditions [heads total-UF-ingested total-MAD-ingested daily-
     ; Calculer le facteur d'énergie
     let energy-factor (total-UF-ingested - daily-needs-UF) / ((0.80 * heads) - daily-needs-UF)
     ; Assurer que le facteur est entre 0 et 1
-    set energy-factor max list -1 (min list energy-factor 1)
+  set energy-factor max list -1 (min list energy-factor 1)
 
     let daily-ratio-need daily-needs-MAD / daily-needs-UF
 
@@ -3257,7 +3256,7 @@ proportion-big-herders
 proportion-big-herders
 0
 100
-22.0
+61.0
 1
 1
 NIL
@@ -3272,7 +3271,7 @@ proportion-medium-herders
 proportion-medium-herders
 0
 100
-50.0
+39.0
 1
 1
 NIL
@@ -3352,8 +3351,8 @@ true
 false
 "" ""
 PENS
-"Cattles" 1.0 0 -16777216 true "" "plot mean [live-weight] of cattles / count cattles"
-"Sheeps" 1.0 0 -5516827 true "" "plot mean [live-weight] of sheeps / count sheeps"
+"Cattles" 1.0 0 -16777216 true "" "plot mean [live-weight] of cattles "
+"Sheeps" 1.0 0 -5516827 true "" "plot mean [live-weight] of sheeps"
 
 @#$#@#$#@
 ## WHAT IS IT?
