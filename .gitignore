@@ -1,0 +1,4 @@
+# Ignorer tous les fichiers avec l'extension *tmp.nlogo
+*.tmp.nlogo
+# Fichiers temporaires de R
+*.Rhistory
