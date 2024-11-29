@@ -3,7 +3,7 @@ extensions [csv]
 globals [
   size-x                 ; Taille horizontale du monde
   size-y                 ; Taille verticale du monde
-
+;;bbb
   current-season         ; Saison actuelle
   last-season            ; Saison précédente
   season-counter         ; Compteur de saison
