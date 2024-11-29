@@ -117,6 +117,7 @@ turtles-own [
 
   ; Etat corporel des troupeaux
   corporal-condition               ; État de santé de l'agent - en valeur de NEC (Note d'Etat Corporel)
+
   protein-condition                ; Condition protéique
   initial-live-weight              ; poids vif à l'initialisation (kg)
   live-weight                      ; poids vif actuel (kg)
@@ -127,12 +128,14 @@ turtles-own [
   head                             ; Nombre d'individus
   max-daily-DM-ingestible-per-head ; Quantité maximale de MS qu'un individu peut consommer par jour
   daily-min-UF-needed-head         ; Quantité minimum d'Unité Fourragère à l'entretien d'un UBT
-  daily-min-MAD-needed-head        ; Quentité minimum de Matière Azotée Digestible à l'entretien d'un UBT;
+  daily-needs-UF
+  daily-min-MAD-needed-head        ; Quantité minimum de Matière Azotée Digestible à l'entretien d'un UBT;
+  daily-needs-MAD
   DM-ingested                      ; Quantité totale d'herbe ingérée (kg de MS)
   UF-ingested                      ; UF totales ingérées
   MAD-ingested                     ; MAD totales ingérées
-  energy-ingested                  ; Quantité d'énergie ingérée (MCal)
   daily-water-consumption          ; Consommation d'eau quotidienne
+  preference-mono
 
   ; Caractéristiques des foyers partagé aux troupeaux (Utilisé autant par les troupeaux que les foyers)
   known-space                      ; Tout l'espace connu par les individus
@@ -672,7 +675,6 @@ to setup-herds ; Valeurs à définir
       set max-daily-DM-ingestible-per-head 7.2 * UBT-size
       set daily-min-UF-needed-head 0.45 * max-daily-DM-ingestible-per-head          ; Quantité minimum d'Unité Fourragère à l'entretien d'un UBT
       set daily-min-MAD-needed-head 25  * max-daily-DM-ingestible-per-head        ; Quentité minimum de Matière Azotée Digestible à l'entretien d'un UBT
-      set energy-ingested 0
       set weight-gain 0
       set daily-water-consumption 22 * head * UBT-size; 22 l/UBT/J de consommation d'eau
 
@@ -730,7 +732,6 @@ to setup-herds ; Valeurs à définir
       set max-daily-DM-ingestible-per-head 7.2 * UBT-size
       set daily-min-UF-needed-head 0.45 * max-daily-DM-ingestible-per-head          ; Quantité minimum d'Unité Fourragère à l'entretien d'un UBT
       set daily-min-MAD-needed-head 25  * max-daily-DM-ingestible-per-head        ; Quentité minimum de Matière Azotée Digestible à l'entretien d'un UBT
-      set energy-ingested 0
       set weight-gain 0
       set daily-water-consumption 22 * head * UBT-size; 22 l/UBT/J de consommation d'eau
 
@@ -1016,7 +1017,7 @@ to update-visualization
       set pcolor scale-color yellow current-grass max-grass 0
     ]
   ]
-  if visualization-mode = "grass-qualit" [
+  if visualization-mode = "grass-quality" [
     display-grass-quality
   ]
 end
@@ -1053,7 +1054,7 @@ to go
     set-season-durations              ; Au premier jour de chaque nouvelle année et en fonction de l'année, redéfinit les durées pour chacune des siaosn pour l'année en cours
     update-tree-age                   ; Au premier jour de chaque nouvelle année, fait grandir les populations d'arbres d'un an
     renew-tree-population             ; Au premier jour de chaque nouvelle année, crée une nouvelle population d'arbres d'un an
-    ask patches [assign-grass-proportions  ]        ; Au premier jour de chaque nouvelle année, relance la génération aléatoire des proportions en monocotylédone et dicotylédone
+    ask patches [assign-grass-proportions]        ; Au premier jour de chaque nouvelle année, relance la génération aléatoire des proportions en monocotylédone et dicotylédone
     call-back-herds
   ]
 
@@ -1062,7 +1063,16 @@ to go
   grow-tree-resources
 
   ; Activités des agents
-  move-and-eat                        ; Activités quotidiennes du couple Berger-Troupeau
+
+  ask cattles with [have-left = false] [
+    move-and-eat                        ; Activités quotidiennes du couple Berger-Troupeau - Bovins
+    update-corporal-conditions head UBT-size UF-ingested MAD-ingested daily-needs-UF daily-needs-MAD max-daily-DM-ingestible-per-head preference-mono
+  ]
+
+   ask sheeps with [have-left = false] [
+    move-and-eat                        ; Activités quotidiennes du couple Berger-Troupeau - Petits ruminants
+    update-corporal-conditions head UBT-size UF-ingested MAD-ingested daily-needs-UF daily-needs-MAD max-daily-DM-ingestible-per-head preference-mono
+  ]
 
   choose-strategy                     ; Choix stratégiques pastoraux du chef de ménage
 
@@ -1693,7 +1703,6 @@ end
 
 to move-and-eat ; Mouvement et consommation des troupeaux - bovins puis ovins
 
-  ask cattles with [have-left = false] [
    ;; Find the best patch within known space
     let best-patch find-best-nearest-patch known-space
     let my-home-patch current-home-patch
@@ -1701,7 +1710,9 @@ to move-and-eat ; Mouvement et consommation des troupeaux - bovins puis ovins
     set DM-ingested 0
     set UF-ingested 0
     set MAD-ingested 0
-    show word "tyoupi " head
+      ; Calculer les besoins énergétiques (UF) et protéiques (MAD) qui peut évoluer à chaque step en fonction du nombre de tête dans le troupeau
+    set daily-needs-UF daily-min-UF-needed-head * head
+    set daily-needs-MAD daily-min-MAD-needed-head * head
 
     if best-patch != nobody [
       ;; Calculate the distance between the best patch and the current home patch
@@ -1772,7 +1783,7 @@ to move-and-eat ; Mouvement et consommation des troupeaux - bovins puis ovins
       ]
     ]
     ; Déterminer la préférence pour les monocotylédones
-    let preference-mono 0.5  ; Valeur par défaut
+    set preference-mono 0.5  ; Valeur par défaut
 
     ifelse current-season = "Nduungu" [
       ; En Nduungu, préférence de 80% pour les monocotylédones
@@ -1798,13 +1809,11 @@ to move-and-eat ; Mouvement et consommation des troupeaux - bovins puis ovins
     let average-MAD-per-kg-MS ([monocot-MAD-per-kg-MS] of patch-here * monocot-prop) + ([dicot-MAD-per-kg-MS] of patch-here * (1 - monocot-prop))
 
     ; Calculer la quantité de MS à consommer en fonction de la valeur moyenne du fourrage disponible en UF. Plus la valeur est forte, plus il en mangera
-    let desired-MS-intake-per-head (max-daily-DM-ingestible-per-head * 0.5  + (max-daily-DM-ingestible-per-head * 0.5)  * average-UF-per-kg-MS)
+    let desired-MS-intake-per-head (max-daily-DM-ingestible-per-head * 0.5  + ((max-daily-DM-ingestible-per-head * 0.5)  * average-UF-per-kg-MS))
     ; Assurer que la consommation ne dépasse pas max-daily-DM-ingestible-per-head
     set desired-MS-intake-per-head min list desired-MS-intake-per-head max-daily-DM-ingestible-per-head
 
-    ; Calculer les besoins énergétiques (UF) et protéiques (MAD) qui peut évoluer à chaque step en fonction du nombre de tête dans le troupeau
-    let daily-needs-UF daily-min-UF-needed-head * head
-    let daily-needs-MAD daily-min-MAD-needed-head * head
+
 
     ; Consommer l'herbe
     consume-grass patch-here (desired-MS-intake-per-head * head) p preference-mono
@@ -1816,151 +1825,10 @@ to move-and-eat ; Mouvement et consommation des troupeaux - bovins puis ovins
       consume-tree-resources patch-here remaining-DM-to-consume
     ]
     ; Mettre à jour la condition corporelle en fonction des UF et MAD ingérées
-    update-corporal-conditions head UBT-size UF-ingested MAD-ingested daily-needs-UF daily-needs-MAD preference-mono
 
-show word "mad-----------" MAD-ingested
 
-show word "DM-----------" DM-ingested
-
-show word "UF-----------" UF-ingested
-  ]
-
-  ;; Mouvement et consommation des ovins (à adapter de manière similaire)
-  ask sheeps with [have-left = false] [
-    ;; Find the best patch within known space
-    let best-patch find-best-nearest-patch known-space
-    let my-home-patch current-home-patch
-    move-to current-home-patch
-    set DM-ingested 0
-    set UF-ingested 0
-    set MAD-ingested 0
-    show word "tyoupi " head
-
-    if best-patch != nobody [
-      ;; Calculate the distance between the best patch and the current home patch
-      let distance-to-home distance best-patch
-
-      ;; If the best patch is more than 12 units away from the current home patch
-      ifelse distance-to-home >= 12 [
-
-        ;; Check if the herd is not already in a temporary camp
-        ifelse not is-in-temporary-camp [
-
-          ;; Create a temporary camp if not already in one
-          set current-home-patch best-patch
-          set is-in-temporary-camp true
-          move-to current-home-patch
-          set xcor xcor + (random-float 0.9 - 0.45)
-          set ycor ycor + (random-float 0.9 - 0.45)
-
-          ;; Add patches within a radius of 3 cells around the camp to known-space
-          let nearby-patches [patches in-radius 3] of current-home-patch
-          set known-space (patch-set known-space nearby-patches)
-
-          ;; Update close-known-space and distant
-          set close-known-space known-space in-radius 12
-          set distant-known-space known-space who-are-not close-known-space
-
-        ] [ ;; The herd is already in a temporary camp
-
-          ;; Check if the best patch is in the original camp known space
-          ifelse member? best-patch original-camp-known-space [
-
-            ;; Move to the best patch
-            move-to best-patch
-            set xcor xcor + (random-float 0.9 - 0.45)
-            set ycor ycor + (random-float 0.9 - 0.45)
-
-            ;; Return to the original camp
-            set current-home-patch original-home-patch
-            set current-home-camp original-home-camp
-            set is-in-temporary-camp false
-            set known-space [known-space] of foyer-owner
-            set close-known-space [close-known-space] of foyer-owner
-            set distant-known-space [distant-known-space] of foyer-owner
-
-          ] [
-            ;; Create a temporary camp
-            set current-home-patch best-patch
-            set is-in-temporary-camp true
-            move-to current-home-patch
-            set xcor xcor + (random-float 0.9 - 0.45)
-            set ycor ycor + (random-float 0.9 - 0.45)
-
-            ;; Add patches within a radius of 3 cells around the camp to known-space
-            let nearby-patches [patches in-radius 3] of current-home-patch
-            set known-space (patch-set known-space nearby-patches)
-
-            ;; Update close-known-space and distant
-            set close-known-space known-space in-radius 12
-            set distant-known-space known-space who-are-not close-known-space
-          ]
-        ]
-      ] [ ;; The best patch is within 12 units of the current home patch
-
-        ;; Move to the best patch
-        move-to best-patch
-        set xcor xcor + (random-float 0.9 - 0.45)
-        set ycor ycor + (random-float 0.9 - 0.45)
-      ]
-    ]
-    ; Déterminer la préférence pour les monocotylédones
-    let preference-mono 0.5  ; Valeur par défaut
-
-    ifelse current-season = "Nduungu" [
-      ; En Nduungu, préférence de 80% pour les monocotylédones
-      set preference-mono 0.8
-    ] [
-      ; Pendant les autres saisons, préférence de 80% pour l'espèce avec le ratio MAD/UF le plus élevé
-      let monocot-MAD-UF-ratio [monocot-MAD-per-kg-MS] of patch-here / [monocot-UF-per-kg-MS] of patch-here
-      let dicot-MAD-UF-ratio [dicot-MAD-per-kg-MS] of patch-here / [dicot-UF-per-kg-MS] of patch-here
-
-      ifelse monocot-MAD-UF-ratio >= dicot-MAD-UF-ratio [
-        set preference-mono 0.8
-      ] [
-        set preference-mono 0.5
-      ]
-    ]
-
-    ; Calculer l'UF/kg MS moyen du fourrage disponible
-    let monocot-prop [current-monocot-grass] of patch-here / [current-grass] of patch-here
-    let average-UF-per-kg-MS ([monocot-UF-per-kg-MS] of patch-here * monocot-prop) + ([dicot-UF-per-kg-MS] of patch-here * (1 - monocot-prop))
-
-    ; Calculer la MAD/kg MS moyenne du fourrage disponible
-    let dicot-prop [current-dicot-grass] of patch-here / [current-grass] of patch-here
-    let average-MAD-per-kg-MS ([monocot-MAD-per-kg-MS] of patch-here * monocot-prop) + ([dicot-MAD-per-kg-MS] of patch-here * (1 - monocot-prop))
-
-    ; Calculer la quantité de MS à consommer en fonction de la valeur moyenne du fourrage disponible en UF. Plus la valeur est forte, plus il en mangera
-    let desired-MS-intake-per-head (max-daily-DM-ingestible-per-head * 0.5  + (max-daily-DM-ingestible-per-head * 0.5)  * average-UF-per-kg-MS)
-    ; Assurer que la consommation ne dépasse pas max-daily-DM-ingestible-per-head
-    set desired-MS-intake-per-head min list desired-MS-intake-per-head max-daily-DM-ingestible-per-head
-
-    ; Calculer les besoins énergétiques (UF) et protéiques (MAD) qui peut évoluer à chaque step en fonction du nombre de tête dans le troupeau
-    let daily-needs-UF daily-min-UF-needed-head * head
-    let daily-needs-MAD daily-min-MAD-needed-head * head
-
-    ; Consommer l'herbe
-    consume-grass patch-here (desired-MS-intake-per-head * head) p preference-mono
-
-    ; Calculer le reste de MS à consommer en fonction de la consommation journalière maximale et la quantité voulue à consommer par le troupeau
-    let remaining-DM-to-consume (max-daily-DM-ingestible-per-head * head) - (desired-MS-intake-per-head * head)
-
-    if remaining-DM-to-consume > 0 [
-      consume-tree-resources patch-here remaining-DM-to-consume
-    ]
-    ; Mettre à jour la condition corporelle en fonction des UF et MAD ingérées
-    update-corporal-conditions head UBT-size UF-ingested MAD-ingested daily-needs-UF daily-needs-MAD preference-mono
-
-show word "mad-----------" MAD-ingested
-
-show word "DM-----------" DM-ingested
-
-show word "UF-----------" UF-ingested
-  ]
 
 end
-
-
 
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1968,7 +1836,7 @@ end
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; Procédure pour consommer l'herbe
-to consume-grass [patch-to-eat amount monocot-prop preference-mono]
+to consume-grass [patch-to-eat amount monocot-prop pref-mono]
 
 
   ; Obtenir les quantités disponibles d'herbe par type sur le patch
@@ -1976,8 +1844,8 @@ to consume-grass [patch-to-eat amount monocot-prop preference-mono]
   let dicot-grass-available [current-dicot-grass] of patch-to-eat
 
   ; Calculer les quantités consommées par type sur le patch
-  let mono-ingested min list mono-grass-available (amount * preference-mono)
-  let dicot-ingested min list dicot-grass-available (amount * (1 - preference-mono))
+  let mono-ingested min list mono-grass-available (amount * pref-mono)
+  let dicot-ingested min list dicot-grass-available (amount * (1 - pref-mono))
   set DM-ingested mono-ingested + dicot-ingested
   ; Calculer les UF ingérées
   let mono-UF-ingested mono-ingested * [monocot-UF-per-kg-MS] of patch-to-eat
@@ -2146,17 +2014,19 @@ end
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; Procédure pour mettre à jour la condition corporelle des animaux
-to update-corporal-conditions [heads UBT total-UF-ingested total-MAD-ingested daily-needs-UF daily-needs-MAD preference-mono]
+to update-corporal-conditions [heads UBT total-UF-ingested total-MAD-ingested daily-need-UF daily-need-MAD max-daily-DM-ingestible-head pref-mono]
   ; Calcul de l'UFL/kg MS du fourrage consommé
   ; Nous considérons UF/kg MS ≈ UFL/kg MS pour les bovins
   ; Calcul de l'UFL/kg MS moyen du fourrage consommé
   set weight-gain 0
-  let daily-needs-ratio-MAD-UF  daily-needs-MAD / daily-needs-UF
+  let daily-needs-ratio-MAD-UF  daily-need-MAD / daily-need-UF
   let MAD-UF-ratio total-MAD-ingested / total-UF-ingested
-;  perte de poids
-;  ifelse (total-UF-ingested < daily-needs-UF) or (MAD-UF-ratio < daily-needs-ratio-MAD-UF) [
-;    show "plop"
-;    ; Calculer le déficit énergétique
+  let max-UF-ingestible 0.80 * heads * max-daily-DM-ingestible-head
+  let max-MAD-ingestible 52 * heads * max-daily-DM-ingestible-head
+  ;  perte de poids
+  ;  ifelse (total-UF-ingested < daily-needs-UF) or (MAD-UF-ratio < daily-needs-ratio-MAD-UF) [
+  ;    show "plop"
+  ;    ; Calculer le déficit énergétique
 ;    let energy-deficit-factor (daily-needs-UF - total-UF-ingested) / ((0.80 * heads) - daily-needs-UF)
 ;
 ;    ; Calculer le déficit protéique
@@ -2182,68 +2052,47 @@ to update-corporal-conditions [heads UBT total-UF-ingested total-MAD-ingested da
 ;
 ;  ] [
     ; Calculer le facteur d'énergie
-  let energy-factor (total-UF-ingested - daily-needs-UF) / ((0.80 * heads * 7.2) - daily-needs-UF)
-    ; Assurer que le facteur est entre -1 et 1
-  show word "heads---------------  " heads
-
-  show word "daily-needs-UF---------------  " daily-needs-UF
-
-  show word "total-UF-ingested---------------  " total-UF-ingested
-
-  show word "energy first---------------  " energy-factor
+  let energy-factor (total-UF-ingested - daily-need-UF) / (max-UF-ingestible - daily-need-UF)
+  ; Assurer que le facteur est entre -1 et 1
   let energy-factor-total max list 0 (min list energy-factor 1)
 
-  show word "energy---------------  " energy-factor-total
-    let daily-ratio-need daily-needs-MAD / daily-needs-UF
 
-    ; Calculer le facteur du ratio MAD/UF
-    let protein-factor (total-MAD-ingested - daily-needs-MAD) / ((52 * heads * 7.2) - daily-needs-MAD)
-    show word "heads---------------  " heads
+  let daily-ratio-need daily-need-MAD / daily-need-UF
 
-  show word "daily-needs-UF---------------  " daily-needs-UF
+  ; Calculer le facteur du ratio MAD/UF
+  let protein-factor (total-MAD-ingested - daily-need-MAD) / (max-MAD-ingestible - daily-need-MAD)
 
-  show word "total-UF-ingested---------------  " total-UF-ingested
+  ; Assurer que le facteur est entre 0 et 1
+  let protein-factor-total max list 0 (min list protein-factor 1)
 
-  show word "energy first---------------  " energy-factor
-    show word "protein first---------------  " protein-factor
-    ; Assurer que le facteur est entre 0 et 1
-    let protein-factor-total max list 0 (min list protein-factor 1)
+  ; Calculer le gain de poids potentiel (en grammes par jour)
+  set weight-gain (protein-factor-total * energy-factor-total * 1.2 * UBT) - (0.5 * UBT)
+  show word "WG---------------- " weight-gain
 
-    show word "protein---------------  " protein-factor-total
+                                                         ;show word "weight gain " weight-gain  ; Mettre à jour le poids vif
+  set live-weight live-weight + weight-gain
+  show word "LW---------------- " (live-weight / head)
 
-    ; Calculer le gain de poids potentiel (en grammes par jour)
-    let potential-weight-gain protein-factor-total * energy-factor-total * 1200 * UBT
-show word "PWG---------------  " potential-weight-gain
-    show word "protein---------------  " protein-factor-total
-    ; L'animal gagne du poids
-    set weight-gain (potential-weight-gain / 1000) * head  ; Convertir en kg et multiplier par le nombre de têtes
-show word "WG ---------------" weight-gain
-;  ]
-;show word "weight gain " weight-gain  ; Mettre à jour le poids vif
-  set live-weight live-weight + (weight-gain - 0.5)
+  ; Calculer la NEC à partir du poids vif en considérant que les vaches sont toutes des N'dama. A reprendre avec des valeurs adéquates pour chaque type de bétail .  (AMOUGOU MESSI G., 1998. Méthode d’estimation et variation de la composition corporelle des vaches zébu Gobra et Taurin N’Dama en fonction du niveau d’alimentation. Thèse de Doctorat Vétérinaire EISMV, Dakar, Sénégal, 102 p)
+  set corporal-condition ((live-weight - (66.785 * head)) / (47.1 * head))
 
-
-  ; Calculer la NEC à partir du poids vif en considérant que les vaches sont toutes des N'dama
-  let NEC (live-weight - 66.785) / 47.1
-
+  show word "CC---------------- " corporal-condition
   ; Assurer que la NEC reste dans des limites raisonnables (par exemple, entre 1 et 5)
-  if NEC < 1 [ set NEC 1 ]
-  if NEC > 5 [ set NEC 5 ]
+  if corporal-condition < 1 [ set corporal-condition 1 ]
+  if corporal-condition > 5 [ set corporal-condition 5 ]
 
-  ; Mettre à jour la condition corporelle avec la NEC
-  set corporal-condition NEC
+  ; Mettre à jour la condition corporelle avec la NEC  set corporal-condition NEC
 
-;
-;  ; Calculer le ratio de MAD consommé par rapport au MAD nécessaire
-;  let MAD-ratio total-MAD-ingested / daily-needs-MAD
-;
-;  ; Mettre à jour la condition protéique
-;  set protein-condition protein-condition + (protein-condition * MAD-ratio)  ; Échelle de 0 à 10
-;
-;  ; Assurer que la condition protéique reste entre 0 et 10
-;  if protein-condition < 0 [ set protein-condition 0 ]
-;  if protein-condition > 100 [ set protein-condition 100 ]
-;
+  ;  ; Calculer le ratio de MAD consommé par rapport au MAD nécessaire
+  ;  let MAD-ratio total-MAD-ingested / daily-needs-MAD
+  ;
+  ;  ; Mettre à jour la condition protéique
+  ;  set protein-condition protein-condition + (protein-condition * MAD-ratio)  ; Échelle de 0 à 10
+  ;
+  ;  ; Assurer que la condition protéique reste entre 0 et 10
+  ;  if protein-condition < 0 [ set protein-condition 0 ]
+  ;  if protein-condition > 100 [ set protein-condition 100 ]
+  ;
 end
 
 
@@ -2398,7 +2247,8 @@ to do-first-strategy
   let undiscovered-patches patches with [
     distance home-patch <= 12 and not member? self my-known-space
   ]
-
+  ask undiscovered-patches [set pcolor red ]
+  stop
   ifelse any? undiscovered-patches [
     ;; Se déplacer vers un patch aléatoire parmi ces patches
     move-to one-of undiscovered-patches
@@ -2996,8 +2846,8 @@ GRAPHICS-WINDOW
 11
 -11
 11
-0
-0
+1
+1
 1
 ticks
 30.0
@@ -3321,8 +3171,8 @@ NIL
 NIL
 0.0
 10.0
-0.0
-10.0
+-2.0
+2.0
 true
 true
 "" ""
@@ -3374,7 +3224,7 @@ PLOT
 160
 1345
 310
-Live-weight
+log2 (Live-weight)
 NIL
 NIL
 0.0
@@ -3385,8 +3235,27 @@ true
 false
 "" ""
 PENS
-"Cattles" 1.0 0 -16777216 true "" "plot mean [live-weight] of cattles "
-"Sheeps" 1.0 0 -5516827 true "" "plot mean [live-weight] of sheeps"
+"Cattles" 1.0 0 -16777216 true "" "plot log (mean [live-weight] of cattles / mean [head]  of cattles) 2"
+"Sheeps" 1.0 0 -5516827 true "" "plot log (mean [live-weight] of sheeps / mean [head] of sheeps) 2"
+
+PLOT
+1145
+395
+1345
+545
+NEC mean
+NIL
+NIL
+0.0
+10.0
+0.0
+5.0
+true
+true
+"" ""
+PENS
+"Cattles" 1.0 0 -16777216 true "" "plot mean [corporal-condition] of cattles"
+"Sheeps" 1.0 0 -8275240 true "" "plot mean [corporal-condition] of sheeps"
 
 @#$#@#$#@
 ## WHAT IS IT?
