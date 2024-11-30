@@ -3264,9 +3264,9 @@ PENS
 PLOT
 1310
 165
-1510
+1615
 315
-mean of Live-weight per head
+CATTLE weight per head
 NIL
 NIL
 0.0
@@ -3274,13 +3274,12 @@ NIL
 0.0
 10.0
 true
-false
+true
 "" ""
 PENS
-"Cattles" 1.0 0 -16777216 true "" "plot cattlesWeightGain"
-"Sheeps" 1.0 0 -5516827 true "" "plot sheepsWeightGain"
-"standerd-deviation" 1.0 0 -7500403 true "" "plot standard-deviation [live-weight] of cattles with [have-left = false] / mean [head]  of cattles with [have-left = false]"
-"pen-3" 1.0 0 -2674135 true "" "plot max [live-weight] of cattles with [have-left = false] / mean [head]  of cattles with [have-left = false]"
+"meanWeight" 1.0 0 -16777216 true "" "plot meanCattlesLiveWeight"
+"maxWeight" 1.0 0 -2674135 true "" "plot maxCattlesLiveWeight"
+"minWeight" 1.0 0 -13791810 true "" "plot minCattlesLiveWeight"
 
 PLOT
 1110
@@ -3304,9 +3303,9 @@ PENS
 BUTTON
 40
 585
-592
+150
 618
-NIL
+removeGrass
 ask patches [set current-grass  0.1\nset current-monocot-grass 0.1\nset current-dicot-grass 0.1]
 NIL
 1
@@ -3319,10 +3318,10 @@ NIL
 1
 
 PLOT
-1310
-315
-1510
+910
 465
+1110
+615
 Sum grass
 NIL
 NIL
@@ -3371,6 +3370,26 @@ false
 "set-plot-x-range 0 5\nset-plot-y-range 0 100\nset-histogram-num-bars 5" ""
 PENS
 "pen-0" 1.0 1 -16777216 true "" "histogram listValueHerdeType"
+
+PLOT
+1310
+315
+1615
+465
+SHEEP weight per head
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+true
+"" ""
+PENS
+"meanWeight" 1.0 0 -16777216 true "" "plot meanSheepsLiveWeight"
+"maxWeight" 1.0 0 -2674135 true "" "plot maxSheepsLiveWeight"
+"minWeight" 1.0 0 -13791810 true "" "plot minSheepsLiveWeight"
 
 @#$#@#$#@
 ## WHAT IS IT?
