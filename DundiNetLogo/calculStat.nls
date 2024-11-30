@@ -5,23 +5,32 @@ globals [
   totalCattles
   waterStock
   sheepsTempCamp
-  cattleTempCamp
+  cattlesTempCamp
   sheepsHaveLeft
   cattlesHaveLeft
   sheepsWeightGain
   cattlesWeightGain
   meanSheepsLiveWeight
   meanCattlesLiveWeight
+  meanSheepsNEC
   meanCattlesNEC
+  
+  TotalGrass
+  totalTrees
+  
+  sumSmallHerder
+  sumMediumHerder
+  sumLargeHerder
 ]
 
 to calculStat
   set totalFoyers count foyers
+  
   set totalSheeps sum [head] of sheeps
   set totalCattles sum [head] of cattles
   set waterStock sum [water-stock] of patches
   set sheepsTempCamp count sheeps with [is-in-temporary-camp = true]
-  set cattleTempCamp count cattles with [is-in-temporary-camp = true]
+  set cattlesTempCamp count cattles with [is-in-temporary-camp = true]
   set sheepsHaveLeft count sheeps with [have-left = true]
   set cattlesHaveLeft count cattles with [have-left = true]
   set sheepsWeightGain mean [weight-gain] of sheeps
@@ -29,5 +38,12 @@ to calculStat
   set meanCattlesLiveWeight mean [live-weight] of cattles / mean [head]  of cattles
   set meanSheepsLiveWeight mean [live-weight] of sheeps / mean [head]  of sheeps
   set meanCattlesNEC mean [corporal-condition] of cattles with [have-left = false]
+  set meanSheepsNEC mean [corporal-condition] of sheeps with [have-left = false]
   
+  set totalGrass sum [current-grass] of patches
+  set totalTrees sum [tree-cover] of patches
+  
+  set sumSmallHerder count foyers with [herder-type = "petit"]
+  set sumMediumHerder count foyers with [herder-type = "moyen"]
+  set sumLargeHerder count foyers with [herder-type = "grand"]
 end

@@ -3009,7 +3009,7 @@ MONITOR
 96
 310
 Total Foyers
-count foyers
+totalFoyers
 17
 1
 11
@@ -3020,7 +3020,7 @@ MONITOR
 96
 410
 Total cattles
-sum [head] of cattles
+totalCattles
 17
 1
 11
@@ -3031,7 +3031,7 @@ MONITOR
 96
 360
 Total Sheeps
-sum [head] of sheeps
+totalSheeps
 17
 1
 11
@@ -3087,7 +3087,7 @@ MONITOR
 886
 175
 NIL
-sum [water-stock] of patches
+waterStock
 17
 1
 11
@@ -3219,8 +3219,8 @@ true
 true
 "" ""
 PENS
-"cattles" 1.0 0 -16777216 true "" "plot mean [weight-gain] of cattles"
-"sheeps" 1.0 0 -5516827 true "" "plot mean [weight-gain] of sheeps"
+"cattles" 1.0 0 -16777216 true "" "plot cattlesWeightGain"
+"sheeps" 1.0 0 -5516827 true "" "plot sheepsWeightGain"
 "0" 1.0 0 -5298144 true "" "plot 0"
 
 PLOT
@@ -3239,8 +3239,8 @@ true
 false
 "" ""
 PENS
-"sheeps" 1.0 0 -5516827 true "" "plot count sheeps with [is-in-temporary-camp = true]"
-"cattles" 1.0 0 -16449023 true "" "plot count cattles with [is-in-temporary-camp = true]"
+"sheeps" 1.0 0 -5516827 true "" "plot sheepsTempCamp"
+"cattles" 1.0 0 -16449023 true "" "plot cattlesTempCamp"
 
 PLOT
 1310
@@ -3258,8 +3258,8 @@ true
 false
 "" ""
 PENS
-"default" 1.0 0 -5516827 true "" "plot count sheeps with [have-left = true]"
-"pen-1" 1.0 0 -16777216 true "" "plot count cattles with [have-left = true]"
+"default" 1.0 0 -5516827 true "" "plot sheepsHaveLeft"
+"pen-1" 1.0 0 -16777216 true "" "plot cattlesHaveLeft"
 
 PLOT
 1310
@@ -3277,8 +3277,8 @@ true
 false
 "" ""
 PENS
-"Cattles" 1.0 0 -16777216 true "" "plot mean [live-weight] of cattles with [have-left = false] / mean [head]  of cattles with [have-left = false]"
-"Sheeps" 1.0 0 -5516827 true "" "plot mean [live-weight] of sheeps with [have-left = false] / mean [head] of sheeps with [have-left = false]"
+"Cattles" 1.0 0 -16777216 true "" "plot cattlesWeightGain"
+"Sheeps" 1.0 0 -5516827 true "" "plot sheepsWeightGain"
 "standerd-deviation" 1.0 0 -7500403 true "" "plot standard-deviation [live-weight] of cattles with [have-left = false] / mean [head]  of cattles with [have-left = false]"
 "pen-3" 1.0 0 -2674135 true "" "plot max [live-weight] of cattles with [have-left = false] / mean [head]  of cattles with [have-left = false]"
 
@@ -3298,14 +3298,14 @@ true
 true
 "" ""
 PENS
-"Cattles" 1.0 0 -16777216 true "" "plot mean [corporal-condition] of cattles with [have-left = false]"
-"Sheeps" 1.0 0 -8275240 true "" "plot mean [corporal-condition] of sheeps with [have-left = false]"
+"Cattles" 1.0 0 -16777216 true "" "plot meanCattlesNEC"
+"Sheeps" 1.0 0 -8275240 true "" "plot meanSheepsNEC"
 
 BUTTON
-10
-510
-562
-543
+40
+585
+592
+618
 NIL
 ask patches [set current-grass  0.1\nset current-monocot-grass 0.1\nset current-dicot-grass 0.1]
 NIL
@@ -3323,7 +3323,7 @@ PLOT
 315
 1510
 465
-mean grass amount
+Sum grass
 NIL
 NIL
 0.0
@@ -3334,7 +3334,7 @@ true
 false
 "" ""
 PENS
-"default" 1.0 0 -16777216 true "" "plot mean [current-grass] of patches"
+"default" 1.0 0 -16777216 true "" "plot totalGrass"
 
 PLOT
 1110
