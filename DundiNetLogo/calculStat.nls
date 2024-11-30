@@ -1,0 +1,30 @@
+globals [
+  ;; output
+  totalFoyers
+  totalSheeps
+  totalCattles
+  waterStock
+  sheepsTempCamp
+  cattleTempCamp
+  sheepsHaveLeft
+  cattlesHaveLeft
+  sheepsWeightGain
+  cattlesWeightGain
+  meanSheepsLiveWeight
+  meanCattlesLiveWeight
+]
+
+to sous-modele-comportement
+  set totalFoyers count foyers
+  set totalSheeps sum [head] of sheeps
+  set totalCattles sum [head] of cattles
+  set waterStock sum [water-stock] of patches
+  set sheepsTempCamp count sheeps with [is-in-temporary-camp = true]
+  set cattleTempCamp count cattles with [is-in-temporary-camp = true]
+  set sheepsHaveLeft count sheeps with [have-left = true]
+  set cattlesHaveLeft count cattles with [have-left = true]
+  set sheepsWeightGain mean [weight-gain] of sheeps
+  set cattlesWeightGain mean [weight-gain] of cattles
+  set meanCattlesLiveWeight mean [live-weight] of cattles / mean [head]  of cattles
+  set meanSheepsLiveWeight mean [live-weight] of sheeps / mean [head]  of sheeps
+end
