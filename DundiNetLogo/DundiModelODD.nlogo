@@ -1,10 +1,10 @@
-__includes ["calculStat.nls"]  ; Inclure le fichier du sous-modèle
+__includes["calculStat.nls"]
 extensions [csv]
 
 globals [
   size-x                 ; Taille horizontale du monde
   size-y                 ; Taille verticale du monde
-
+;;bbb
   current-season         ; Saison actuelle
   last-season            ; Saison précédente
   season-counter         ; Compteur de saison
@@ -28,6 +28,12 @@ globals [
 
   seuil-bon              ; Seuil pour une herbe de bonne qualité
   seuil-moyen            ; Seuil pour une herbe de qualité moyenne
+
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; indicateurs
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  listValueHerdeType
 ]
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -307,7 +313,7 @@ to setup
   clear-all
   resize-world -11 11 -11 11  ; Fixer les limites du monde à -11 à 11 en x et y
   set-patch-size 20  ; Ajuster la taille des patches
-
+  set listValueHerdeType []
 
   ; Chargement des valeurs environnementales
   load-environment "environment_vel.txt"
@@ -1083,9 +1089,9 @@ to go
     color-grass
     ;color-trees
   ]
-
   calculStat
   update-visualization
+  update-plot
   tick
 end
 
@@ -1874,9 +1880,9 @@ to consume-grass [patch-to-eat amount monocot-prop pref-mono]
     set current-monocot-grass current-monocot-grass - (mono-ingested + (trampling-effect * monocot-prop))
     set current-dicot-grass current-dicot-grass - (dicot-ingested + (trampling-effect * (1 - monocot-prop)))
     set current-grass current-monocot-grass + current-dicot-grass
-    if current-monocot-grass < 0 [ set current-monocot-grass 0.000001 ]
-    if current-dicot-grass < 0 [ set current-dicot-grass 0.000001 ]
-    if current-grass < 0 [ set current-grass 0.000001 ]
+    if current-monocot-grass < 0 [ set current-monocot-grass 0.1 ]
+    if current-dicot-grass < 0 [ set current-dicot-grass 0.1 ]
+    if current-grass < 0 [ set current-grass 0.2 ]
   ]
 end
 
@@ -2069,17 +2075,21 @@ to update-corporal-conditions [heads UBT total-UF-ingested total-MAD-ingested da
   let protein-factor-total max list 0 (min list protein-factor 1)
 
   ; Calculer le gain de poids potentiel (en grammes par jour)
-  set weight-gain (protein-factor-total * energy-factor-total * 1.2 * UBT) - (0.5 * UBT)
-  show word "WG---------------- " weight-gain
-
+  set weight-gain (protein-factor-total * energy-factor-total * 1.7 * UBT * head) - (1 * UBT * head)
                                                          ;show word "weight gain " weight-gain  ; Mettre à jour le poids vif
-  set live-weight live-weight + weight-gain
-  show word "LW---------------- " (live-weight / head)
+  set live-weight (live-weight + weight-gain)
 
   ; Calculer la NEC à partir du poids vif en considérant que les vaches sont toutes des N'dama. A reprendre avec des valeurs adéquates pour chaque type de bétail .  (AMOUGOU MESSI G., 1998. Méthode d’estimation et variation de la composition corporelle des vaches zébu Gobra et Taurin N’Dama en fonction du niveau d’alimentation. Thèse de Doctorat Vétérinaire EISMV, Dakar, Sénégal, 102 p)
-  set corporal-condition ((live-weight - (66.785 * head)) / (47.1 * head))
 
-  show word "CC---------------- " corporal-condition
+  if breed = cattles [
+  set corporal-condition (live-weight - (66.785 * head) ) / (47.1 * head)
+  ]
+
+  ; régression linéaire à partir des valeurs de https://reca-niger.org/IMG/pdf/FT_embouche_ovine_Cirdes.pdf
+  if breed = sheeps [
+  set corporal-condition ( (4 * head) * live-weight / (23 * head)) - ( 3.69 * head)
+  ]
+
   ; Assurer que la NEC reste dans des limites raisonnables (par exemple, entre 1 et 5)
   if corporal-condition < 1 [ set corporal-condition 1 ]
   if corporal-condition > 5 [ set corporal-condition 5 ]
@@ -2215,10 +2225,10 @@ to choose-strategy
     let sheep-one-starving (sheep-cc < sheep-low-threshold-cc)
 
     ;; Si **une des deux** conditions des troupeaux est en dessous du seuil, exécuter `do-first-strategy`
-    if cattle-one-starving [
+    if [cattle-cc <= 3] of cattle-herd [
       do-first-strategy
     ]
-     if sheep-one-starving [
+     if [sheep-cc <= 3] of sheep-herd  [
       do-first-strategy
     ]
 
@@ -2370,6 +2380,35 @@ end
 to display-labels
   ask turtles [set label ""]
   ask turtles [set label head]
+
+end
+
+to update-plot
+;  show "ahahahahah"
+;  set-current-plot "HistHerderType"
+;   ;;pour réaliser un histogram on a besoin d'une liste
+;   set-plot-x-range 0 4
+;;  set-histogram-num-bars 8
+  let _typeF (list "petit" "moyen" "grand")
+  let _listString  [herder-type] of foyers
+  set listValueHerdeType (map [x ->
+  ifelse-value (x = "petit") [1]
+  [ifelse-value (x = "moyen") [2]
+  [ifelse-value (x = "grand") [3]
+  [0]]]] _listString)
+
+;  show _z
+;  set listValueHerdeType []
+;  foreach _typeF [
+;    x -> let _y count foyers with[herder-type = x ]
+;    set listValueHerdeType lput  _y listValueHerdeType
+;  ]
+;  show listValueHerdeType
+;   histogram  listValueHerdeType
+;;   let maxbar modes  _listValueHerdeType
+;;   let maxrange length filter [ ? = item 0 maxbar ]  _listValueHerdeType
+;;  set-plot-y-range 0 max list 10 maxrange
+;  set-plot-y-range 0 100
 
 end
 
@@ -2898,7 +2937,7 @@ initial-number-of-camps
 initial-number-of-camps
 0
 200
-1.0
+10.0
 1
 1
 NIL
@@ -2913,7 +2952,7 @@ space-camp-mean
 space-camp-mean
 space-camp-min
 space-camp-max
-1.0
+17.0
 1
 1
 foyers
@@ -2928,7 +2967,7 @@ space-camp-min
 space-camp-min
 0
 100
-1.0
+11.0
 1
 1
 NIL
@@ -2943,7 +2982,7 @@ space-camp-max
 space-camp-max
 space-camp-min
 50
-1.0
+31.0
 1
 1
 NIL
@@ -2958,7 +2997,7 @@ space-camp-standard-deviation
 space-camp-standard-deviation
 0
 20
-0.0
+3.0
 1
 1
 NIL
@@ -3143,7 +3182,7 @@ proportion-big-herders
 proportion-big-herders
 0
 100
-100.0
+53.0
 1
 1
 NIL
@@ -3158,17 +3197,17 @@ proportion-medium-herders
 proportion-medium-herders
 0
 100
-0.0
+11.0
 1
 1
 NIL
 HORIZONTAL
 
 PLOT
-945
-160
-1145
-310
+1110
+165
+1310
+315
 Weight-gain
 NIL
 NIL
@@ -3185,10 +3224,10 @@ PENS
 "0" 1.0 0 -5298144 true "" "plot 0"
 
 PLOT
-945
-10
-1145
-160
+1110
+15
+1310
+165
 Parti en demi transhumance
 NIL
 NIL
@@ -3204,10 +3243,10 @@ PENS
 "cattles" 1.0 0 -16449023 true "" "plot count cattles with [is-in-temporary-camp = true]"
 
 PLOT
-1145
-10
-1345
-160
+1310
+15
+1510
+165
 partis dans le saloum
 NIL
 NIL
@@ -3223,11 +3262,11 @@ PENS
 "pen-1" 1.0 0 -16777216 true "" "plot count cattles with [have-left = true]"
 
 PLOT
-1145
-160
-1345
-310
-log2 (Live-weight)
+1310
+165
+1510
+315
+mean of Live-weight per head
 NIL
 NIL
 0.0
@@ -3238,14 +3277,16 @@ true
 false
 "" ""
 PENS
-"Cattles" 1.0 0 -16777216 true "" "plot log (mean [live-weight] of cattles / mean [head]  of cattles) 2"
-"Sheeps" 1.0 0 -5516827 true "" "plot log (mean [live-weight] of sheeps / mean [head] of sheeps) 2"
+"Cattles" 1.0 0 -16777216 true "" "plot mean [live-weight] of cattles with [have-left = false] / mean [head]  of cattles with [have-left = false]"
+"Sheeps" 1.0 0 -5516827 true "" "plot mean [live-weight] of sheeps with [have-left = false] / mean [head] of sheeps with [have-left = false]"
+"standerd-deviation" 1.0 0 -7500403 true "" "plot standard-deviation [live-weight] of cattles with [have-left = false] / mean [head]  of cattles with [have-left = false]"
+"pen-3" 1.0 0 -2674135 true "" "plot max [live-weight] of cattles with [have-left = false] / mean [head]  of cattles with [have-left = false]"
 
 PLOT
-1145
-395
-1345
-545
+1110
+315
+1310
+465
 NEC mean
 NIL
 NIL
@@ -3257,8 +3298,79 @@ true
 true
 "" ""
 PENS
-"Cattles" 1.0 0 -16777216 true "" "plot mean [corporal-condition] of cattles"
-"Sheeps" 1.0 0 -8275240 true "" "plot mean [corporal-condition] of sheeps"
+"Cattles" 1.0 0 -16777216 true "" "plot mean [corporal-condition] of cattles with [have-left = false]"
+"Sheeps" 1.0 0 -8275240 true "" "plot mean [corporal-condition] of sheeps with [have-left = false]"
+
+BUTTON
+10
+510
+562
+543
+NIL
+ask patches [set current-grass  0.1\nset current-monocot-grass 0.1\nset current-dicot-grass 0.1]
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+PLOT
+1310
+315
+1510
+465
+mean grass amount
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot mean [current-grass] of patches"
+
+PLOT
+1110
+465
+1310
+615
+distant-kown-space
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot mean [distant-known-space] of foyers"
+
+PLOT
+1310
+465
+1510
+615
+HistHerderType
+listValueHerdeType
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"set-plot-x-range 0 5\nset-plot-y-range 0 100\nset-histogram-num-bars 5" ""
+PENS
+"pen-0" 1.0 1 -16777216 true "" "histogram listValueHerdeType"
 
 @#$#@#$#@
 ## WHAT IS IT?
