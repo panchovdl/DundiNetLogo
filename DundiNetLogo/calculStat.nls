@@ -14,7 +14,7 @@ globals [
   meanCattlesLiveWeight
 ]
 
-to sous-modele-comportement
+to calculStat
   set totalFoyers count foyers
   set totalSheeps sum [head] of sheeps
   set totalCattles sum [head] of cattles
