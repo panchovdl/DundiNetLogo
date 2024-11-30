@@ -352,6 +352,7 @@ to setup
 
 
   ;Visualiser l'environnement
+  calculStat
   update-visualization
   display-labels
 
@@ -1083,6 +1084,7 @@ to go
     ;color-trees
   ]
 
+  calculStat
   update-visualization
   tick
 end
