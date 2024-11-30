@@ -1028,6 +1028,11 @@ to update-visualization
   if visualization-mode = "grass-quality" [
     display-grass-quality
   ]
+
+  if visualization-mode = "known-space" [
+    display-knownSpace
+  ]
+
 end
 
 
@@ -2373,6 +2378,12 @@ to display-grass-quality
   ]
 end
 
+to display-knownSpace
+  ask patches [set pcolor white]
+  ask foyers [
+    ask known-space [set pcolor [who] of myself]
+  ]
+end
 to color-grass  ;; patch procedure
   set pcolor scale-color yellow current-grass max-grass 0
 end
@@ -2937,7 +2948,7 @@ initial-number-of-camps
 initial-number-of-camps
 0
 200
-10.0
+2.0
 1
 1
 NIL
@@ -3099,8 +3110,8 @@ CHOOSER
 540
 visualization-mode
 visualization-mode
-"soil-type" "tree-cover" "grass-cover" "grass-qualit"
-2
+"soil-type" "tree-cover" "grass-cover" "grass-qualit" "known-space"
+4
 
 BUTTON
 689
@@ -3204,7 +3215,7 @@ NIL
 HORIZONTAL
 
 PLOT
-1110
+1000
 165
 1310
 315
@@ -3224,7 +3235,7 @@ PENS
 "0" 1.0 0 -5298144 true "" "plot 0"
 
 PLOT
-1110
+1000
 15
 1310
 165
@@ -3245,7 +3256,7 @@ PENS
 PLOT
 1310
 15
-1510
+1615
 165
 partis dans le saloum
 NIL
@@ -3282,7 +3293,7 @@ PENS
 "minWeight" 1.0 0 -13791810 true "" "plot minCattlesLiveWeight"
 
 PLOT
-1110
+1000
 315
 1310
 465
@@ -3318,9 +3329,9 @@ NIL
 1
 
 PLOT
-910
+1000
 465
-1110
+1245
 615
 Sum grass
 NIL
@@ -3333,12 +3344,12 @@ true
 false
 "" ""
 PENS
-"default" 1.0 0 -16777216 true "" "plot totalGrass"
+"default" 1.0 0 -14835848 true "" "plot totalGrass"
 
 PLOT
-1110
+1245
 465
-1310
+1445
 615
 distant-kown-space
 NIL
@@ -3354,9 +3365,9 @@ PENS
 "default" 1.0 0 -16777216 true "" "plot mean [distant-known-space] of foyers"
 
 PLOT
-1310
+1445
 465
-1510
+1645
 615
 HistHerderType
 listValueHerdeType
