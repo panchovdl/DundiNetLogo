@@ -12,6 +12,7 @@ globals [
   cattlesWeightGain
   meanSheepsLiveWeight
   meanCattlesLiveWeight
+  meanCattlesNEC
 ]
 
 to calculStat
@@ -27,4 +28,6 @@ to calculStat
   set cattlesWeightGain mean [weight-gain] of cattles
   set meanCattlesLiveWeight mean [live-weight] of cattles / mean [head]  of cattles
   set meanSheepsLiveWeight mean [live-weight] of sheeps / mean [head]  of sheeps
+  set meanCattlesNEC mean [corporal-condition] of cattles with [have-left = false]
+  
 end
