@@ -26,8 +26,10 @@ globals [
   ceetcelde-duration     ; Nombre de ticks pour la période de soudure
 
 
-  seuil-bon              ; Seuil pour une herbe de bonne qualité
-  seuil-moyen            ; Seuil pour une herbe de qualité moyenne
+  seuil-bon-UF              ; Seuil UF pour une herbe de bonne qualité
+  seuil-moyen-UF            ; Seuil UF pour une herbe de qualité moyenne
+  seuil-bon-MAD
+  seuil-moyen-MAD
 
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -89,7 +91,7 @@ patches-own [
   ; Variables d'initialisation des populations ligneuses
 
   tree-cover                       ; Couverture d'arbres
-  max-tree-cover                   ; Maximum d'individus atteignable sur un km²
+  max-tree-cover                   ; Maximum d'individus atteignable sur un km² (définit selon le type de sol)
   num-nutritious                   ; Nombre d'arbres appréciés par le bétail en fonction du tree-cover
   num-less-nutritious              ; Nombre d'arbres peu / pas apprécié par le bétail en fonction du tree-cover
   num-fruity                       ; Nombre d'arbres fruitiers (jujubier, baobab, balanites) par le bétail en fonction du tree-cover
@@ -124,7 +126,6 @@ turtles-own [
 
   ; Etat corporel des troupeaux
   corporal-condition               ; État de santé de l'agent - en valeur de NEC (Note d'Etat Corporel)
-
   protein-condition                ; Condition protéique
   initial-live-weight              ; poids vif à l'initialisation (kg)
   live-weight                      ; poids vif actuel (kg)
@@ -135,9 +136,9 @@ turtles-own [
   head                             ; Nombre d'individus
   max-daily-DM-ingestible-per-head ; Quantité maximale de MS qu'un individu peut consommer par jour
   daily-min-UF-needed-head         ; Quantité minimum d'Unité Fourragère à l'entretien d'un UBT
-  daily-needs-UF
+  daily-needs-UF                   ; Quantité minimum d'Unité Fourragère à l'entretien du troupeau
   daily-min-MAD-needed-head        ; Quantité minimum de Matière Azotée Digestible à l'entretien d'un UBT;
-  daily-needs-MAD
+  daily-needs-MAD                  ; Quantité minimum de Matière Azotée Digestible à l'entretien du troupeau
   DM-ingested                      ; Quantité totale d'herbe ingérée (kg de MS)
   UF-ingested                      ; UF totales ingérées
   MAD-ingested                     ; MAD totales ingérées
@@ -188,7 +189,7 @@ foyers-own [
   cattle-herd-size                 ; Taille du troupeau de bovins associé
   sheep-herd                       ; Troupeau de moutons associé
   sheep-herd-size                  ; Taille du troupeau d'ovins associé
-  shepherd-type
+  shepherd-type                    ; Type de berger du foyer
   herder-type                      ; Caractéristique d'élevage du foyer (grand moyen petit)
   pasture-strategy                 ; Stratégies de pâturage
 
@@ -220,9 +221,9 @@ foyers-own [
 
 sheeps-own [
   foyer-owner                      ; Foyer du troupeau
-  shepherd-type                      ; Caractéristique d'élevage du foyer (grand moyen petit)
+  shepherd-type                    ; Caractéristique d'élevage du foyer (grand moyen petit)
   pasture-strategy                 ; Stratégies de pâturage
-  have-left
+  have-left                        ; Indique si le troupeau est parti vers le sud ou hors de la zone de l'UP
 ]
 
 
@@ -235,7 +236,7 @@ cattles-own [
   foyer-owner                      ; Foyer du troupeau
   shepherd-type                    ; Caractéristique d'élevage du foyer (grand moyen petit)
   pasture-strategy                 ; Stratégies de pâturage
-  have-left
+  have-left                        ; Indique si le troupeau est parti vers le sud ou hors de la zone de l'UP
 ]
 
 
@@ -330,7 +331,6 @@ to setup
 
   ; Chargement des valeurs spécifiques aux ressouces pastorales
   load-tree-age-data "tree_info.csv" ; valeurs pour les ages
-  show tree-age-data
   load-tree-nutrition-data "tree_nutrition.csv" ; valeurs pour les qualités nutritives selon type d'arbre, saison, type de sol
 
 
@@ -338,14 +338,6 @@ to setup
   update-year-type
   set-season-durations
 
-
-  ; Définir les seuils
-  set seuil-bon 70    ; Qualité de l'herbe - à ajuster selon les données du manuel de Boudet (1975)
-  set seuil-moyen 55  ; À ajuster
-  set max-grass 300000 ; pour visualisation
-  set max-trees 15000 ; pour visualisation
-  ask patches [
-    set max-tree-cover 2000] ; pour visualisation
 
 
   ; Lancer l'environnement
@@ -356,6 +348,13 @@ to setup
   setup-herds  ; Créer les troupeaux
   setup-trees  ; Créer les arbres
 
+  ; Définir les seuils
+  set seuil-bon-UF 0.6    ; Qualité de l'herbe - à ajuster selon les données du manuel de Boudet (1975)
+  set seuil-moyen-UF 0.45  ; À ajuster
+  set seuil-bon-MAD 53
+  set seuil-moyen-MAD 25
+  set max-grass max [K] of patches ; pour visualisation
+  set max-trees max [tree-cover] of patches
 
   ;Visualiser l'environnement
   calculStat
@@ -373,10 +372,10 @@ end
 
 to setup-landscape
   ask patches [
+    set max-tree-cover tree-cover
     if soil-type = "Baldiol" [
       set K 120000  ; Stock de production maximal de Matière Sèche (MS - DM[en]) sur 1 km² pour "Baldiol"
       set current-grass K
-      assign-grass-proportions
       set num-nutritious round (tree-cover * 0.5)
       set num-less-nutritious round (tree-cover * 0.25)
       set num-fruity round (tree-cover * 0.25)
@@ -385,7 +384,6 @@ to setup-landscape
     if soil-type = "Caangol" [
       set K 300000  ; Stock de production maximal de Matière Sèche (MS - DM[en]) sur 1 km² pour Caangol
       set current-grass K
-      assign-grass-proportions
       set num-nutritious round (tree-cover * 0.5)
       set num-less-nutritious round (tree-cover * 0.25)
       set num-fruity round (tree-cover * 0.25)
@@ -394,7 +392,6 @@ to setup-landscape
     if soil-type = "Sangre" [
       set K 80000  ; Stock de production maximal de Matière Sèche (MS - DM[en]) sur 1 km² pour Sangre
       set current-grass K
-      assign-grass-proportions
       set num-nutritious round (tree-cover * 0.8)
       set num-less-nutritious round (tree-cover * 0.25)
       set num-fruity round (tree-cover * 0.0001)
@@ -403,7 +400,6 @@ to setup-landscape
     if soil-type = "Seeno" [
       set K 200000  ; Stock de production maximal de Matière Sèche (MS - DM[en]) sur 1 km² pour Seeno
       set current-grass K
-      assign-grass-proportions
       set num-nutritious round (tree-cover * 0.5)
       set num-less-nutritious round (tree-cover * 0.25)
       set num-fruity round (tree-cover * 0.25)
@@ -422,6 +418,8 @@ to setup-landscape
     set water-stock 0  ; Initialement, aucun stock d'eau dans les mares
     assign-grass-proportions
   ]
+  update-UF-and-MAD
+  update-grass-quality
 end
 
 
@@ -568,14 +566,13 @@ to setup-foyers
       set current-home-camp original-home-camp
       set original-home-patch [patch-here] of original-home-camp  ; Stocke la position du campement
       set current-home-patch original-home-patch
-      set is-in-temporary-camp false
-      set temporary-home-camp nobody
       set herder-type determine-herder-type
       set-herd-sizes
       set known-space patches in-radius 3
       set close-known-space known-space with [
         distance [current-home-patch] of myself <= 12
       ]
+
       set original-camp-known-space close-known-space
       set cattle-low-threshold-cc 2
       set cattle-low-threshold-pc 2
@@ -1054,7 +1051,6 @@ to go
   if current-season != last-season [
     update-UF-and-MAD                 ; Mettre à jour les valeurs de MAD et UF pour le tapis herbacé
     update-tree-nutritional-values    ; Mettre à jour les valeurs de MAD et UF pour les arbres
-    update-grass-quality              ; Indiquer la qualité de l'herbe
     set last-season current-season    ; Permet au counter d'identifier quand la saison change
     update-tree-visualisation
   ]
@@ -1073,6 +1069,7 @@ to go
 
   ; Mise à jour des ressources
   grow-grass
+  update-grass-quality              ; Indiquer la qualité de l'herbe
   grow-tree-resources
 
   ; Activités des agents
@@ -1169,28 +1166,28 @@ to update-UF-and-MAD
   ask patches [
     ; Définir les valeurs pour les monocotylédones et dicotyledones
     if current-season = "Nduungu" [
-      set monocot-UF-per-kg-MS 0.7
-      set monocot-MAD-per-kg-MS 80
-      set dicot-UF-per-kg-MS 0.7
-      set dicot-MAD-per-kg-MS 80
+      set monocot-UF-per-kg-MS 0.5
+      set monocot-MAD-per-kg-MS 60
+      set dicot-UF-per-kg-MS 0.6
+      set dicot-MAD-per-kg-MS 100
     ]
     if current-season = "Dabbuunde" [
-      set monocot-UF-per-kg-MS 0.7
-      set monocot-MAD-per-kg-MS 80
-      set dicot-UF-per-kg-MS 0.7
-      set dicot-MAD-per-kg-MS 80
+      set monocot-UF-per-kg-MS 0.6
+      set monocot-MAD-per-kg-MS 20
+      set dicot-UF-per-kg-MS 0.8
+      set dicot-MAD-per-kg-MS 110
     ]
     if current-season = "Ceedu" [
-      set monocot-UF-per-kg-MS 0.7
-      set monocot-MAD-per-kg-MS 80
-      set dicot-UF-per-kg-MS 0.7
-      set dicot-MAD-per-kg-MS 80
+      set monocot-UF-per-kg-MS 0.45
+      set monocot-MAD-per-kg-MS 1
+      set dicot-UF-per-kg-MS 0.6
+      set dicot-MAD-per-kg-MS 30
     ]
     if current-season = "Ceetcelde" [
-      set monocot-UF-per-kg-MS 0.7
-      set monocot-MAD-per-kg-MS 80
-      set dicot-UF-per-kg-MS 0.7
-      set dicot-MAD-per-kg-MS 80
+      set monocot-UF-per-kg-MS 0.4
+      set monocot-MAD-per-kg-MS 0.01
+      set dicot-UF-per-kg-MS 0.4
+      set dicot-MAD-per-kg-MS 30
     ]
   ]
 end
@@ -1222,7 +1219,7 @@ to assign-grass-proportions ; Réassigner la proportion de monocotylédones (p) 
       set p random-float (0.0 - 0.2) + 0.4  ; Intervalle [0.4, 0.6]
     ]
     if soil-type = "Caangol" [
-      set p random-float (0.0 - 0.3) + 0.5  ; Intervalle [0.5, 0.8]
+      set p random-float (0.0 - 0.3) + 0.1  ; Intervalle [0.1, 0.4]
     ]
     if soil-type = "Sangre" [
       set p random-float (0.0 - 0.3) + 0.2  ; Intervalle [0.2, 0.5]
@@ -1233,7 +1230,6 @@ to assign-grass-proportions ; Réassigner la proportion de monocotylédones (p) 
 
     ; Assurer que p est entre 0 et 1
     set p max list 0.2 (min list p 1)
-
     ; Réinitialiser les stocks d'herbe en fonction des nouvelles proportions
     set current-monocot-grass current-grass * p
     set current-dicot-grass current-grass * (1 - p)
@@ -1249,25 +1245,19 @@ end
 to update-grass-quality ; - Version 2
   ask patches [
     ; Calculer le rapport MAD/UF pour les monocotylédones
-    let monocot-MAD-UF-ratio monocot-MAD-per-kg-MS / monocot-UF-per-kg-MS
-    ; Calculer le rapport MAD/UF pour les dicotylédones
-    let dicot-MAD-UF-ratio dicot-MAD-per-kg-MS / dicot-UF-per-kg-MS
-
-    ; Calculer la moyenne pondérée des rapports en fonction de la proportion de chaque type
-    let average-MAD-UF-ratio (monocot-MAD-UF-ratio * p) + (dicot-MAD-UF-ratio * (1 - p))
-
-
+    let mean-UF-per-kg-DM  ((monocot-UF-per-kg-MS * current-monocot-grass) + (dicot-UF-per-kg-MS * current-dicot-grass)) / (current-monocot-grass + current-dicot-grass)
+    let mean-MAD-per-kg-DM  ((monocot-MAD-per-kg-MS * current-monocot-grass) + (dicot-MAD-per-kg-MS * current-dicot-grass)) / (current-monocot-grass + current-dicot-grass)
     ; Déterminer la qualité de l'herbe en fonction du rapport moyen MAD/UF
-    ifelse average-MAD-UF-ratio >= seuil-bon [
+    ifelse ((mean-UF-per-kg-DM >= seuil-bon-UF) AND (mean-MAD-per-kg-DM >= seuil-bon-MAD)) [
       set grass-quality "good"
-      ] [ ifelse average-MAD-UF-ratio >= seuil-moyen [
+      ] [ ifelse ((mean-UF-per-kg-DM >= seuil-moyen-UF) AND (mean-MAD-per-kg-DM >= seuil-moyen-MAD))  [
         set grass-quality "average"
       ] [
         set grass-quality "poor"
       ]
       ; Assigner q basé sur la qualité actuelle de l'herbe
-      set q grass-quality-to-q grass-quality
     ]
+    set q grass-quality-to-q grass-quality
   ]
 end
 ;to update-grass-quality - version 1
@@ -1462,9 +1452,9 @@ to grow-grass  ; - Version 2.2.
         set current-grass current-monocot-grass + current-dicot-grass
       ]
       ; Assurer que les valeurs restent positives
-      if current-monocot-grass < 0 [ set current-monocot-grass 0.000000001 ]
-      if current-dicot-grass < 0 [ set current-dicot-grass 0.000000001]
-      if current-grass < 0 [ set current-grass 0.000000001 ]
+      if current-monocot-grass < 0 [ set current-monocot-grass 0.000001 ]
+      if current-dicot-grass < 0 [ set current-dicot-grass 0.000001]
+      if current-grass < 0 [ set current-grass 0.000001 ]
     ]
   ]
 end
@@ -1815,7 +1805,7 @@ to move-and-eat ; Mouvement et consommation des troupeaux - bovins puis ovins
     ]
 
     ; Calculer l'UF/kg MS moyen du fourrage disponible
-    let monocot-prop [current-monocot-grass] of patch-here / [current-grass] of patch-here
+    let monocot-prop ([current-monocot-grass] of patch-here / [current-grass] of patch-here)
     let average-UF-per-kg-MS ([monocot-UF-per-kg-MS] of patch-here * monocot-prop) + ([dicot-UF-per-kg-MS] of patch-here * (1 - monocot-prop))
 
     ; Calculer la MAD/kg MS moyenne du fourrage disponible
@@ -2445,7 +2435,6 @@ to load-environment [filename]
     let tree-count item 3 data
     let nom_puular item 7 data
     let low-topo-zone item 6 data
-
     ask patch px py [
       set soil-type nom_puular
       set tree-cover tree-count
@@ -2948,7 +2937,7 @@ initial-number-of-camps
 initial-number-of-camps
 0
 200
-2.0
+1.0
 1
 1
 NIL
@@ -2963,7 +2952,7 @@ space-camp-mean
 space-camp-mean
 space-camp-min
 space-camp-max
-17.0
+1.0
 1
 1
 foyers
@@ -2978,7 +2967,7 @@ space-camp-min
 space-camp-min
 0
 100
-11.0
+1.0
 1
 1
 NIL
@@ -2993,7 +2982,7 @@ space-camp-max
 space-camp-max
 space-camp-min
 50
-31.0
+1.0
 1
 1
 NIL
@@ -3008,7 +2997,7 @@ space-camp-standard-deviation
 space-camp-standard-deviation
 0
 20
-3.0
+0.0
 1
 1
 NIL
@@ -3110,8 +3099,8 @@ CHOOSER
 540
 visualization-mode
 visualization-mode
-"soil-type" "tree-cover" "grass-cover" "grass-qualit" "known-space"
-4
+"soil-type" "tree-cover" "grass-cover" "grass-quality" "known-space"
+2
 
 BUTTON
 689
@@ -3148,22 +3137,22 @@ NIL
 1
 
 MONITOR
-817
+825
 185
-930
+935
 230
-NIL
+Season
 current-season
 17
 1
 11
 
 MONITOR
-689
+745
 185
-814
+825
 230
-NIL
+Type of Year
 current-year-type
 17
 1
@@ -3178,7 +3167,7 @@ good-shepherd-percentage
 good-shepherd-percentage
 0
 100
-100.0
+99.0
 1
 1
 NIL
@@ -3193,7 +3182,7 @@ proportion-big-herders
 proportion-big-herders
 0
 100
-53.0
+56.0
 1
 1
 NIL
@@ -3208,7 +3197,7 @@ proportion-medium-herders
 proportion-medium-herders
 0
 100
-11.0
+16.0
 1
 1
 NIL
@@ -3401,6 +3390,17 @@ PENS
 "meanWeight" 1.0 0 -16777216 true "" "plot meanSheepsLiveWeight"
 "maxWeight" 1.0 0 -2674135 true "" "plot maxSheepsLiveWeight"
 "minWeight" 1.0 0 -13791810 true "" "plot minSheepsLiveWeight"
+
+MONITOR
+690
+185
+747
+230
+Year
+year-index
+17
+1
+11
 
 @#$#@#$#@
 ## WHAT IS IT?

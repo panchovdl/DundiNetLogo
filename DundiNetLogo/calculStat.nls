@@ -41,7 +41,7 @@ to calculStat
   set meanSheepsNEC mean [corporal-condition] of sheeps with [have-left = false]
   
   set totalGrass sum [current-grass] of patches
-  set totalTrees sum [tree-cover] of patches
+  set totalTrees sum [population-size] of tree-populations
   
   set sumSmallHerder count foyers with [herder-type = "petit"]
   set sumMediumHerder count foyers with [herder-type = "moyen"]
