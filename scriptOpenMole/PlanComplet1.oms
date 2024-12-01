@@ -1,0 +1,22 @@
+import _file_.DundiModelODD._
+import _file_.environement_explo._
+
+DirectSampling(
+  evaluation = dundiModelTask,
+  sampling = 
+    (mySeed in (1 to 10 by 1))x
+    (tpsAuChamp in (0.0 to 100.0 by 10.0)) x
+    (qPrésenceBrousse in (0.0 to 1.0 by 1.0))x
+    //(fréquenceRéu in (1.0 to 10.0 by 1.0))x
+    //(probaDenonce in (1.0 to 100.0 by 10.0))x
+    (probaDiscu in (1.0 to 100.0 by 10.0))x
+    (nbProTGMax in (1.0 to 50.0 by 5.0))
+) hook (workDirectory / "result_M3_directSamplingSC_muse", Seq(mySeed,tpsAuChamp, qPrésenceBrousse, fréquenceRéu, probaDenonce, probaDiscu, nbProTGMax,
+                                                        om_stockMil,om_charette, om_MST_t, om_MFET_t)) on grid by 1000
+                                                        
+                                                        
+/*
+`grid` est la VO.Complex.system, la grille européenne
+`muse` est le cluster de monpellier . Sur Muse, il y a 3 queue : can be agap_short (1h) agap_normal(48h) agap_long(no limit)
+Il faut tenir compte de ces limites dans le fichier environement_explo.oms
+*/
