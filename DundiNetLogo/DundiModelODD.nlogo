@@ -129,6 +129,8 @@ turtles-own [
   protein-condition                ; Condition protéique
   initial-live-weight              ; poids vif à l'initialisation (kg)
   live-weight                      ; poids vif actuel (kg)
+  max-live-weight                  ; Maximum de poids vif atteignable (kg)
+  min-live-weight                  ; Minimum de poids vif atteignable (kg)
   weight-gain                      ; Gain ou perte de poids
 
   ; Alimentation spécifiques aux troupeaux
@@ -143,7 +145,7 @@ turtles-own [
   UF-ingested                      ; UF totales ingérées
   MAD-ingested                     ; MAD totales ingérées
   daily-water-consumption          ; Consommation d'eau quotidienne
-  preference-mono
+  preference-mono                  ; Préférence pour les Graminées
 
   ; Caractéristiques des foyers partagé aux troupeaux (Utilisé autant par les troupeaux que les foyers)
   known-space                      ; Tout l'espace connu par les individus
@@ -375,7 +377,7 @@ to setup-landscape
     set max-tree-cover tree-cover
     if soil-type = "Baldiol" [
       set K 120000  ; Stock de production maximal de Matière Sèche (MS - DM[en]) sur 1 km² pour "Baldiol"
-      set current-grass K
+      set current-grass 40
       set num-nutritious round (tree-cover * 0.5)
       set num-less-nutritious round (tree-cover * 0.25)
       set num-fruity round (tree-cover * 0.25)
@@ -383,7 +385,7 @@ to setup-landscape
     ]
     if soil-type = "Caangol" [
       set K 300000  ; Stock de production maximal de Matière Sèche (MS - DM[en]) sur 1 km² pour Caangol
-      set current-grass K
+      set current-grass 40
       set num-nutritious round (tree-cover * 0.5)
       set num-less-nutritious round (tree-cover * 0.25)
       set num-fruity round (tree-cover * 0.25)
@@ -391,7 +393,7 @@ to setup-landscape
     ]
     if soil-type = "Sangre" [
       set K 80000  ; Stock de production maximal de Matière Sèche (MS - DM[en]) sur 1 km² pour Sangre
-      set current-grass K
+      set current-grass 40
       set num-nutritious round (tree-cover * 0.8)
       set num-less-nutritious round (tree-cover * 0.25)
       set num-fruity round (tree-cover * 0.0001)
@@ -399,7 +401,7 @@ to setup-landscape
     ]
     if soil-type = "Seeno" [
       set K 200000  ; Stock de production maximal de Matière Sèche (MS - DM[en]) sur 1 km² pour Seeno
-      set current-grass K
+      set current-grass 40
       set num-nutritious round (tree-cover * 0.5)
       set num-less-nutritious round (tree-cover * 0.25)
       set num-fruity round (tree-cover * 0.25)
@@ -574,6 +576,7 @@ to setup-foyers
       ]
 
       set original-camp-known-space close-known-space
+
       set cattle-low-threshold-cc 2
       set cattle-low-threshold-pc 2
       set sheep-low-threshold-cc 3
@@ -667,6 +670,8 @@ to setup-herds ; Valeurs à définir
       set protein-condition 10
       set initial-live-weight 250 * UBT-size * head
       set live-weight initial-live-weight
+      set max-live-weight 350 * head
+      set min-live-weight 66
 
           ; caractéristiques visuelles
       set color grey
@@ -710,9 +715,10 @@ to setup-herds ; Valeurs à définir
       ]
       set have-left false
     ]
-
     ; Attribuer le troupeau créé à son propriétaire
     set cattle-herd my-cattles
+
+
     ; Créer un troupeau de petits ruminants pour le foyer
     let my-sheeps []
     hatch-sheeps 1 [
@@ -725,6 +731,8 @@ to setup-herds ; Valeurs à définir
       set protein-condition 10
       set initial-live-weight 250 * UBT-size * head
       set live-weight initial-live-weight
+      set max-live-weight 80 * head
+      set min-live-weight 21 * head
 
           ; caractéristiques visuelles
       set color black
@@ -1071,29 +1079,30 @@ to go
   grow-grass
   update-grass-quality              ; Indiquer la qualité de l'herbe
   grow-tree-resources
-
   ; Activités des agents
 
+  ; Activités des troupeaux
   ask cattles with [have-left = false] [
     move-and-eat                        ; Activités quotidiennes du couple Berger-Troupeau - Bovins
     update-corporal-conditions head UBT-size UF-ingested MAD-ingested daily-needs-UF daily-needs-MAD max-daily-DM-ingestible-per-head preference-mono
   ]
-
-   ask sheeps with [have-left = false] [
+  ask sheeps with [have-left = false] [
     move-and-eat                        ; Activités quotidiennes du couple Berger-Troupeau - Petits ruminants
     update-corporal-conditions head UBT-size UF-ingested MAD-ingested daily-needs-UF daily-needs-MAD max-daily-DM-ingestible-per-head preference-mono
   ]
 
+  ; Activités des Foyers
+  ask foyers [
   choose-strategy                     ; Choix stratégiques pastoraux du chef de ménage
+  ]
+
+  ; Mise à jour des valeurs Stats pour visualisation
+  calculStat
 
   ; Visuel
-  ask patches [
-    color-grass
-    ;color-trees
-  ]
-  calculStat
   update-visualization
   update-plot
+
   tick
 end
 
@@ -1157,14 +1166,14 @@ to update-season
 end
 
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;;; Mise à jour des valeurs nutritives de l'herbe ;;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;; Mise à jour des valeurs nutritives de l'herbe. Mise à jour par saison ;;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
 to update-UF-and-MAD
   ask patches [
-    ; Définir les valeurs pour les monocotylédones et dicotyledones
+    ; Définit pour les deux espèces les valeurs en UF et MAD par kg de MS (valeurs de Boudet, 1975, "Manuel sur les pâturages tropicaux et cultures fourragères" en prenant comme référence une valeur proche des graminées les plus présents (monocotylédones) et zornia comme légumineuse (dicotylédone))
     if current-season = "Nduungu" [
       set monocot-UF-per-kg-MS 0.5
       set monocot-MAD-per-kg-MS 60
@@ -1194,9 +1203,9 @@ end
 
 
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;;; Mise à jour des valeurs nutritives des arbres ;;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;; Mise à jour des valeurs nutritives des arbres. Mise à jour par saison ;;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 to update-tree-nutritional-values
   ask tree-populations [
@@ -1207,11 +1216,9 @@ to update-tree-nutritional-values
 end
 
 
-
-
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;;; Mise à jour des proportions d'herbe ;;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;; Mise à jour des proportions d'herbe. Mise à jour par an ;;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 to assign-grass-proportions ; Réassigner la proportion de monocotylédones (p) en fonction du type de sol
 
@@ -1238,9 +1245,9 @@ end
 
 
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;;; Mise à jour de la qualité de l'herbe ;;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;; Mise à jour de la qualité de l'herbe selon les proportions des deux espèces herbacées. Mise à jour quotidienne ;;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 to update-grass-quality ; - Version 2
   ask patches [
@@ -1260,123 +1267,6 @@ to update-grass-quality ; - Version 2
     set q grass-quality-to-q grass-quality
   ]
 end
-;to update-grass-quality - version 1
- ; ask patches [
-  ;  if (any? patches with [grass-quality-nduungu = 0 and grass-quality-ceetcelde = 0]) [  ; Vérifie si c'est la première année
-   ;   if soil-type = "Baldiol" [                                                              ; qualité : "good" = 3 ; "average" = 2 ; "bad" = 1
-    ;    let rand random-float 1
-     ;   if current-season = "Ceedu" [
-      ;    ifelse rand < 0.5 [set grass-quality-ceedu "good"]
-       ;   [ifelse rand < 0.75 [set grass-quality-ceedu "average"]
-        ;    [set grass-quality-ceedu "poor"]]
-;        ]
- ;       if current-season = "Nduungu" [
-  ;        ifelse rand < 0.25 [set grass-quality-nduungu "good"]
-   ;       [ifelse rand < 0.5 [set grass-quality-nduungu "average"]
-    ;        [set grass-quality-nduungu "poor"]]
-     ;   ]
-      ;  if current-season = "Dabbuunde" [
-       ;   ifelse rand < 0.1 [set grass-quality-dabbuunde "good"]
-        ;  [ifelse rand < 0.3 [set grass-quality-dabbuunde "average"]
-         ;   [set grass-quality-dabbuunde "poor"]]
-;        ]
- ;       if current-season = "Ceetcelde" [
-  ;        ifelse rand < 0.4 [set grass-quality-ceetcelde "good"]
-   ;       [ifelse rand < 0.7 [set grass-quality-ceetcelde "average"]
-    ;        [set grass-quality-ceetcelde "poor"]]
-     ;   ]
-      ;]
-;      if soil-type = "Caangol" [
- ;       let rand random-float 1
-  ;      if current-season = "Ceedu" [
-   ;       ifelse rand < 0.5 [set grass-quality-ceedu "good"]
-    ;      [ifelse rand < 0.75 [set grass-quality-ceedu "average"]
-     ;       [set grass-quality-ceedu "poor"]]
-      ;  ]
-;        if current-season = "Nduungu" [
- ;         ifelse rand < 0.25 [set grass-quality-nduungu "good"]
-  ;        [ifelse rand < 0.5 [set grass-quality-nduungu "average"]
-   ;         [set grass-quality-nduungu "poor"]]
-    ;    ]
-;        if current-season = "Dabbuunde" [
- ;         ifelse rand < 0.1 [set grass-quality-dabbuunde "good"]
-  ;        [ifelse rand < 0.3 [set grass-quality-dabbuunde "average"]
-   ;         [set grass-quality-dabbuunde "poor"]]
-    ;    ]
-;        if current-season = "Ceetcelde" [
- ;         ifelse rand < 0.4 [set grass-quality-ceetcelde "good"]
-  ;        [ifelse rand < 0.7 [set grass-quality-ceetcelde "average"]
-   ;         [set grass-quality-ceetcelde "poor"]]
-    ;    ]
-     ; ]
-;      if soil-type = "Sangre" [
- ;       let rand random-float 1
-  ;      if current-season = "Ceedu" [
-   ;       ifelse rand < 0.5 [set grass-quality-ceedu "good"]
-    ;      [ifelse rand < 0.75 [set grass-quality-ceedu "average"]
-     ;       [set grass-quality-ceedu "poor"]]
-      ;  ]
-       ; if current-season = "Nduungu" [
-        ;  ifelse rand < 0.25 [set grass-quality-nduungu "good"]
-         ; [ifelse rand < 0.5 [set grass-quality-nduungu "average"]
-          ;  [set grass-quality-nduungu "poor"]]
-        ;]
-        ;if current-season = "Dabbuunde" [
-         ; ifelse rand < 0.1 [set grass-quality-dabbuunde "good"]
-          ;[ifelse rand < 0.3 [set grass-quality-dabbuunde "average"]
-           ; [set grass-quality-dabbuunde "poor"]]
-        ;]
-        ;if current-season = "Ceetcelde" [
-         ; ifelse rand < 0.4 [set grass-quality-ceetcelde "good"]
-          ;[ifelse rand < 0.7 [set grass-quality-ceetcelde "average"]
-           ; [set grass-quality-ceetcelde "poor"]]
-        ;]
-      ;]
- ;     if soil-type = "Seeno" [
- ;       let rand random-float 1
- ;       if current-season = "Ceedu" [
-  ;        ifelse rand < 0.5 [set grass-quality-ceedu "good"]
-  ;        [ifelse rand < 0.75 [set grass-quality-ceedu "average"]
- ;           [set grass-quality-ceedu "poor"]]
- ;       ]
-;        if current-season = "Nduungu" [
- ;         ifelse rand < 0.25 [set grass-quality-nduungu "good"]
- ;         [ifelse rand < 0.5 [set grass-quality-nduungu "average"]
- ;           [set grass-quality-nduungu "poor"]]
- ;       ]
-  ;      if current-season = "Dabbuunde" [
- ;         ifelse rand < 0.1 [set grass-quality-dabbuunde "good"]
- ;         [ifelse rand < 0.3 [set grass-quality-dabbuunde "average"]
- ;           [set grass-quality-dabbuunde "poor"]]
-  ;      ]
-  ;      if current-season = "Ceetcelde" [
-   ;       ifelse rand < 0.4 [set grass-quality-ceetcelde "good"] ;
-  ;        [ifelse rand < 0.7 [set grass-quality-ceetcelde "average"]
-;            [set grass-quality-ceetcelde "poor"]]
-;        ]
-;      ]
-;      if current-season = "Ceedu" [set grass-quality grass-quality-ceedu]
-;      if current-season = "Nduungu" [set grass-quality grass-quality-nduungu]
-;      if current-season = "Dabbuunde" [set grass-quality grass-quality-dabbuunde]
-;      if current-season = "Ceetcelde" [set grass-quality grass-quality-ceetcelde]
-
-
-      ; Assigner q basé sur la qualité actuelle de l'herbe
-;      set q grass-quality-to-q grass-quality
-;      set p grass-quality-to-p grass-quality
-   ; (Si vous avez besoin de stocker q, vous pouvez le faire ici)
-
-
- ;   ] [
-    ;; Pour les années suivantes, réutilise la qualité de l'herbe de l'année précédente ;; Abandonné après discussion car inadapté selon le discours des acteurs
-    ;  if current-season = "Ceedu" [set grass-quality grass-quality-ceedu]
-     ; if current-season = "Nduungu" [set grass-quality grass-quality-nduungu]
-      ;if current-season = "Dabbuunde" [set grass-quality grass-quality-dabbuunde]
-      ;if current-season = "Ceetcelde" [set grass-quality grass-quality-ceetcelde]
-    ;]
-  ;]
-
-;end
 
 
 to update-tree-visualisation
@@ -1399,72 +1289,57 @@ to update-tree-visualisation
 end
 
 
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;; Mise à jour du stock de l'herbe selon les proportions des deux espèces herbacées. Mise à jour quotidienne ;;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
 to grow-grass  ; - Version 2.2.
   ask patches [
+    let r_grass 0 ; Taux de croissance de l'herbe, uniforme pour tous les types d'herbe
+                  ; Croissance logistique pendant Nduungu
+    let new-mono-grass 0
+    let new-dicot-grass 0
     if current-season = "Nduungu" [
-      ; Croissance logistique pendant Nduungu
-      let r_grass 0.1  ; Taux de croissance, ajustez selon vos besoins
-                 ; Croissance logistique pour les monocotylédones
-      let new-mono-grass current-monocot-grass + r_grass * current-monocot-grass * (K * p - current-monocot-grass) / (K * p)
-      set current-monocot-grass min (list new-mono-grass (K * p))
-
-      ; Croissance logistique pour les dicotylédones
-      let new-dicot-grass current-dicot-grass + r_grass * current-dicot-grass * (K * (1 - p) - current-dicot-grass) / (K * (1 - p))
-      set current-dicot-grass min (list new-dicot-grass (K * (1 - p)))
-
-      ; Mettre à jour le stock total d'herbe
-      set current-grass current-monocot-grass + current-dicot-grass
-      ;  let new-current-grass current-grass + r * current-grass * (K - current-grass) / K
-      ;  set current-grass min (list new-current-grass K)
-
+      set r_grass 0.16
+      set new-mono-grass current-monocot-grass + r_grass * current-monocot-grass * (K * p - current-monocot-grass) / (K * p)
+    ; Croissance logistique pour les dicotylédones
+      set new-dicot-grass current-dicot-grass + r_grass * current-dicot-grass * (K * (1 - p) - current-dicot-grass) / (K * (1 - p))
     ]
-    if current-season = "Dabbuunde" or current-season = "Ceedu" [
-      ; Initialiser total-ticks-to-mid-ceedu si nécessaire
-      if ticks-since-dabbuunde = 0 [
-        set total-dry-season-ticks (dabbuunde-duration + ceedu-duration)
-      ]
-      if ticks-since-dabbuunde <= total-dry-season-ticks [
-        ; Perte de biomasse décroissante jusqu'à la mi-Ceedu
-        let loss_percentage 0.2
-        let proportion_of_period ticks-since-dabbuunde / total-dry-season-ticks
-        ; Calculer la perte par tick pour les monocotylédones
-        let per_tick_loss_mono (2 * monocot-grass-end-nduungu * (loss_percentage / total-dry-season-ticks)) * (1 - proportion_of_period)
-        set current-monocot-grass current-monocot-grass - per_tick_loss_mono
-
-        ; Calculer la perte par tick pour les dicotylédones
-        let per_tick_loss_dicot (2 * dicot-grass-end-nduungu * (loss_percentage / total-dry-season-ticks)) * (1 - proportion_of_period)
-        set current-dicot-grass current-dicot-grass - per_tick_loss_dicot
-
-        ; Mettre à jour le stock total d'herbe
-        set current-grass current-monocot-grass + current-dicot-grass
-
-        ; Incrémenter ticks-since-dabbuunde
-        set ticks-since-dabbuunde ticks-since-dabbuunde + 1
-      ]
-      if current-season = "Ceetcelde" [
-        ; Réduction constante pour les deux types
-        let reduction_rate 0.99  ; Même pour les deux types
-
-        set current-monocot-grass current-monocot-grass * reduction_rate
-        set current-dicot-grass current-dicot-grass * reduction_rate
-
-        ; Mettre à jour le stock total d'herbe
-        set current-grass current-monocot-grass + current-dicot-grass
-      ]
-      ; Assurer que les valeurs restent positives
-      if current-monocot-grass < 0 [ set current-monocot-grass 0.000001 ]
-      if current-dicot-grass < 0 [ set current-dicot-grass 0.000001]
-      if current-grass < 0 [ set current-grass 0.000001 ]
+    if current-season = "Dabbuunde" [
+      set r_grass -0.01
+      set new-mono-grass current-monocot-grass + r_grass * current-monocot-grass
+    ; Croissance logistique pour les dicotylédones
+      set new-dicot-grass current-dicot-grass + r_grass * current-dicot-grass
     ]
+    if current-season = "Ceedu" [
+      set r_grass -0.02
+      set new-mono-grass current-monocot-grass + r_grass * current-monocot-grass * (K * p - current-monocot-grass) / (K * p)
+    ; Croissance logistique pour les dicotylédones
+      set new-dicot-grass current-dicot-grass + r_grass * current-dicot-grass * (K * (1 - p) - current-dicot-grass) / (K * (1 - p))
+    ]
+    if current-season = "Ceetcelde" [
+      set r_grass -0.02  ; Même pour les deux types
+      set new-mono-grass current-monocot-grass + r_grass * current-monocot-grass * (K * p - current-monocot-grass) / (K * p)
+    ; Croissance logistique pour les dicotylédones
+      set new-dicot-grass current-dicot-grass + r_grass * current-dicot-grass * (K * (1 - p) - current-dicot-grass) / (K * (1 - p))
+    ]
+
+    set current-monocot-grass min (list new-mono-grass (K * p))
+    set current-dicot-grass min (list new-dicot-grass (K * (1 - p)))
+    ; Mettre à jour le stock total d'herbe
+    set current-grass current-monocot-grass + current-dicot-grass
+
+    ;  let new-current-grass current-grass + r * current-grass * (K - current-grass) / K
+    ;  set current-grass min (list new-current-grass K)
+
+
+    ; Assurer que les valeurs restent positives
+    if current-monocot-grass < 0 [ set current-monocot-grass 1 ]
+    if current-dicot-grass < 0 [ set current-dicot-grass 1]
+    if current-grass < 0 [ set current-grass 1 ]
   ]
 end
-;to grow-grass - Version 1
-;  let r 0
-;  if current-season = "Ceedu" [set r 0.00001]
-;  if current-season = "Ceetcelde" [set r 0.000005]
-;  if current-season = "Dabbuunde" [set r 0.000002]
-;  if current-season = "Nduungu" [set r 0.01]
-
 
 to update-tree-age
   ; Si une année s'est écoulée
@@ -1707,41 +1582,41 @@ end
 
 to move-and-eat ; Mouvement et consommation des troupeaux - bovins puis ovins
 
-   ;; Find the best patch within known space
-    let best-patch find-best-nearest-patch known-space
-    let my-home-patch current-home-patch
-    move-to current-home-patch
-    set DM-ingested 0
-    set UF-ingested 0
-    set MAD-ingested 0
-      ; Calculer les besoins énergétiques (UF) et protéiques (MAD) qui peut évoluer à chaque step en fonction du nombre de tête dans le troupeau
-    set daily-needs-UF daily-min-UF-needed-head * head
-    set daily-needs-MAD daily-min-MAD-needed-head * head
+  ;; Find the best patch within known space
+  let best-patch find-best-nearest-patch known-space
+  let my-home-patch current-home-patch
+  move-to current-home-patch
+  set DM-ingested 0
+  set UF-ingested 0
+  set MAD-ingested 0
+  ; Calculer les besoins énergétiques (UF) et protéiques (MAD) qui peut évoluer à chaque step en fonction du nombre de tête dans le troupeau
+  set daily-needs-UF daily-min-UF-needed-head * head
+  set daily-needs-MAD daily-min-MAD-needed-head * head
 
-    if best-patch != nobody [
-      ;; Calculate the distance between the best patch and the current home patch
-      let distance-to-home distance best-patch
+  if best-patch != nobody [
+    ;; Calculate the distance between the best patch and the current home patch
+    let distance-to-home distance best-patch
 
-      ;; If the best patch is more than 12 units away from the current home patch
-      ifelse distance-to-home >= 12 [
+    ;; If the best patch is more than 12 units away from the current home patch
+    ifelse distance-to-home >= 3 [
 
-        ;; Check if the herd is not already in a temporary camp
-        ifelse not is-in-temporary-camp [
+      ;; Check if the herd is not already in a temporary camp
+      ifelse not is-in-temporary-camp [
 
           ;; Create a temporary camp if not already in one
-          set current-home-patch best-patch
-          set is-in-temporary-camp true
-          move-to current-home-patch
-          set xcor xcor + (random-float 0.9 - 0.45)
-          set ycor ycor + (random-float 0.9 - 0.45)
+        set current-home-patch best-patch
+        set is-in-temporary-camp true
+        move-to current-home-patch
+        set xcor xcor + (random-float 0.9 - 0.45)
+        set ycor ycor + (random-float 0.9 - 0.45)
 
-          ;; Add patches within a radius of 3 cells around the camp to known-space
-          let nearby-patches [patches in-radius 3] of current-home-patch
-          set known-space (patch-set known-space nearby-patches)
+        ;; Add patches within a radius of 3 cells around the camp to known-space
+        let nearby-patches [patches in-radius 3] of current-home-patch
+        set known-space (patch-set known-space nearby-patches)
 
           ;; Update close-known-space and distant
-          set close-known-space known-space in-radius 12
-          set distant-known-space known-space who-are-not close-known-space
+        set close-known-space ([known-space] of foyer-owner) in-radius 12
+        set distant-known-space known-space who-are-not close-known-space
 
         ] [ ;; The herd is already in a temporary camp
 
@@ -1828,7 +1703,13 @@ to move-and-eat ; Mouvement et consommation des troupeaux - bovins puis ovins
     if remaining-DM-to-consume > 0 [
       consume-tree-resources patch-here remaining-DM-to-consume
     ]
-    ; Mettre à jour la condition corporelle en fonction des UF et MAD ingérées
+  ; Mettre à jour la condition corporelle en fonction des UF et MAD ingérées
+;  show word "Heads  " head
+;  show word "DM-ingested  " DM-ingested
+;  show word "daily-needs-UF  " daily-needs-UF
+;  show word "UF-ingested  " UF-ingested
+;  show word "daily-needs-MAD  " daily-needs-MAD
+;  show word "MAD-ingested  " MAD-ingested
 
 
 
@@ -1859,8 +1740,12 @@ to consume-grass [patch-to-eat amount monocot-prop pref-mono]
   let mono-MAD-ingested mono-ingested * [monocot-MAD-per-kg-MS] of patch-to-eat
   let dicot-MAD-ingested dicot-ingested * [dicot-MAD-per-kg-MS] of patch-to-eat
   set MAD-ingested mono-MAD-ingested + dicot-MAD-ingested
-
-
+;  show word "mono-UF-ingested  " mono-UF-ingested
+;  show word "mono-MAD-ingested  " mono-MAD-ingested
+;  show word "dicot-UF-ingested  " dicot-UF-ingested
+;  show word "dicot-MAD-ingested  " dicot-MAD-ingested
+;  show word "UF-ingested grass " UF-ingested
+;  show word "MAD-ingested grass "MAD-ingested
   ; Calculer les effets de piétinement
   let trampling-effect calculate-trampling-effect current-monocot-grass current-dicot-grass head
 
@@ -2027,191 +1912,52 @@ to update-corporal-conditions [heads UBT total-UF-ingested total-MAD-ingested da
   let MAD-UF-ratio total-MAD-ingested / total-UF-ingested
   let max-UF-ingestible 0.80 * heads * max-daily-DM-ingestible-head
   let max-MAD-ingestible 52 * heads * max-daily-DM-ingestible-head
-  ;  perte de poids
-  ;  ifelse (total-UF-ingested < daily-needs-UF) or (MAD-UF-ratio < daily-needs-ratio-MAD-UF) [
-  ;    show "plop"
-  ;    ; Calculer le déficit énergétique
-;    let energy-deficit-factor (daily-needs-UF - total-UF-ingested) / ((0.80 * heads) - daily-needs-UF)
-;
-;    ; Calculer le déficit protéique
-;    let mad-uf-deficit-factor (daily-needs-ratio-MAD-UF - MAD-UF-ratio) / ((52 * head) - daily-needs-ratio-MAD-UF)
-;
-;    ; Calculer le facteur combiné de déficit
-;    let combined-deficit-factor (energy-deficit-factor + mad-uf-deficit-factor) / 2
-;    set combined-deficit-factor max list 0 (min list combined-deficit-factor 1)
-;
-;show word "energy def fact " energy-deficit-factor
-;
-;show word "MAD UF def fact " mad-uf-deficit-factor
-;    ; Calculer la perte de poids maximale possible (par exemple, 500 g/jour)
-;    let maximum-weight-loss 500  ; en grammes par jour
-;
-;    ; Calculer la perte de poids
-;    let weight-loss combined-deficit-factor * maximum-weight-loss
-;show word "def fact " combined-deficit-factor
-;    show word "max weight loss " maximum-weight-loss
-;    ; Mettre à jour le poids vif en soustrayant la perte (convertie en kg)
-;    set weight-gain (- weight-loss / 1000) * head  ; Convertir en kg et multiplier par le nombre de têtes
-;show word "weight loss " weight-loss
-;
-;  ] [
+
     ; Calculer le facteur d'énergie
-  let energy-factor (total-UF-ingested - daily-need-UF) / (max-UF-ingestible - daily-need-UF)
-  ; Assurer que le facteur est entre -1 et 1
-  let energy-factor-total max list 0 (min list energy-factor 1)
-
-
-  let daily-ratio-need daily-need-MAD / daily-need-UF
+  let energy-factor ((total-UF-ingested - daily-need-UF) / (max-UF-ingestible - daily-need-UF))
+  ; Assurer que le facteur est entre 0 et 0.5
+  let energy-factor-total max list 0 (min list energy-factor 0.5)
 
   ; Calculer le facteur du ratio MAD/UF
-  let protein-factor (total-MAD-ingested - daily-need-MAD) / (max-MAD-ingestible - daily-need-MAD)
+  let protein-factor ((total-MAD-ingested - daily-need-MAD) / (max-MAD-ingestible - daily-need-MAD))
 
-  ; Assurer que le facteur est entre 0 et 1
-  let protein-factor-total max list 0 (min list protein-factor 1)
-
+  ; Assurer que le facteur est entre 0 et 0.5
+  let protein-factor-total max list 0 (min list protein-factor 0.5)
+;show word "protein factor" protein-factor-total
   ; Calculer le gain de poids potentiel (en grammes par jour)
-  set weight-gain (protein-factor-total * energy-factor-total * 1.7 * UBT * head) - (1 * UBT * head)
-                                                         ;show word "weight gain " weight-gain  ; Mettre à jour le poids vif
-  set live-weight (live-weight + weight-gain)
+  set weight-gain ((protein-factor-total + energy-factor-total) * 1.4 * UBT) - 0.7 * UBT
+ ; Mettre à jour le poids vif à partir du gain de poids par tête de bétail
+  set live-weight (live-weight + (weight-gain * head))
+  if live-weight > max-live-weight [ set live-weight max-live-weight]
 
-  ; Calculer la NEC à partir du poids vif en considérant que les vaches sont toutes des N'dama. A reprendre avec des valeurs adéquates pour chaque type de bétail .  (AMOUGOU MESSI G., 1998. Méthode d’estimation et variation de la composition corporelle des vaches zébu Gobra et Taurin N’Dama en fonction du niveau d’alimentation. Thèse de Doctorat Vétérinaire EISMV, Dakar, Sénégal, 102 p)
+  ; Calculer la NEC à partir du poids vif en considérant que les vaches sont toutes des N'dama. (AMOUGOU MESSI G., 1998. Méthode d’estimation et variation de la composition corporelle des vaches zébu Gobra et Taurin N’Dama en fonction du niveau d’alimentation. Thèse de Doctorat Vétérinaire EISMV, Dakar, Sénégal, 102 p)
 
   if breed = cattles [
   set corporal-condition (live-weight - (66.785 * head) ) / (47.1 * head)
   ]
 
   ; régression linéaire à partir des valeurs de https://reca-niger.org/IMG/pdf/FT_embouche_ovine_Cirdes.pdf
+
   if breed = sheeps [
-  set corporal-condition ( (4 * head) * live-weight / (23 * head)) - ( 3.69 * head)
+  set corporal-condition (live-weight - (21.21 * head)) / ( 5.75 * head)
   ]
 
   ; Assurer que la NEC reste dans des limites raisonnables (par exemple, entre 1 et 5)
   if corporal-condition < 1 [ set corporal-condition 1 ]
   if corporal-condition > 5 [ set corporal-condition 5 ]
 
-  ; Mettre à jour la condition corporelle avec la NEC  set corporal-condition NEC
-
-  ;  ; Calculer le ratio de MAD consommé par rapport au MAD nécessaire
-  ;  let MAD-ratio total-MAD-ingested / daily-needs-MAD
-  ;
-  ;  ; Mettre à jour la condition protéique
-  ;  set protein-condition protein-condition + (protein-condition * MAD-ratio)  ; Échelle de 0 à 10
-  ;
-  ;  ; Assurer que la condition protéique reste entre 0 et 10
-  ;  if protein-condition < 0 [ set protein-condition 0 ]
-  ;  if protein-condition > 100 [ set protein-condition 100 ]
-  ;
 end
 
 
 
 
-   ; set grass-eaten consume-grass patch-here daily-needs
- ;   let total-eaten grass-eaten
- ;   let remaining-needs daily-needs - grass-eaten
- ;   if remaining-needs > 0 [
- ;     let tree-eaten consume-tree-resources patch-here remaining-needs
-;      set total-eaten total-eaten + tree-eaten
-;    ]
-
- ;   ; Calcul de l'énergie ingérée
-  ;  let energy-per-kg-dm 1.75  ;; MCal par kg de MS
-   ; set energy-intake total-eaten * energy-per-kg-dm
-
-    ; Calcul du gain de poids
- ;   let energy-per-kg-gain 7.5  ;; MCal par kg de gain de poids
- ;   set weight-gain energy-intake / energy-per-kg-gain
-
-    ; Mise à jour du poids vif
-   ; set live-weight live-weight + weight-gain
-
-    ; Mise à jour de la condition corporelle
-  ;  set corporal-condition live-weight / (initial-live-weight * head)
- ; ];
-
-  ;; Mouvement et consommation des ovins
- ; ask sheeps [
-    ;; Maintenant, trouver le best-patch pour le tick courant avec le known-space mis à jour
- ;   let best-patch find-best-nearest-patch known-space
-;
-    ;; Stocker le best-patch pour le prochain tick
- ;   set previously-visited-patch best-patch
-
- ;   let daily-needs max-daily-DM-ingestible-per-head * head
- ;   let grass-eaten 0
-
-;    if best-patch != nobody [
-;      move-to best-patch
-;    ]
-
- ;   set grass-eaten consume-grass patch-here daily-needs
- ;   let total-eaten grass-eaten
- ;   let remaining-needs daily-needs - grass-eaten
- ;   if remaining-needs > 0 [
- ;     let tree-eaten consume-tree-resources patch-here remaining-needs
- ;     set total-eaten total-eaten + tree-eaten
-;    ]
- ;   set corporal-condition (update-condition total-eaten daily-needs q) / head
- ; ]
-;end
-
-
-; Consommer de l'herbe sur un patch donné
-;to-report consume-grass [patch-to-eat amount]
- ; let grass-available [current-grass] of patch-to-eat
-;  let trampling-effect calculate-trampling-effect current-grass q head
- ; let grass-ingered min list grass-available amount  ; La quantité d'herbe consommée est limitée par ce qui est disponible
-;  ask patch-to-eat [
- ;   set current-grass current-grass - (grass-ingered + trampling-effect)
- ; ]
- ; report grass-ingered  ; Retourner la quantité d'herbe consommée
-;end
-
-
-
-
-; Mettre à jour la condition corporelle en fonction de la nourriture consommée
-;to-report update-condition [grass-eaten daily-needs quality-ratio]
-;  let actual-condition 0
-  ; Mettre à jour la condition corporelle en utilisant q
-;  set actual-condition corporal-condition + (grass-eaten * quality-ratio - daily-needs)
-;  report actual-condition
-;  print actual-condition
-;end
-
-
-;;to-report calculate-trampling-effect [grass good-grass-prop heads] - Version 1
-  ;; Calcul de l'effet de piétinement (MLVstk) en fonction de la biomasse (current-grass)
-  ;; et de la proportion de dicotylédones (dicot)
-
-  ;;let monocot-effect 0.2 * exp(-0.00068 * grass * (1 - good-grass-prop))  ; Effet sur les monocotylédones
- ;; let dicot-effect 0.165 * exp(-0.00092 * grass * good-grass-prop)  ; Effet sur les dicotylédones
-
-  ;; Combiner les effets des deux types de végétation
- ;; let MLVstk monocot-effect + dicot-effect
-
-  ;; Le MLVstk est multiplié par la taille du troupeau (head) pour avoir l'effet total sur le patch
- ;; report MLVstk * heads
-;;end
-
-; Mettre à jour la condition corporelle en fonction de la nourriture consommée
-;to-report update-condition [grass-eaten daily-needs quality-ratio]
- ; let actual-condition 0
-  ; Mettre à jour la condition corporelle en utilisant q
-  ;set actual-condition corporal-condition + (grass-eaten * quality-ratio - daily-needs)
-  ;report actual-condition
-  ;print actual-condition
-;end
-
-
 to choose-strategy
-  ask foyers [
     ;; Récupérer les conditions corporelles des troupeaux de bovins
-    let cattle-cc round [corporal-condition] of cattle-herd
+    let cattle-cc  [corporal-condition] of cattle-herd
     let cattle-pc round [protein-condition] of cattle-herd
 
     ;; Récupérer les conditions corporelles des troupeaux de moutons
-    let sheep-cc round [corporal-condition] of sheep-herd
+    let sheep-cc [corporal-condition] of sheep-herd
     let sheep-pc round [protein-condition] of sheep-herd
 
 
@@ -2222,9 +1968,11 @@ to choose-strategy
     ;; Si **une des deux** conditions des troupeaux est en dessous du seuil, exécuter `do-first-strategy`
     if [cattle-cc <= 3] of cattle-herd [
       do-first-strategy
+;    show word "toutouuu  " cattle-cc
     ]
      if [sheep-cc <= 3] of sheep-herd  [
       do-first-strategy
+;        show word "toutouuu  " sheep-cc
     ]
 
     ;; Si **les deux** conditions des deux troupea sont en dessous des seuils, quitter le modèle
@@ -2244,19 +1992,20 @@ to choose-strategy
         ]
       ]
     ]
-  ]
 end
 
 to do-first-strategy
   ;; Store the foyer's variables in local variables
   let home-patch original-home-patch
+  show word "home-patch   " home-patch
   let my-known-space known-space
+  show word "my known-space     " my-known-space
   ;; Find patches within 12 units of home-patch and not in known-space
   let undiscovered-patches patches with [
     distance home-patch <= 12 and not member? self my-known-space
   ]
+  show word "undiscovered-patches      "  undiscovered-patches
   ask undiscovered-patches [set pcolor red ]
-  stop
   ifelse any? undiscovered-patches [
     ;; Se déplacer vers un patch aléatoire parmi ces patches
     move-to one-of undiscovered-patches
@@ -2372,6 +2121,12 @@ to display-knownSpace
   ask patches [set pcolor white]
   ask foyers [
     ask known-space [set pcolor [who] of myself]
+  ]
+  ask cattles [
+  ask known-space [set pcolor [who] of myself]
+  ]
+  ask sheeps [
+  ask known-space [set pcolor [who] of myself]
   ]
 end
 to color-grass  ;; patch procedure
@@ -2653,7 +2408,7 @@ end
 to-report calculate-tree-icon-size [populations]
   ;; Définir les valeurs minimales et maximales pour le mapping
   let minPopulation 0
-  let maxPopulation 10000  ;; Ajustez cette valeur en fonction de vos données réelles
+  let maxPopulation 8000  ;; Ajustez cette valeur en fonction de vos données réelles
   let minSize 0.1
   let maxSize 1.5
   ;; Assurer que population est dans les limites
@@ -2752,10 +2507,6 @@ to-report growth-leaf-logistic [input-tree-type tree-age pop-size current-leaf m
     ]
     ; Afficher les valeurs pour débogage
 
-    ; Vérifier que max-leaf n'est pas égal à zéro
-    if max-leaf = 0 [
-      report 0  ; Éviter la division par zéro
-  ]
     let growth precision (r * (precision current-leaf 5) * (precision (1 - (current-leaf / max-leaf)) 5)) 5
     if abs(growth) > 1e10 [
     report 0
@@ -2798,8 +2549,8 @@ end
 
 ; Trouver le meilleur patch : d'abord la qualité, ensuite la quantité, enfin la proximité
 to-report find-best-nearest-patch [known-spaces]
-  let viable-patches known-space with [current-grass > 1]
-
+  let viable-patches known-spaces with [current-grass >= 40]
+show viable-patches
   ifelse any? viable-patches [
     ifelse shepherd-type = "good" [
     ; Étape 1 : Sélectionner les patches avec la meilleure qualité d'herbe
@@ -3100,7 +2851,7 @@ CHOOSER
 visualization-mode
 visualization-mode
 "soil-type" "tree-cover" "grass-cover" "grass-quality" "known-space"
-2
+4
 
 BUTTON
 689
@@ -3167,7 +2918,7 @@ good-shepherd-percentage
 good-shepherd-percentage
 0
 100
-99.0
+100.0
 1
 1
 NIL
@@ -3182,7 +2933,7 @@ proportion-big-herders
 proportion-big-herders
 0
 100
-56.0
+100.0
 1
 1
 NIL
@@ -3197,7 +2948,7 @@ proportion-medium-herders
 proportion-medium-herders
 0
 100
-16.0
+0.0
 1
 1
 NIL
@@ -3401,6 +3152,24 @@ year-index
 17
 1
 11
+
+PLOT
+770
+365
+970
+515
+mean grass per Ha
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot meanGrass"
 
 @#$#@#$#@
 ## WHAT IS IT?
