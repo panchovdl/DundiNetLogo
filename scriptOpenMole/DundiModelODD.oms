@@ -1,0 +1,102 @@
+
+/*
+This is skeleton to plug your model into OpenMOLE. To go further you should complete it.
+Define some hook, some exploration methods, and optionally some execution environment.
+To do all that please refer to the OpenMOLE documentation.
+*/
+
+val initialNumberOfCamps = Val[Double]
+val spaceCampMean = Val[Double]
+val spaceCampMin = Val[Double]
+val spaceCampMax = Val[Double]
+val spaceCampStandardDeviation = Val[Double]
+val maxPonds4Months = Val[Double]
+val maxPonds5Months = Val[Double]
+val maxPonds6Months = Val[Double]
+val visualizationMode = Val[String]
+val goodShepherdPercentage = Val[Double]
+val proportionBigHerders = Val[Double]
+val proportionMediumHerders = Val[Double]
+val currentSeason = Val[String]
+val currentYearType = Val[String]
+val yearIndex = Val[Double]
+val mySeed = Val[Int]
+
+// Déclaration des outputs
+val totalFoyers = Val[Double]
+val totalSheeps = Val[Double]
+val totalCattles = Val[Double]
+val waterStock = Val[Double]
+val sheepsTempCamp = Val[Double]
+val cattlesTempCamp = Val[Double]
+val sheepsHaveLeft = Val[Double]
+val cattlesHaveLeft = Val[Double]
+val sheepsWeightGain = Val[Double]
+val cattlesWeightGain = Val[Double]
+val meanSheepsLiveWeight = Val[Double]
+val meanCattlesLiveWeight = Val[Double]
+val meanSheepsNEC = Val[Double]
+val meanCattlesNEC = Val[Double]
+val TotalGrass = Val[Double]
+val totalTrees = Val[Double]
+val sumSmallHerder = Val[Double]
+val sumMediumHerder = Val[Double]
+val sumLargeHerder = Val[Double]
+
+val dundiModelTask = NetLogo6Task(
+  workDirectory / "DundiModelODD.nlogo",
+    Seq("setup", "while [ticks <= 3650] [go] ;; critère d'arrête du model 10 ans"),
+    seed = mySeed,
+    embedWorkspace = true) set (
+    inputs += initialNumberOfCamps mapped "initial-number-of-camps",
+    inputs += spaceCampMean mapped "space-camp-mean",
+    inputs += spaceCampMin mapped "space-camp-min",
+    inputs += spaceCampMax mapped "space-camp-max",
+    inputs += spaceCampStandardDeviation mapped "space-camp-standard-deviation",
+    inputs += maxPonds4Months mapped "max-ponds-4-months",
+    inputs += maxPonds5Months mapped "max-ponds-5-months",
+    inputs += maxPonds6Months mapped "max-ponds-6-months",
+    inputs += visualizationMode mapped "visualization-mode",
+    inputs += goodShepherdPercentage mapped "good-shepherd-percentage",
+    inputs += proportionBigHerders mapped "proportion-big-herders",
+    inputs += proportionMediumHerders mapped "proportion-medium-herders",
+    // Mapper les variables openMole avec les output du model
+    outputs += currentSeason mapped "current-season",
+    outputs += currentYearType mapped "current-year-type",
+    outputs += yearIndex mapped "year-index",
+    outputs += totalFoyers mapped "totalFoyers",
+    outputs += totalSheeps mapped "totalSheeps",
+    outputs += totalCattles mapped "totalCattles",
+    outputs += waterStock mapped "waterStock",
+    outputs += sheepsTempCamp mapped "sheepsTempCamp",
+    outputs += cattlesTempCamp mapped "cattlesTempCamp",
+    outputs += sheepsHaveLeft mapped "sheepsHaveLeft",
+    outputs += cattlesHaveLeft mapped "cattlesHaveLeft",
+    outputs += sheepsWeightGain mapped "sheepsWeightGain",
+    outputs += cattlesWeightGain mapped "cattlesWeightGain",
+    outputs += meanSheepsLiveWeight mapped "meanSheepsLiveWeight",
+    outputs += meanCattlesLiveWeight mapped "meanCattlesLiveWeight",
+    outputs += meanSheepsNEC mapped "meanSheepsNEC",
+    outputs += meanCattlesNEC mapped "meanCattlesNEC",
+    outputs += TotalGrass mapped "TotalGrass",
+    outputs += totalTrees mapped "totalTrees",
+    outputs += sumSmallHerder mapped "sumSmallHerder",
+    outputs += sumMediumHerder mapped "sumMediumHerder",
+    outputs += sumLargeHerder mapped "sumLargeHerder",
+    
+    initialNumberOfCamps := 1.0,
+    spaceCampMean := 1.0,
+    spaceCampMin := 1.0,
+    spaceCampMax := 1.0,
+    spaceCampStandardDeviation := 0.0,
+    maxPonds4Months := 4.0,
+    maxPonds5Months := 0.0,
+    maxPonds6Months := 0.0,
+    visualizationMode := "grass-cover",
+    goodShepherdPercentage := 99.0,
+    proportionBigHerders := 56.0,
+    proportionMediumHerders := 16.0,
+    mySeed := 42
+  )
+
+dundiModelTask hook display
