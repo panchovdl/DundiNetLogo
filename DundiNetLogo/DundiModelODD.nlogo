@@ -376,6 +376,7 @@ to setup
   set max-trees max [tree-cover] of patches
 
   ;Visualiser l'environnement
+  reset-ticks
   calculStat
   update-visualization
   display-labels
@@ -2934,20 +2935,20 @@ waterStock
 11
 
 CHOOSER
-250
-490
-406
-535
+640
+475
+796
+520
 visualization-mode
 visualization-mode
 "soil-type" "tree-cover" "grass-cover" "grass-quality" "known-space"
 4
 
 BUTTON
-405
-490
-495
-523
+545
+475
+635
+508
 visualize
   update-visualization
 NIL
@@ -3288,9 +3289,9 @@ PENS
 
 PLOT
 800
-465
+490
 1000
-615
+640
 Trees Resources Consumption
 NIL
 NIL
@@ -3308,10 +3309,10 @@ PENS
 "pen-3" 1.0 0 -955883 true "" "plot meanLeavesConsumedSheep"
 
 SLIDER
-225
-510
-437
-543
+220
+490
+432
+523
 SheepNECSatifactionIndex
 SheepNECSatifactionIndex
 0
@@ -3323,10 +3324,10 @@ NIL
 HORIZONTAL
 
 PLOT
-785
-465
-985
-615
+10
+490
+210
+640
 MST NEC
 NIL
 NIL
@@ -3342,10 +3343,10 @@ PENS
 "cattle" 1.0 0 -16777216 true "" "plot  MSTCattle-NEC"
 
 SLIDER
-225
-550
-422
-583
+220
+530
+417
+563
 CattleNECSatifactionIndex
 CattleNECSatifactionIndex
 0

@@ -19,17 +19,26 @@ globals [
   meanSheepsNEC
   meanCattlesNEC
   
+  totalTrees8years
+  totalTrees7years
+  totalTrees6years
+  totalTrees5years
+  totalTrees4years
+  totalTrees3years
+  totalTrees2years
+  totalTrees1years
   
-  TotalGrass
+  totalGrass
   totalTrees
   meanGrass
+  meanFruitsConsumedCattle
+  meanLeavesConsumedCattle
+  meanFruitsConsumedSheep 
+  meanLeavesConsumedSheep 
   
   sumSmallHerder
   sumMediumHerder
   sumLargeHerder
-  
-  MSTSheep-NEC
-  MSTCattle-NEC
 ]
 
 to calculStat
@@ -45,7 +54,6 @@ to calculStat
   set sheepsWeightGain mean [weight-gain] of sheeps
   set cattlesWeightGain mean [weight-gain] of cattles
   
-<<<<<<< HEAD
   set meanCattlesLiveWeight mean [live-weight] of cattles / mean [head]  of cattles
 ;  set maxCattlesLiveWeight max [max-live-weight] of cattles
   set maxCattlesLiveWeight 350
@@ -56,32 +64,6 @@ to calculStat
   set maxSheepsLiveWeight 80
 ;  set minSheepsLiveWeight [min-live-weight] of sheeps
   set minSheepsLiveWeight 21
-=======
-  ifelse count cattles with [have-left = false] > 0 [
-    set meanCattlesLiveWeight (mean [live-weight] of cattles with [have-left = false]) / (mean [head]  of cattles with [have-left = false])
-    let oneMaxCattleHerd one-of cattles with [have-left = false] with-max [live-weight]
-    set maxCattlesLiveWeight ( [live-weight] of oneMaxCattleHerd) / ([head] of oneMaxCattleHerd)
-    let oneMinCattleHerd one-of cattles with [have-left = false] with-min [live-weight]
-    set minCattlesLiveWeight ([live-weight] of oneMinCattleHerd) / ([head] of oneMinCattleHerd)
-  ][
-    set meanCattlesLiveWeight 0
-    set maxCattlesLiveWeight 0
-    set minCattlesLiveWeight 0
-  ]
-
-  ifelse count sheeps with [have-left = false] > 0 [  
-  set meanSheepsLiveWeight (mean [live-weight] of sheeps with [have-left = false]) / (mean [head]  of sheeps with [have-left = false])
-    let oneMaxSheepHerd one-of sheeps with [have-left = false] with-max [live-weight]
-    set maxSheepsLiveWeight ( [live-weight] of oneMaxSheepHerd) / ([head] of oneMaxSheepHerd)
-    let oneMinSheepHerd one-of sheeps with [have-left = false] with-min [live-weight]
-    set minSheepsLiveWeight ([live-weight] of oneMinSheepHerd) / ([head] of oneMinSheepHerd)
-  ][
-    set meanSheepsLiveWeight 0
-    set maxSheepsLiveWeight 0
-    set minSheepsLiveWeight 0
-  ]
-  
->>>>>>> 647acda6a0d2cc72453faa8d03248751034d5865
   if count cattles with [have-left = false] > 0[ ;; Est-ce qu'il y a quelque chose a faire dans le else ?
     set meanCattlesNEC mean [corporal-condition] of cattles with [have-left = false]
   ]
@@ -91,24 +73,23 @@ to calculStat
   set totalGrass sum [current-grass] of patches
   set meanGrass mean [current-grass] of patches
   set totalTrees sum [population-size] of tree-populations
+  set totalTrees8years sum [population-size] of tree-populations with [tree-pop-age >= 8]
+  set totalTrees7years sum [population-size] of tree-populations with [tree-pop-age = 7]
+  
+  set totalTrees6years sum [population-size] of tree-populations with [tree-pop-age = 6]
+  set totalTrees5years sum [population-size] of tree-populations with [tree-pop-age = 5]
+  set totalTrees4years sum [population-size] of tree-populations with [tree-pop-age = 4]
+  set totalTrees3years sum [population-size] of tree-populations with [tree-pop-age = 3]
+  set totalTrees2years sum [population-size] of tree-populations with [tree-pop-age = 2]
+  set totalTrees1years sum [population-size] of tree-populations with [tree-pop-age = 1]
+  
+;  set meanFruitsConsumedCattle mean [fruits-consumed] of cattles with [have-left = false]
+;  set meanLeavesConsumedCattle mean [leaves-consumed] of cattles with [have-left = false]
+;  set meanFruitsConsumedSheep  mean [fruits-consumed] of sheeps with [have-left = false]
+;  set meanLeavesConsumedSheep mean [leaves-consumed] of sheeps with [have-left = false]
+  
   
   set sumSmallHerder count foyers with [herder-type = "petit"]
   set sumMediumHerder count foyers with [herder-type = "moyen"]
   set sumLargeHerder count foyers with [herder-type = "grand"]
-  
-  if ticks > 0[
-  ask foyers [
-    if SheepNECSatifactionIndex <= [corporal-condition] of sheep-herd [
-      set sheepNEC-satisfaction (sheepNEC-satisfaction + 1)
-    ]
-      
-    if CattleNECSatifactionIndex <= [corporal-condition] of cattle-herd [
-      set cattleNEC-satisfaction (cattleNEC-satisfaction + 1)
-    ]
-  ]
-  set MSTSheep-NEC (mean[sheepNEC-satisfaction] of foyers) / ticks
-  set MSTCattle-NEC (mean[cattleNEC-satisfaction] of foyers) / ticks
-  
-  ]
-  
 end
