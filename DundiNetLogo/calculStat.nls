@@ -19,8 +19,10 @@ globals [
   meanSheepsNEC
   meanCattlesNEC
   
+  
   TotalGrass
   totalTrees
+  meanGrass
   
   sumSmallHerder
   sumMediumHerder
@@ -41,11 +43,11 @@ to calculStat
   set cattlesWeightGain mean [weight-gain] of cattles
   
   set meanCattlesLiveWeight mean [live-weight] of cattles / mean [head]  of cattles
-  set maxCattlesLiveWeight max [live-weight] of cattles / max [head]  of cattles
-  set minCattlesLiveWeight min [live-weight] of cattles / min [head]  of cattles
+  set maxCattlesLiveWeight max [max-live-weight] of cattles
+  set minCattlesLiveWeight [min-live-weight] of cattles
   set meanSheepsLiveWeight mean [live-weight] of sheeps / mean [head]  of sheeps
-  set maxSheepsLiveWeight max [live-weight] of sheeps / max [head]  of sheeps
-  set minSheepsLiveWeight min [live-weight] of sheeps / min [head]  of sheeps
+  set maxSheepsLiveWeight [max-live-weight] of sheeps
+  set minSheepsLiveWeight [min-live-weight] of sheeps
   if count cattles with [have-left = false] > 0[ ;; Est-ce qu'il y a quelque chose a faire dans le else ?
     set meanCattlesNEC mean [corporal-condition] of cattles with [have-left = false]
   ]
@@ -53,6 +55,7 @@ to calculStat
     set meanSheepsNEC mean [corporal-condition] of sheeps with [have-left = false]
   ]
   set totalGrass sum [current-grass] of patches
+  set meanGrass mean [current-grass] of patches
   set totalTrees sum [population-size] of tree-populations
   
   set sumSmallHerder count foyers with [herder-type = "petit"]
