@@ -27,6 +27,9 @@ globals [
   sumSmallHerder
   sumMediumHerder
   sumLargeHerder
+  
+  MSTSheep-NEC
+  MSTCattle-NEC
 ]
 
 to calculStat
@@ -79,4 +82,20 @@ to calculStat
   set sumSmallHerder count foyers with [herder-type = "petit"]
   set sumMediumHerder count foyers with [herder-type = "moyen"]
   set sumLargeHerder count foyers with [herder-type = "grand"]
+  
+  if ticks > 0[
+  ask foyers [
+    if SheepNECSatifactionIndex <= [corporal-condition] of sheep-herd [
+      set sheepNEC-satisfaction (sheepNEC-satisfaction + 1)
+    ]
+      
+    if CattleNECSatifactionIndex <= [corporal-condition] of cattle-herd [
+      set cattleNEC-satisfaction (cattleNEC-satisfaction + 1)
+    ]
+  ]
+  set MSTSheep-NEC (mean[sheepNEC-satisfaction] of foyers) / ticks
+  set MSTCattle-NEC (mean[cattleNEC-satisfaction] of foyers) / ticks
+  
+  ]
+  
 end

@@ -215,6 +215,8 @@ foyers-own [
   friends                          ; Amis de l'agent
   far-exploration-count            ; Compteur d'exploration au loin
   close-exploration-count          ; Compteur d'exploration proche
+  cattleNEC-satisfaction
+  sheepNEC-satisfaction
 ]
 
 
@@ -360,12 +362,13 @@ to setup
   set max-grass max [K] of patches ; pour visualisation
   set max-trees max [tree-cover] of patches
 
+
+
+  reset-ticks
   ;Visualiser l'environnement
   calculStat
   update-visualization
   display-labels
-
-  reset-ticks
 
 end
 
@@ -3058,7 +3061,7 @@ current-year-type
 SLIDER
 690
 307
-932
+865
 340
 good-shepherd-percentage
 good-shepherd-percentage
@@ -3073,7 +3076,7 @@ HORIZONTAL
 SLIDER
 689
 236
-931
+864
 269
 proportion-big-herders
 proportion-big-herders
@@ -3088,7 +3091,7 @@ HORIZONTAL
 SLIDER
 689
 271
-932
+864
 304
 proportion-medium-herders
 proportion-medium-herders
@@ -3198,10 +3201,10 @@ PENS
 "Sheeps" 1.0 0 -8275240 true "" "plot meanSheepsNEC"
 
 BUTTON
-40
-585
-150
-618
+85
+435
+195
+468
 removeGrass
 ask patches [set current-grass  0.1\nset current-monocot-grass 0.1\nset current-dicot-grass 0.1]
 NIL
@@ -3213,24 +3216,6 @@ NIL
 NIL
 NIL
 1
-
-PLOT
-1000
-465
-1245
-615
-Sum grass
-NIL
-NIL
-0.0
-10.0
-0.0
-10.0
-true
-false
-"" ""
-PENS
-"default" 1.0 0 -14835848 true "" "plot totalGrass"
 
 PLOT
 1245
@@ -3300,9 +3285,9 @@ year-index
 11
 
 PLOT
-740
+985
 465
-1000
+1245
 615
 mean grass (kg/Ha)
 NIL
@@ -3316,6 +3301,55 @@ false
 "" ""
 PENS
 "default" 1.0 0 -16777216 true "" "plot meanGrass"
+
+SLIDER
+225
+510
+437
+543
+SheepNECSatifactionIndex
+SheepNECSatifactionIndex
+0
+5
+3.0
+1
+1
+NIL
+HORIZONTAL
+
+PLOT
+785
+465
+985
+615
+MST NEC
+NIL
+NIL
+0.0
+10.0
+0.0
+1.0
+true
+false
+"" ""
+PENS
+"sheep" 1.0 0 -13791810 true "" "plot  MSTSheep-NEC"
+"cattle" 1.0 0 -16777216 true "" "plot  MSTCattle-NEC"
+
+SLIDER
+225
+550
+422
+583
+CattleNECSatifactionIndex
+CattleNECSatifactionIndex
+0
+5
+3.0
+1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
