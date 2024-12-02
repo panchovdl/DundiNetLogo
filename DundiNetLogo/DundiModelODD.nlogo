@@ -1,5 +1,5 @@
 __includes["calculStat.nls"]
-extensions [csv]
+extensions [csv csv]
 
 globals [
   size-x                 ; Taille horizontale du monde
