@@ -1,5 +1,6 @@
 __includes["calculStat.nls"]
 extensions [csv]
+extensions [csv csv]
 
 globals [
   size-x                 ; Taille horizontale du monde
@@ -223,6 +224,10 @@ foyers-own [
   friends                          ; Amis de l'agent
   far-exploration-count            ; Compteur d'exploration au loin
   close-exploration-count          ; Compteur d'exploration
+  close-exploration-count          ; Compteur d'exploration proche
+  cattleNEC-satisfaction
+  sheepNEC-satisfaction
+>>>>>>> 647acda6a0d2cc72453faa8d03248751034d5865
 ]
 
 
@@ -373,6 +378,9 @@ to setup
   set max-grass max [K] of patches ; pour visualisation
   set max-trees max [tree-cover] of patches
 
+
+
+  reset-ticks
   ;Visualiser l'environnement
   calculStat
   update-visualization
@@ -2730,6 +2738,9 @@ to-report find-best-nearest-patch [known-spaces my-shepherd]
     let max-grass-patches best-quality-patches with-max [current-grass]
 
 ;show word "max-grass-patches       " max-grass-patches
+    ; Étape 2 : Parmi les patches avec la meilleure qualité, sélectionner ceux avec la plus grande quantité d'herbe
+    let max-grass-patches best-quality-patches with-max [current-grass]
+
     ; Étape 3 : Choisir le patch le plus proche parmi ceux avec la meilleure qualité et la plus grande quantité d'herbe
     report min-one-of max-grass-patches [distance myself]
     ] [
@@ -2851,6 +2862,82 @@ NIL
 NIL
 0
 
+=======
+SLIDER
+9
+83
+207
+116
+initial-number-of-camps
+initial-number-of-camps
+0
+200
+17.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+8
+190
+206
+223
+space-camp-mean
+space-camp-mean
+space-camp-min
+space-camp-max
+1.0
+1
+1
+foyers
+HORIZONTAL
+
+SLIDER
+9
+119
+207
+152
+space-camp-min
+space-camp-min
+0
+100
+1.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+9
+155
+206
+188
+space-camp-max
+space-camp-max
+space-camp-min
+50
+1.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+9
+227
+205
+260
+space-camp-standard-deviation
+space-camp-standard-deviation
+0
+20
+0.0
+1
+1
+NIL
+HORIZONTAL
+
 MONITOR
 9
 265
@@ -2951,10 +3038,10 @@ visualization-mode
 4
 
 BUTTON
-689
-499
-779
-532
+530
+550
+620
+583
 visualize
   update-visualization
 NIL
@@ -3009,13 +3096,13 @@ current-year-type
 SLIDER
 690
 307
-932
+865
 340
 good-shepherd-percentage
 good-shepherd-percentage
 0
 100
-0.0
+29.0
 1
 1
 NIL
@@ -3024,13 +3111,13 @@ HORIZONTAL
 SLIDER
 689
 236
-931
+864
 269
 proportion-big-herders
 proportion-big-herders
 0
 100
-100.0
+65.0
 1
 1
 NIL
@@ -3039,13 +3126,13 @@ HORIZONTAL
 SLIDER
 689
 271
-932
+864
 304
 proportion-medium-herders
 proportion-medium-herders
 0
 100
-0.0
+23.0
 1
 1
 NIL
@@ -3112,7 +3199,7 @@ PENS
 PLOT
 1310
 165
-1615
+1690
 315
 CATTLE weight per head
 NIL
@@ -3149,10 +3236,10 @@ PENS
 "Sheeps" 1.0 0 -8275240 true "" "plot meanSheepsNEC"
 
 BUTTON
-40
-585
-150
-618
+85
+435
+195
+468
 removeGrass
 ask patches [set current-grass  0.1\nset current-monocot-grass 0.1\nset current-dicot-grass 0.1]
 NIL
@@ -3164,24 +3251,6 @@ NIL
 NIL
 NIL
 1
-
-PLOT
-1000
-465
-1245
-615
-Sum grass
-NIL
-NIL
-0.0
-10.0
-0.0
-10.0
-true
-false
-"" ""
-PENS
-"default" 1.0 0 -14835848 true "" "plot totalGrass"
 
 PLOT
 1245
@@ -3222,7 +3291,7 @@ PENS
 PLOT
 1310
 315
-1615
+1690
 465
 SHEEP weight per head
 NIL
@@ -3251,11 +3320,11 @@ year-index
 11
 
 PLOT
-770
-365
-970
-515
-mean grass per Ha
+985
+465
+1245
+615
+mean grass (kg/Ha)
 NIL
 NIL
 0.0
@@ -3313,6 +3382,55 @@ PENS
 "pen-1" 1.0 0 -7500403 true "" "plot meanLeavesConsumedCattle"
 "pen-2" 1.0 0 -2674135 true "" "plot meanFruitsConsumedSheep"
 "pen-3" 1.0 0 -955883 true "" "plot meanLeavesConsumedSheep"
+
+SLIDER
+225
+510
+437
+543
+SheepNECSatifactionIndex
+SheepNECSatifactionIndex
+0
+5
+3.0
+1
+1
+NIL
+HORIZONTAL
+
+PLOT
+785
+465
+985
+615
+MST NEC
+NIL
+NIL
+0.0
+10.0
+0.0
+1.0
+true
+false
+"" ""
+PENS
+"sheep" 1.0 0 -13791810 true "" "plot  MSTSheep-NEC"
+"cattle" 1.0 0 -16777216 true "" "plot  MSTCattle-NEC"
+
+SLIDER
+225
+550
+422
+583
+CattleNECSatifactionIndex
+CattleNECSatifactionIndex
+0
+5
+3.0
+1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
