@@ -224,7 +224,6 @@ foyers-own [
   friends                          ; Amis de l'agent
   far-exploration-count            ; Compteur d'exploration au loin
   close-exploration-count          ; Compteur d'exploration
-  close-exploration-count          ; Compteur d'exploration proche
   cattleNEC-satisfaction
   sheepNEC-satisfaction
 >>>>>>> 647acda6a0d2cc72453faa8d03248751034d5865
@@ -1871,7 +1870,6 @@ to consume-tree-resources [patch-of-grass-eaten remaining-needs] ;; contexte tro
       let who-one-tree-population item 0 i
       let one-tree-population turtle who-one-tree-population
 
-      show word "one-tree-population             " one-tree-population
       let max-consumable item 1 i
 
       let share (max-consumable / total-available)
@@ -1901,15 +1899,8 @@ to consume-tree-resources [patch-of-grass-eaten remaining-needs] ;; contexte tro
 
         ;; Accumuler les valeurs
         set total-UF-ingested-from-trees total-UF-ingested-from-trees + UF-ingested-pop
-    show word "  UF-ingested-pop    "     UF-ingested-pop
-     show word " total-UF-ingested-from-trees    "     total-UF-ingested-from-trees
         set total-MAD-ingested-from-trees total-MAD-ingested-from-trees + MAD-ingested-pop
-           show word "  total-MAD-ingested-from-trees    "     total-MAD-ingested-from-trees
-
-           show word "   total-MAD-ingested-from-trees    "      total-MAD-ingested-from-trees
         set total-DM-ingested-from-trees total-DM-ingested-from-trees + amount-consumed
-           show word "  total-DM-ingested-from-trees    "     total-DM-ingested-from-trees
-           show word "  amount-consumed    "     amount-consumed
 
       ] ;; end if
     ];; end foreach
@@ -2738,9 +2729,6 @@ to-report find-best-nearest-patch [known-spaces my-shepherd]
     let max-grass-patches best-quality-patches with-max [current-grass]
 
 ;show word "max-grass-patches       " max-grass-patches
-    ; Étape 2 : Parmi les patches avec la meilleure qualité, sélectionner ceux avec la plus grande quantité d'herbe
-    let max-grass-patches best-quality-patches with-max [current-grass]
-
     ; Étape 3 : Choisir le patch le plus proche parmi ceux avec la meilleure qualité et la plus grande quantité d'herbe
     report min-one-of max-grass-patches [distance myself]
     ] [
@@ -2802,9 +2790,9 @@ to-report patches-between [ p1 p2 ]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-210
+100
 10
-678
+568
 479
 -1
 -1
@@ -2829,9 +2817,9 @@ ticks
 30.0
 
 BUTTON
-68
+5
 10
-141
+78
 43
 NIL
 setup
@@ -2846,10 +2834,10 @@ NIL
 1
 
 BUTTON
-146
-10
-209
-43
+5
+45
+68
+78
 NIL
 go\n
 T
@@ -2861,82 +2849,6 @@ NIL
 NIL
 NIL
 0
-
-=======
-SLIDER
-9
-83
-207
-116
-initial-number-of-camps
-initial-number-of-camps
-0
-200
-17.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-8
-190
-206
-223
-space-camp-mean
-space-camp-mean
-space-camp-min
-space-camp-max
-1.0
-1
-1
-foyers
-HORIZONTAL
-
-SLIDER
-9
-119
-207
-152
-space-camp-min
-space-camp-min
-0
-100
-1.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-9
-155
-206
-188
-space-camp-max
-space-camp-max
-space-camp-min
-50
-1.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-9
-227
-205
-260
-space-camp-standard-deviation
-space-camp-standard-deviation
-0
-20
-0.0
-1
-1
-NIL
-HORIZONTAL
 
 MONITOR
 9
@@ -3028,20 +2940,20 @@ waterStock
 11
 
 CHOOSER
-523
-495
-679
-540
+250
+490
+406
+535
 visualization-mode
 visualization-mode
 "soil-type" "tree-cover" "grass-cover" "grass-quality" "known-space"
 4
 
 BUTTON
-530
-550
-620
-583
+405
+490
+495
+523
 visualize
   update-visualization
 NIL
@@ -3055,10 +2967,10 @@ NIL
 1
 
 BUTTON
-145
-45
-208
-78
+4
+80
+67
+113
 NIL
 go
 NIL
@@ -3094,15 +3006,15 @@ current-year-type
 11
 
 SLIDER
-690
-307
-865
-340
+840
+235
+995
+268
 good-shepherd-percentage
 good-shepherd-percentage
 0
 100
-29.0
+0.0
 1
 1
 NIL
@@ -3111,13 +3023,13 @@ HORIZONTAL
 SLIDER
 689
 236
-864
+844
 269
 proportion-big-herders
 proportion-big-herders
 0
 100
-65.0
+100.0
 1
 1
 NIL
@@ -3126,13 +3038,13 @@ HORIZONTAL
 SLIDER
 689
 271
-864
+844
 304
 proportion-medium-herders
 proportion-medium-herders
 0
 100
-23.0
+0.0
 1
 1
 NIL
@@ -3199,7 +3111,7 @@ PENS
 PLOT
 1310
 165
-1690
+1615
 315
 CATTLE weight per head
 NIL
@@ -3236,10 +3148,10 @@ PENS
 "Sheeps" 1.0 0 -8275240 true "" "plot meanSheepsNEC"
 
 BUTTON
-85
-435
-195
-468
+575
+270
+685
+303
 removeGrass
 ask patches [set current-grass  0.1\nset current-monocot-grass 0.1\nset current-dicot-grass 0.1]
 NIL
@@ -3251,6 +3163,24 @@ NIL
 NIL
 NIL
 1
+
+PLOT
+1000
+465
+1245
+615
+Sum grass
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -14835848 true "" "plot totalGrass"
 
 PLOT
 1245
@@ -3291,7 +3221,7 @@ PENS
 PLOT
 1310
 315
-1690
+1615
 465
 SHEEP weight per head
 NIL
@@ -3320,11 +3250,11 @@ year-index
 11
 
 PLOT
-985
+800
+315
+1000
 465
-1245
-615
-mean grass (kg/Ha)
+mean grass per Ha
 NIL
 NIL
 0.0
@@ -3338,10 +3268,10 @@ PENS
 "default" 1.0 0 -16777216 true "" "plot meanGrass / 100"
 
 PLOT
-500
-685
-700
-835
+600
+315
+800
+465
 trees-evolve
 NIL
 NIL
@@ -3363,10 +3293,10 @@ PENS
 "pen-7" 1.0 0 -13840069 true "" "plot totalTrees1years"
 
 PLOT
-810
-620
-1010
-770
+800
+465
+1000
+615
 Trees Resources Consumption
 NIL
 NIL
