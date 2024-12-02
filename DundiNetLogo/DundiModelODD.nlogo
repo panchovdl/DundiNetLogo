@@ -2016,14 +2016,12 @@ to do-first-strategy
   ifelse ([current-home-patch] of cattle-herd = original-home-patch) and ([current-home-patch] of sheep-herd = original-home-patch) [
     ;; Store the foyer's variables in local variables
     let home-patch original-home-patch
-    show word "home-patch   " current-home-patch
     let my-known-space known-space
-    show word "my known-space     " my-known-space
     ;; Find patches within 12 units of home-patch and not in known-space
     let undiscovered-patches patches with [
       distance home-patch <= 6 and not member? self my-known-space
     ]
-    show word "undiscovered-patches      "  undiscovered-patches
+
     ifelse any? undiscovered-patches [
       ;; Se déplacer vers un patch aléatoire parmi ces patches
       move-to one-of undiscovered-patches
@@ -2698,17 +2696,14 @@ end
 ; Trouver le meilleur patch : d'abord la qualité, ensuite la quantité, enfin la proximité
 to-report find-best-nearest-patch [known-spaces my-shepherd]
   let viable-patches known-spaces with [current-grass >= 40]
-  show word "known-space       " known-spaces
-show word "viable-patches     " viable-patches
+
   ifelse any? viable-patches [
     ifelse my-shepherd = "bon" [
     ; Étape 1 : Sélectionner les patches avec la meilleure qualité d'herbe
     let best-quality-patches viable-patches with-max [q]
-show word "best-quality-patches      " best-quality-patches
     ; Étape 2 : Parmi les patches avec la meilleure qualité, sélectionner ceux avec la plus grande quantité d'herbe
     let max-grass-patches best-quality-patches with-max [current-grass]
 
-show word "max-grass-patches       " max-grass-patches
     ; Étape 3 : Choisir le patch le plus proche parmi ceux avec la meilleure qualité et la plus grande quantité d'herbe
     report min-one-of max-grass-patches [distance myself]
     ] [
@@ -2839,7 +2834,7 @@ initial-number-of-camps
 initial-number-of-camps
 0
 200
-1.0
+17.0
 1
 1
 NIL
