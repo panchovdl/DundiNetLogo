@@ -1739,7 +1739,7 @@ to move-and-eat ; Mouvement et consommation des troupeaux - bovins puis ovins
 
     ; Calculer le reste de MS à consommer en fonction de la consommation journalière maximale et la quantité voulue à consommer par le troupeau
     let remaining-DM-to-consume (max-daily-DM-ingestible-per-head * head) - (desired-MS-intake-per-head * head)
-show word "reamining needs       " remaining-DM-to-consume
+
     if remaining-DM-to-consume > 0 [
       consume-tree-resources patch-here remaining-DM-to-consume
     ]
@@ -1906,7 +1906,6 @@ to consume-tree-resources [patch-of-grass-eaten remaining-needs] ;; contexte tro
     set DM-ingested DM-ingested + total-DM-ingested-from-trees
 
     let proportion-from-trees (total-DM-ingested-from-trees / DM-ingested)   ; proportion de la ration provenant des arbres
-    show word "  proportion-from-trees    "      proportion-from-trees
     if shepherd-type = "bad" [
 
       if proportion-from-trees > 0.8 [
@@ -2936,9 +2935,9 @@ waterStock
 
 CHOOSER
 640
-475
+545
 796
-520
+590
 visualization-mode
 visualization-mode
 "soil-type" "tree-cover" "grass-cover" "grass-quality" "known-space"
@@ -3275,17 +3274,17 @@ NIL
 0.0
 10.0
 true
-false
+true
 "" ""
 PENS
 "8 years" 1.0 0 -16777216 true "" "plot totalTrees8years"
 "7 years" 1.0 0 -7500403 true "" "plot totalTrees7years"
-"pen-2" 1.0 0 -2674135 true "" "plot totalTrees6years"
-"pen-3" 1.0 0 -955883 true "" "plot totalTrees5years"
-"pen-4" 1.0 0 -6459832 true "" "plot totalTrees4years"
-"pen-5" 1.0 0 -1184463 true "" "plot totalTrees3years"
-"pen-6" 1.0 0 -10899396 true "" "plot totalTrees2years"
-"pen-7" 1.0 0 -13840069 true "" "plot totalTrees1years"
+"6 years" 1.0 0 -2674135 true "" "plot totalTrees6years"
+"5 years" 1.0 0 -955883 true "" "plot totalTrees5years"
+"4 years" 1.0 0 -6459832 true "" "plot totalTrees4years"
+"3 years" 1.0 0 -1184463 true "" "plot totalTrees3years"
+"2 years" 1.0 0 -10899396 true "" "plot totalTrees2years"
+"1 year" 1.0 0 -13840069 true "" "plot totalTrees1years"
 
 PLOT
 800
