@@ -352,7 +352,7 @@ to setup
   update-year-type
   set-season-durations
 
-  set initial-number-of-camps 10
+  set initial-number-of-camps interface-number-of-camp-i
   set space-camp-min 2
   set space-camp-max 15
   set space-camp-standard-deviation 5
@@ -2878,10 +2878,10 @@ totalSheeps
 11
 
 SLIDER
-685
-12
-883
-45
+1725
+15
+1923
+48
 max-ponds-4-months
 max-ponds-4-months
 0
@@ -2893,10 +2893,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-686
-50
-884
-83
+1726
+53
+1924
+86
 max-ponds-5-months
 max-ponds-5-months
 0
@@ -2908,10 +2908,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-687
-89
-885
-122
+1727
+92
+1925
+125
 max-ponds-6-months
 max-ponds-6-months
 0
@@ -2923,10 +2923,10 @@ NIL
 HORIZONTAL
 
 MONITOR
-688
-130
-886
-175
+1728
+133
+1926
+178
 NIL
 waterStock
 17
@@ -2944,10 +2944,10 @@ visualization-mode
 4
 
 BUTTON
-545
 475
-635
-508
+485
+565
+518
 visualize
   update-visualization
 NIL
@@ -2978,10 +2978,10 @@ NIL
 1
 
 MONITOR
-825
-185
-935
-230
+710
+10
+820
+55
 Season
 current-season
 17
@@ -2989,10 +2989,10 @@ current-season
 11
 
 MONITOR
-745
-185
-825
-230
+630
+10
+710
+55
 Type of Year
 current-year-type
 17
@@ -3000,10 +3000,10 @@ current-year-type
 11
 
 SLIDER
-840
-235
-995
-268
+575
+140
+730
+173
 good-shepherd-percentage
 good-shepherd-percentage
 0
@@ -3015,10 +3015,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-689
-236
-844
-269
+575
+65
+730
+98
 proportion-big-herders
 proportion-big-herders
 0
@@ -3030,10 +3030,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-689
-271
-844
-304
+575
+100
+730
+133
 proportion-medium-herders
 proportion-medium-herders
 0
@@ -3122,30 +3122,11 @@ PENS
 "maxWeight" 1.0 0 -2674135 true "" "plot maxCattlesLiveWeight"
 "minWeight" 1.0 0 -13791810 true "" "plot minCattlesLiveWeight"
 
-PLOT
-1000
-315
-1310
-465
-NEC mean
-NIL
-NIL
-0.0
-10.0
-0.0
-5.0
-true
-true
-"" ""
-PENS
-"Cattles" 1.0 0 -16777216 true "" "plot meanCattlesNEC"
-"Sheeps" 1.0 0 -8275240 true "" "plot meanSheepsNEC"
-
 BUTTON
-575
-270
-685
-303
+600
+195
+710
+228
 removeGrass
 ask patches [set current-grass  0.1\nset current-monocot-grass 0.1\nset current-dicot-grass 0.1]
 NIL
@@ -3233,10 +3214,10 @@ PENS
 "minWeight" 1.0 0 -13791810 true "" "plot minSheepsLiveWeight"
 
 MONITOR
-690
-185
-747
-230
+575
+10
+632
+55
 Year
 year-index
 17
@@ -3265,7 +3246,7 @@ PLOT
 600
 315
 800
-465
+475
 trees-evolve
 NIL
 NIL
@@ -3355,6 +3336,74 @@ CattleNECSatifactionIndex
 1
 NIL
 HORIZONTAL
+
+SLIDER
+55
+116
+92
+261
+interface-number-of-camp-i
+interface-number-of-camp-i
+0
+200
+91.0
+1
+1
+NIL
+VERTICAL
+
+PLOT
+1000
+315
+1310
+465
+NEC mean
+NIL
+NIL
+0.0
+10.0
+0.0
+5.0
+true
+true
+"" ""
+PENS
+"Cattles" 1.0 0 -16777216 true "" "plot meanCattlesNEC"
+"Sheeps" 1.0 0 -8275240 true "" "plot meanSheepsNEC"
+"pen-2" 1.0 0 -2674135 true "" "plot SheepNECSatifactionIndex"
+
+SLIDER
+595
+275
+807
+308
+TreeDensitySatisfaction-oldes
+TreeDensitySatisfaction-oldes
+0
+4000
+50.0
+1
+1
+NIL
+HORIZONTAL
+
+PLOT
+800
+165
+1000
+315
+MST of olders trees
+NIL
+NIL
+0.0
+10.0
+0.0
+1.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot MST-trees"
 
 @#$#@#$#@
 ## WHAT IS IT?
