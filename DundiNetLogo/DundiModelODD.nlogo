@@ -2878,10 +2878,10 @@ totalSheeps
 11
 
 SLIDER
-1725
-15
-1923
-48
+1655
+10
+1853
+43
 max-ponds-4-months
 max-ponds-4-months
 0
@@ -2893,10 +2893,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-1726
-53
-1924
-86
+1656
+48
+1854
+81
 max-ponds-5-months
 max-ponds-5-months
 0
@@ -2908,10 +2908,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-1727
-92
-1925
-125
+1657
+87
+1855
+120
 max-ponds-6-months
 max-ponds-6-months
 0
@@ -2923,10 +2923,10 @@ NIL
 HORIZONTAL
 
 MONITOR
-1728
-133
-1926
-178
+1658
+128
+1856
+173
 NIL
 waterStock
 17
@@ -2941,7 +2941,7 @@ CHOOSER
 visualization-mode
 visualization-mode
 "soil-type" "tree-cover" "grass-cover" "grass-quality" "known-space"
-4
+2
 
 BUTTON
 475
@@ -3260,6 +3260,7 @@ true
 PENS
 "oldes" 1.0 0 -16777216 true "" "plot totalTreesOldes"
 "youngs" 1.0 0 -7500403 true "" "plot totalTreesYoung"
+"satisfaction" 1.0 0 -2674135 true "" "plot TreeDensitySatisfaction-oldes"
 
 PLOT
 800
@@ -3375,7 +3376,7 @@ TreeDensitySatisfaction-oldes
 TreeDensitySatisfaction-oldes
 0
 8000
-6051.0
+4914.0
 1
 1
 NIL
