@@ -3000,10 +3000,10 @@ visualization-mode
 4
 
 BUTTON
-689
-499
-779
-532
+530
+550
+620
+583
 visualize
   update-visualization
 NIL
@@ -3064,7 +3064,7 @@ good-shepherd-percentage
 good-shepherd-percentage
 0
 100
-0.0
+29.0
 1
 1
 NIL
@@ -3079,7 +3079,7 @@ proportion-big-herders
 proportion-big-herders
 0
 100
-100.0
+65.0
 1
 1
 NIL
@@ -3094,7 +3094,7 @@ proportion-medium-herders
 proportion-medium-herders
 0
 100
-0.0
+23.0
 1
 1
 NIL
@@ -3161,7 +3161,7 @@ PENS
 PLOT
 1310
 165
-1615
+1690
 315
 CATTLE weight per head
 NIL
@@ -3271,7 +3271,7 @@ PENS
 PLOT
 1310
 315
-1615
+1690
 465
 SHEEP weight per head
 NIL
@@ -3300,11 +3300,11 @@ year-index
 11
 
 PLOT
-770
-365
-970
-515
-mean grass per Ha
+740
+465
+1000
+615
+mean grass (kg/Ha)
 NIL
 NIL
 0.0

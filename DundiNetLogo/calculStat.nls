@@ -42,17 +42,29 @@ to calculStat
   set sheepsWeightGain mean [weight-gain] of sheeps
   set cattlesWeightGain mean [weight-gain] of cattles
   
-  set meanCattlesLiveWeight mean [live-weight] of cattles with [have-left = false] / (mean [head]  of cattles with [have-left = false])
-  let maxWeightCattleHerd [who] of cattles with [have-left = false] with-max [live-weight] 
-  set maxCattlesLiveWeight [live-weight] of cattle first maxWeightCattleHerd / ([head] of cattle first maxWeightCattleHerd)
-  let minWeightCattleHerd [who] of cattles with [have-left = false] with-min [live-weight] 
-  set minCattlesLiveWeight [live-weight] of cattle first minWeightCattleHerd / ([head] of cattle first minWeightCattleHerd)
-  
-  set meanSheepsLiveWeight mean [live-weight] of sheeps with [have-left = false] / (mean [head]  of sheeps with [have-left = false])
-  let maxWeightSheepHerd [who] of sheeps with [have-left = false] with-max [live-weight] 
-  set maxSheepsLiveWeight [live-weight] of sheep first maxWeightSheepHerd / ([head] of sheep first maxWeightSheepHerd)
-  let minWeightSheepHerd [who] of sheeps with [have-left = false] with-min [live-weight] 
-  set minSheepsLiveWeight [live-weight] of sheep first minWeightSheepHerd / ([head] of sheep first minWeightSheepHerd)
+  ifelse count cattles with [have-left = false] > 0 [
+    set meanCattlesLiveWeight (mean [live-weight] of cattles with [have-left = false]) / (mean [head]  of cattles with [have-left = false])
+    let oneMaxCattleHerd one-of cattles with [have-left = false] with-max [live-weight]
+    set maxCattlesLiveWeight ( [live-weight] of oneMaxCattleHerd) / ([head] of oneMaxCattleHerd)
+    let oneMinCattleHerd one-of cattles with [have-left = false] with-min [live-weight]
+    set minCattlesLiveWeight ([live-weight] of oneMinCattleHerd) / ([head] of oneMinCattleHerd)
+  ][
+    set meanCattlesLiveWeight 0
+    set maxCattlesLiveWeight 0
+    set minCattlesLiveWeight 0
+  ]
+
+  ifelse count sheeps with [have-left = false] > 0 [  
+  set meanSheepsLiveWeight (mean [live-weight] of sheeps with [have-left = false]) / (mean [head]  of sheeps with [have-left = false])
+    let oneMaxSheepHerd one-of sheeps with [have-left = false] with-max [live-weight]
+    set maxSheepsLiveWeight ( [live-weight] of oneMaxSheepHerd) / ([head] of oneMaxSheepHerd)
+    let oneMinSheepHerd one-of sheeps with [have-left = false] with-min [live-weight]
+    set minSheepsLiveWeight ([live-weight] of oneMinSheepHerd) / ([head] of oneMinSheepHerd)
+  ][
+    set meanSheepsLiveWeight 0
+    set maxSheepsLiveWeight 0
+    set minSheepsLiveWeight 0
+  ]
   
   if count cattles with [have-left = false] > 0[ ;; Est-ce qu'il y a quelque chose a faire dans le else ?
     set meanCattlesNEC mean [corporal-condition] of cattles with [have-left = false]
