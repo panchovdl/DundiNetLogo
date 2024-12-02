@@ -43,11 +43,15 @@ to calculStat
   set cattlesWeightGain mean [weight-gain] of cattles
   
   set meanCattlesLiveWeight mean [live-weight] of cattles / mean [head]  of cattles
-  set maxCattlesLiveWeight max [max-live-weight] of cattles
-  set minCattlesLiveWeight [min-live-weight] of cattles
+;  set maxCattlesLiveWeight max [max-live-weight] of cattles
+  set maxCattlesLiveWeight 350
+;  set minCattlesLiveWeight [min-live-weight] of cattles
+  set minCattlesLiveWeight 66
   set meanSheepsLiveWeight mean [live-weight] of sheeps / mean [head]  of sheeps
-  set maxSheepsLiveWeight [max-live-weight] of sheeps
-  set minSheepsLiveWeight [min-live-weight] of sheeps
+;  set maxSheepsLiveWeight [max-live-weight] of sheeps
+  set maxSheepsLiveWeight 80
+;  set minSheepsLiveWeight [min-live-weight] of sheeps
+  set minSheepsLiveWeight 21
   if count cattles with [have-left = false] > 0[ ;; Est-ce qu'il y a quelque chose a faire dans le else ?
     set meanCattlesNEC mean [corporal-condition] of cattles with [have-left = false]
   ]

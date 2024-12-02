@@ -31,6 +31,12 @@ globals [
   seuil-bon-MAD
   seuil-moyen-MAD
 
+  initial-number-of-camps
+  space-camp-min
+  space-camp-max
+  space-camp-standard-deviation
+  space-camp-mean
+
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; indicateurs
@@ -175,6 +181,7 @@ camps-own [
   is-temporary                     ; Booléen indiquant si le camp est temporaire
   wood-needs                       ; Besoins en bois
   wood-quantity                    ; Quantité de bois dans le campement
+
 ]
 
 
@@ -185,6 +192,7 @@ camps-own [
   ;;;;;;;;;;;;;;;;;;;;;;;;;
 
 foyers-own [
+
 
   ; Gestion du troupeau
   cattle-herd                      ; Troupeau de bovins associé
@@ -214,7 +222,7 @@ foyers-own [
  ; Relations
   friends                          ; Amis de l'agent
   far-exploration-count            ; Compteur d'exploration au loin
-  close-exploration-count          ; Compteur d'exploration proche
+  close-exploration-count          ; Compteur d'exploration
 ]
 
 
@@ -342,6 +350,11 @@ to setup
   update-year-type
   set-season-durations
 
+  set initial-number-of-camps 10
+  set space-camp-min 2
+  set space-camp-max 15
+  set space-camp-standard-deviation 5
+  set space-camp-mean (space-camp-min + space-camp-max) / 2
 
 
   ; Lancer l'environnement
@@ -1723,7 +1736,7 @@ to move-and-eat ; Mouvement et consommation des troupeaux - bovins puis ovins
 
     ; Calculer le reste de MS à consommer en fonction de la consommation journalière maximale et la quantité voulue à consommer par le troupeau
     let remaining-DM-to-consume (max-daily-DM-ingestible-per-head * head) - (desired-MS-intake-per-head * head)
-
+show word "reamining needs       " remaining-DM-to-consume
     if remaining-DM-to-consume > 0 [
       consume-tree-resources patch-here remaining-DM-to-consume
     ]
@@ -1795,11 +1808,11 @@ end
   ;;; Procédure d'ingestion des feuilles et fruits  ;;;
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-to consume-tree-resources [patch-of-grass-eaten remaining-needs]
+to consume-tree-resources [patch-of-grass-eaten remaining-needs] ;; contexte troupeau
   ;; Obtenir les populations d'arbres matures sur le patch
   let all-trees tree-populations-on patch-of-grass-eaten
-  let consumption-treshold 0.07
-  let wood-reduction-per-kg-MS 0.1; Cf Hiernaux 1994
+  let consumption-treshold 0
+  let wood-reduction-per-kg-MS 0; Cf Hiernaux 1994
   let consumable-trees all-trees with [population-size > 0]
   ;; Arbres de plus de 5 ans
   let mature-trees consumable-trees with [tree-pop-age >= 6]
@@ -1830,65 +1843,76 @@ to consume-tree-resources [patch-of-grass-eaten remaining-needs]
   ]
     let tree-max-consumable []
     let total-available 0
-
     ask consumable-trees [
       let max_consumable (max-leaf-stock + max-fruit-stock)
       set total-available total-available + max_consumable
-      set tree-max-consumable lput (list self max_consumable) tree-max-consumable
-      if tree-max-consumable = 0 [  show word "tree-pop-max-cons" tree-max-consumable]
-      if total-available = 0 [ show word "total-tree-resource-available" total-available]
+      set tree-max-consumable lput (list who max_consumable) tree-max-consumable
     ]
 
     ;; Déterminer la quantité à consommer
     let amount-to-consume min list remaining-needs total-available
 
-    if amount-to-consume <= 0 [ set amount-to-consume 0 ]
+    if amount-to-consume < 0 [ set amount-to-consume 0 ]
 
     ;; Variables pour accumuler les UF et MAD ingérées
     let total-UF-ingested-from-trees 0
     let total-MAD-ingested-from-trees 0
     let total-DM-ingested-from-trees 0
-
     ;; Distribuer la consommation proportionnellement
-    foreach tree-max-consumable [ [tree-and-max] ->
-      let one-mature-tree-population item 0 tree-and-max
-      let max-consumable item 1 tree-and-max
+    foreach tree-max-consumable [ [i] ->
+      let who-one-tree-population item 0 i
+      let one-tree-population turtle who-one-tree-population
+
+      show word "one-tree-population             " one-tree-population
+      let max-consumable item 1 i
+
       let share (max-consumable / total-available)
+
       let amount-consumed (amount-to-consume * share)
-      let total_resources ([current-leaf-stock] of one-mature-tree-population + [current-fruit-stock] of one-mature-tree-population)
+
+      let total_resources ([current-leaf-stock] of one-tree-population + [current-fruit-stock] of one-tree-population)
+
       if total_resources > 0 [
-        let leaves_share ([current-leaf-stock] of one-mature-tree-population / total_resources)
-        let fruits_share ([current-fruit-stock] of one-mature-tree-population / total_resources)
-        let leaves_consumed amount-consumed * leaves_share
-        let fruits_consumed amount-consumed * fruits_share
+        let leaves_share ([current-leaf-stock] of one-tree-population / total_resources)
+        let fruits_share ([current-fruit-stock] of one-tree-population / total_resources)
+        let leaves-consumed amount-consumed * leaves_share
+        let fruits-consumed amount-consumed * fruits_share
 
         ;; Mettre à jour les stocks dans la population d'arbres
-        ask one-mature-tree-population [
-          set current-leaf-stock current-leaf-stock - leaves_consumed
-          set current-fruit-stock current-fruit-stock - fruits_consumed
-          if current-leaf-stock < 0 [ set current-leaf-stock 0 ]
-          if current-fruit-stock < 0 [ set current-fruit-stock 0 ]
+        ask one-tree-population [
+        set current-leaf-stock (current-leaf-stock - leaves-consumed)
+        set current-fruit-stock  (current-fruit-stock - fruits-consumed)
+        if current-leaf-stock < 0 [ set current-leaf-stock 0 ]
+        if current-fruit-stock < 0 [ set current-fruit-stock 0 ]
         ]
 
         ;; Calculer les UF et MAD ingérées depuis cette population
         ;; Hypothèse : les feuilles et les fruits ont les mêmes valeurs nutritives
-        let UF-ingested-pop amount-consumed * [tree-UF-per-kg-MS] of one-mature-tree-population
-        let MAD-ingested-pop amount-consumed * [tree-MAD-per-kg-MS] of one-mature-tree-population
+        let UF-ingested-pop amount-consumed * [tree-UF-per-kg-MS] of one-tree-population
+        let MAD-ingested-pop amount-consumed * [tree-MAD-per-kg-MS] of one-tree-population
 
         ;; Accumuler les valeurs
         set total-UF-ingested-from-trees total-UF-ingested-from-trees + UF-ingested-pop
+    show word "  UF-ingested-pop    "     UF-ingested-pop
+     show word " total-UF-ingested-from-trees    "     total-UF-ingested-from-trees
         set total-MAD-ingested-from-trees total-MAD-ingested-from-trees + MAD-ingested-pop
+           show word "  total-MAD-ingested-from-trees    "     total-MAD-ingested-from-trees
+
+           show word "   total-MAD-ingested-from-trees    "      total-MAD-ingested-from-trees
         set total-DM-ingested-from-trees total-DM-ingested-from-trees + amount-consumed
+           show word "  total-DM-ingested-from-trees    "     total-DM-ingested-from-trees
+           show word "  amount-consumed    "     amount-consumed
 
-      ]
-    ]
-
+      ] ;; end if
+    ];; end foreach
+    ;; context troupeau
     ;; Mettre à jour les variables du troupeau
     set UF-ingested UF-ingested + total-UF-ingested-from-trees
     set MAD-ingested MAD-ingested + total-MAD-ingested-from-trees
     set DM-ingested DM-ingested + total-DM-ingested-from-trees
 
-    let proportion-from-trees (total-DM-ingested-from-trees / (DM-ingested * head))  ; proportion de la ration provenant des arbres
+    let proportion-from-trees (total-DM-ingested-from-trees / DM-ingested)   ; proportion de la ration provenant des arbres
+    show word "  proportion-from-trees    "      proportion-from-trees
     if shepherd-type = "bad" [
 
       if proportion-from-trees > 0.8 [
@@ -2016,14 +2040,11 @@ to do-first-strategy
   ifelse ([current-home-patch] of cattle-herd = original-home-patch) and ([current-home-patch] of sheep-herd = original-home-patch) [
     ;; Store the foyer's variables in local variables
     let home-patch original-home-patch
-    show word "home-patch   " current-home-patch
     let my-known-space known-space
-    show word "my known-space     " my-known-space
     ;; Find patches within 12 units of home-patch and not in known-space
     let undiscovered-patches patches with [
       distance home-patch <= 6 and not member? self my-known-space
     ]
-    show word "undiscovered-patches      "  undiscovered-patches
     ifelse any? undiscovered-patches [
       ;; Se déplacer vers un patch aléatoire parmi ces patches
       move-to one-of undiscovered-patches
@@ -2462,13 +2483,13 @@ to-report get-germination-rate [tree-types year-type]
   if tree-types
   = "nutritive" [
     if year-type = "bonne" [set rate 0.2]
-    if year-type = "moyenne" [set rate 0.1]
-    if year-type = "mauvaise" [set rate 0.05]
+    if year-type = "moyenne" [set rate 0.05]
+    if year-type = "mauvaise" [set rate 0.01]
   ]
   if tree-type = "lessNutritive" [
     if year-type = "bonne" [set rate 0.15]
     if year-type = "moyenne" [set rate 0.08]
-    if year-type = "mauvaise" [set rate 0.04]
+    if year-type = "mauvaise" [set rate 0.01]
   ]
   if tree-type = "fruity" [
     if year-type = "bonne" [set rate 0.25]
@@ -2670,22 +2691,22 @@ to-report growth-wood-logistic [input-tree-type current-wood max-wood season]
     report 0  ; Pas de croissance si max-wood est zéro
   ] [
     if input-tree-type = "nutritive" [
-      if season = "Nduungu" [set r 0.05]
+      if season = "Nduungu" [set r 0.01]
       if season = "Ceedu" [set r 0.03]
-      if season = "Dabbuunde" [set r 0.01]
-      if season = "Ceetcelde" [set r 0.005]
+      if season = "Dabbuunde" [set r 0.00001]
+      if season = "Ceetcelde" [set r 0.00001]
     ]
     if input-tree-type = "lessNutritive" [
       if season = "Nduungu" [set r 0.04]
-      if season = "Ceedu" [set r 0.025]
-      if season = "Dabbuunde" [set r 0.01]
-      if season = "Ceetcelde" [set r 0.005]
+      if season = "Ceedu" [set r 0.02]
+      if season = "Dabbuunde" [set r 0.00001]
+      if season = "Ceetcelde" [set r 0.00001]
     ]
     if input-tree-type = "fruity" [
       if season = "Nduungu" [set r 0.06]
       if season = "Ceedu" [set r 0.04]
-      if season = "Dabbuunde" [set r 0.02]
-      if season = "Ceetcelde" [set r 0.01]
+      if season = "Dabbuunde" [set r 000002]
+      if season = "Ceetcelde" [set r 0.00001]
     ]
 
     let growth  r * (precision current-wood 5) * (precision (1 - (current-wood / max-wood)) 5)
@@ -2698,17 +2719,17 @@ end
 ; Trouver le meilleur patch : d'abord la qualité, ensuite la quantité, enfin la proximité
 to-report find-best-nearest-patch [known-spaces my-shepherd]
   let viable-patches known-spaces with [current-grass >= 40]
-  show word "known-space       " known-spaces
-show word "viable-patches     " viable-patches
+;  show word "known-space       " known-spaces
+;show word "viable-patches     " viable-patches
   ifelse any? viable-patches [
     ifelse my-shepherd = "bon" [
     ; Étape 1 : Sélectionner les patches avec la meilleure qualité d'herbe
     let best-quality-patches viable-patches with-max [q]
-show word "best-quality-patches      " best-quality-patches
+;show word "best-quality-patches      " best-quality-patches
     ; Étape 2 : Parmi les patches avec la meilleure qualité, sélectionner ceux avec la plus grande quantité d'herbe
     let max-grass-patches best-quality-patches with-max [current-grass]
 
-show word "max-grass-patches       " max-grass-patches
+;show word "max-grass-patches       " max-grass-patches
     ; Étape 3 : Choisir le patch le plus proche parmi ceux avec la meilleure qualité et la plus grande quantité d'herbe
     report min-one-of max-grass-patches [distance myself]
     ] [
@@ -2829,81 +2850,6 @@ NIL
 NIL
 NIL
 0
-
-SLIDER
-9
-83
-207
-116
-initial-number-of-camps
-initial-number-of-camps
-0
-200
-1.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-8
-190
-206
-223
-space-camp-mean
-space-camp-mean
-space-camp-min
-space-camp-max
-1.0
-1
-1
-foyers
-HORIZONTAL
-
-SLIDER
-9
-119
-207
-152
-space-camp-min
-space-camp-min
-0
-100
-1.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-9
-155
-206
-188
-space-camp-max
-space-camp-max
-space-camp-min
-50
-1.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-9
-227
-205
-260
-space-camp-standard-deviation
-space-camp-standard-deviation
-0
-20
-0.0
-1
-1
-NIL
-HORIZONTAL
 
 MONITOR
 9
@@ -3320,7 +3266,53 @@ true
 false
 "" ""
 PENS
-"default" 1.0 0 -16777216 true "" "plot meanGrass"
+"default" 1.0 0 -16777216 true "" "plot meanGrass / 100"
+
+PLOT
+500
+685
+700
+835
+trees-evolve
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"8 years" 1.0 0 -16777216 true "" "plot totalTrees8years"
+"7 years" 1.0 0 -7500403 true "" "plot totalTrees7years"
+"pen-2" 1.0 0 -2674135 true "" "plot totalTrees6years"
+"pen-3" 1.0 0 -955883 true "" "plot totalTrees5years"
+"pen-4" 1.0 0 -6459832 true "" "plot totalTrees4years"
+"pen-5" 1.0 0 -1184463 true "" "plot totalTrees3years"
+"pen-6" 1.0 0 -10899396 true "" "plot totalTrees2years"
+"pen-7" 1.0 0 -13840069 true "" "plot totalTrees1years"
+
+PLOT
+810
+620
+1010
+770
+Trees Resources Consumption
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot meanFruitsConsumedCattle"
+"pen-1" 1.0 0 -7500403 true "" "plot meanLeavesConsumedCattle"
+"pen-2" 1.0 0 -2674135 true "" "plot meanFruitsConsumedSheep"
+"pen-3" 1.0 0 -955883 true "" "plot meanLeavesConsumedSheep"
 
 @#$#@#$#@
 ## WHAT IS IT?
