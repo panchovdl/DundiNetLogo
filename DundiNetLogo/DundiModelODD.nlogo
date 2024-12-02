@@ -1,6 +1,5 @@
 __includes["calculStat.nls"]
 extensions [csv]
-extensions [csv csv]
 
 globals [
   size-x                 ; Taille horizontale du monde
@@ -226,7 +225,6 @@ foyers-own [
   close-exploration-count          ; Compteur d'exploration
   cattleNEC-satisfaction
   sheepNEC-satisfaction
->>>>>>> 647acda6a0d2cc72453faa8d03248751034d5865
 ]
 
 
@@ -377,9 +375,6 @@ to setup
   set max-grass max [K] of patches ; pour visualisation
   set max-trees max [tree-cover] of patches
 
-
-
-  reset-ticks
   ;Visualiser l'environnement
   calculStat
   update-visualization
@@ -1869,7 +1864,6 @@ to consume-tree-resources [patch-of-grass-eaten remaining-needs] ;; contexte tro
     foreach tree-max-consumable [ [i] ->
       let who-one-tree-population item 0 i
       let one-tree-population turtle who-one-tree-population
-
       let max-consumable item 1 i
 
       let share (max-consumable / total-available)
