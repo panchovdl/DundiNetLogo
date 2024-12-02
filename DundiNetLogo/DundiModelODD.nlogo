@@ -3258,14 +3258,8 @@ true
 true
 "" ""
 PENS
-"8 years" 1.0 0 -16777216 true "" "plot totalTrees8years"
-"7 years" 1.0 0 -7500403 true "" "plot totalTrees7years"
-"6 years" 1.0 0 -2674135 true "" "plot totalTrees6years"
-"5 years" 1.0 0 -955883 true "" "plot totalTrees5years"
-"4 years" 1.0 0 -6459832 true "" "plot totalTrees4years"
-"3 years" 1.0 0 -1184463 true "" "plot totalTrees3years"
-"2 years" 1.0 0 -10899396 true "" "plot totalTrees2years"
-"1 year" 1.0 0 -13840069 true "" "plot totalTrees1years"
+"oldes" 1.0 0 -16777216 true "" "plot totalTreesOldes"
+"youngs" 1.0 0 -7500403 true "" "plot totalTreesYoung"
 
 PLOT
 800
@@ -3380,8 +3374,8 @@ SLIDER
 TreeDensitySatisfaction-oldes
 TreeDensitySatisfaction-oldes
 0
-4000
-50.0
+8000
+6051.0
 1
 1
 NIL
