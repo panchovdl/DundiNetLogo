@@ -213,6 +213,8 @@ foyers-own [
 
  ; Relations
   friends                          ; Amis de l'agent
+  far-exploration-count            ; Compteur d'exploration au loin
+  close-exploration-count          ; Compteur d'exploration proche
 ]
 
 
@@ -572,19 +574,19 @@ to setup-foyers
       set-herd-sizes
       set known-space patches in-radius 3
       set close-known-space known-space with [
-        distance [current-home-patch] of myself <= 12
+        distance [current-home-patch] of myself <= 6
       ]
 
       set original-camp-known-space close-known-space
 
-      set cattle-low-threshold-cc 2
-      set cattle-low-threshold-pc 2
-      set sheep-low-threshold-cc 3
-      set sheep-low-threshold-pc 2
-      set cattle-high-threshold-cc 4
-      set cattle-high-threshold-pc 6
-      set sheep-high-threshold-cc 4
-      set sheep-high-threshold-pc 8
+      set cattle-low-threshold-cc 1
+      set sheep-low-threshold-cc 1
+      set cattle-high-threshold-cc 3
+      set sheep-high-threshold-cc 3
+
+
+      set far-exploration-count 0       ; Compteur d'exploration au loin
+      set close-exploration-count 0     ; Compteur d'exploration proche
     ]
   ]
 end
@@ -671,7 +673,7 @@ to setup-herds ; Valeurs à définir
       set initial-live-weight 250 * UBT-size * head
       set live-weight initial-live-weight
       set max-live-weight 350 * head
-      set min-live-weight 66
+      set min-live-weight 66 * head
 
           ; caractéristiques visuelles
       set color grey
@@ -709,9 +711,9 @@ to setup-herds ; Valeurs à définir
           ; Espace connu et déplacements
       set known-space [known-space] of foyer-owner
       set original-camp-known-space known-space
-      set close-known-space known-space in-radius 12
+      set close-known-space known-space in-radius 6
       set distant-known-space known-space with [
-        distance [current-home-patch] of myself > 12
+        distance [current-home-patch] of myself > 6
       ]
       set have-left false
     ]
@@ -766,9 +768,9 @@ to setup-herds ; Valeurs à définir
           ; Espace connu et déplacements
       set known-space [known-space] of foyer-owner
       set original-camp-known-space known-space
-      set close-known-space known-space in-radius 12
+      set close-known-space known-space in-radius 6
       set distant-known-space known-space with [
-        distance [current-home-patch] of myself > 12
+        distance [current-home-patch] of myself > 6
       ]
       set have-left false
 
@@ -1073,6 +1075,17 @@ to go
     renew-tree-population             ; Au premier jour de chaque nouvelle année, crée une nouvelle population d'arbres d'un an
     ask patches [assign-grass-proportions]        ; Au premier jour de chaque nouvelle année, relance la génération aléatoire des proportions en monocotylédone et dicotylédone
     call-back-herds
+    ask foyers [
+      set far-exploration-count 0       ; Compteur d'exploration au loin
+      set close-exploration-count 0     ; Compteur d'exploration proche]
+      set known-space close-known-space
+    ]
+    ask cattles [
+      set known-space [known-space] of foyer-owner
+    ]
+    ask sheeps [
+      set known-space [known-space] of foyer-owner
+    ]
   ]
 
   ; Mise à jour des ressources
@@ -1551,7 +1564,7 @@ to grow-tree-resources
 
 
     ; Croissance ou décroissance logistique du bois
-    let wood-growth growth-wood-logistic tree-type tree-pop-age population-size current-wood-stock max-wood-stock
+    let wood-growth growth-wood-logistic tree-type current-wood-stock max-wood-stock current-season
     let new-wood-stock current-wood-stock + wood-growth
     set current-wood-stock min (list new-wood-stock max-wood-stock)
 
@@ -1563,12 +1576,12 @@ to grow-tree-resources
     set max-leaf-stock max-leaf * population-size * wood-ratio
 
     ; Croissance ou décroissance logistique des fruits
-    let fruit-growth growth-fruit-logistic tree-type tree-pop-age population-size current-fruit-stock max-fruit-stock
+    let fruit-growth growth-fruit-logistic tree-type current-fruit-stock max-fruit-stock current-season ([soil-type] of patch-here)
     let new-fruit-stock current-fruit-stock + fruit-growth
     set current-fruit-stock min (list new-fruit-stock max-fruit-stock)
 
     ; Croissance ou décroissance logistique des feuilles
-    let leaf-growth growth-leaf-logistic tree-type tree-pop-age population-size current-leaf-stock max-leaf-stock
+    let leaf-growth growth-leaf-logistic tree-type current-leaf-stock max-leaf-stock current-season ([soil-type] of patch-here)
     let new-leaf-stock current-leaf-stock + leaf-growth
     set current-leaf-stock min (list new-leaf-stock max-leaf-stock)
   ]
@@ -1583,8 +1596,9 @@ end
 to move-and-eat ; Mouvement et consommation des troupeaux - bovins puis ovins
 
   ;; Find the best patch within known space
-  let best-patch find-best-nearest-patch known-space
-  let my-home-patch current-home-patch
+  let best-patch find-best-nearest-patch known-space shepherd-type
+;  let home-patch current-home-patch
+  let my-known-space known-space
   move-to current-home-patch
   set DM-ingested 0
   set UF-ingested 0
@@ -1598,12 +1612,12 @@ to move-and-eat ; Mouvement et consommation des troupeaux - bovins puis ovins
     let distance-to-home distance best-patch
 
     ;; If the best patch is more than 12 units away from the current home patch
-    ifelse distance-to-home >= 3 [
+    ifelse distance-to-home >= 6 [
 
       ;; Check if the herd is not already in a temporary camp
       ifelse not is-in-temporary-camp [
 
-          ;; Create a temporary camp if not already in one
+        ;; Create a temporary camp if not already in one
         set current-home-patch best-patch
         set is-in-temporary-camp true
         move-to current-home-patch
@@ -1612,45 +1626,55 @@ to move-and-eat ; Mouvement et consommation des troupeaux - bovins puis ovins
 
         ;; Add patches within a radius of 3 cells around the camp to known-space
         let nearby-patches [patches in-radius 3] of current-home-patch
-        set known-space (patch-set known-space nearby-patches)
+        set known-space (patch-set my-known-space nearby-patches)
 
-          ;; Update close-known-space and distant
-        set close-known-space ([known-space] of foyer-owner) in-radius 12
+        ;; Update close-known-space and distant
+        set close-known-space known-space in-radius 6
         set distant-known-space known-space who-are-not close-known-space
+        ask foyer-owner [
+          set known-space (patch-set known-space [known-space] of myself)
+          set close-known-space known-space in-radius 6
+          set distant-known-space known-space who-are-not close-known-space
+]
 
-        ] [ ;; The herd is already in a temporary camp
+      ] [ ;; The herd is already in a temporary camp
 
-          ;; Check if the best patch is in the original camp known space
+        ;; Check if the best patch is in the original camp known space
           ifelse member? best-patch original-camp-known-space [
 
-            ;; Move to the best patch
-            move-to best-patch
-            set xcor xcor + (random-float 0.9 - 0.45)
-            set ycor ycor + (random-float 0.9 - 0.45)
+          ;; Move to the best patch
+          move-to original-home-patch
+          set xcor xcor + (random-float 0.9 - 0.45)
+          set ycor ycor + (random-float 0.9 - 0.45)
 
             ;; Return to the original camp
-            set current-home-patch original-home-patch
-            set current-home-camp original-home-camp
-            set is-in-temporary-camp false
-            set known-space [known-space] of foyer-owner
-            set close-known-space [close-known-space] of foyer-owner
+          set current-home-patch original-home-patch
+          set current-home-camp original-home-camp
+          set is-in-temporary-camp false
+          set known-space [known-space] of foyer-owner
+          set close-known-space [close-known-space] of foyer-owner
             set distant-known-space [distant-known-space] of foyer-owner
 
-          ] [
-            ;; Create a temporary camp
-            set current-home-patch best-patch
+        ] [
+          ;; Create a temporary camp
+          set current-home-patch best-patch
             set is-in-temporary-camp true
-            move-to current-home-patch
-            set xcor xcor + (random-float 0.9 - 0.45)
-            set ycor ycor + (random-float 0.9 - 0.45)
+          move-to current-home-patch
+          set xcor xcor + (random-float 0.9 - 0.45)
+          set ycor ycor + (random-float 0.9 - 0.45)
 
-            ;; Add patches within a radius of 3 cells around the camp to known-space
-            let nearby-patches [patches in-radius 3] of current-home-patch
-            set known-space (patch-set known-space nearby-patches)
+          ;; Add patches within a radius of 3 cells around the camp to known-space
+          let nearby-patches [patches in-radius 3] of current-home-patch
+          set known-space (patch-set my-known-space nearby-patches)
 
-            ;; Update close-known-space and distant
-            set close-known-space known-space in-radius 12
+          ;; Update close-known-space and distant
+          set close-known-space known-space in-radius 6
+          set distant-known-space known-space who-are-not close-known-space
+          ask foyer-owner [
+            set known-space (patch-set known-space [known-space] of myself)
+            set close-known-space known-space in-radius 6
             set distant-known-space known-space who-are-not close-known-space
+          ]
           ]
         ]
       ] [ ;; The best patch is within 12 units of the current home patch
@@ -1954,29 +1978,22 @@ end
 to choose-strategy
     ;; Récupérer les conditions corporelles des troupeaux de bovins
     let cattle-cc  [corporal-condition] of cattle-herd
-    let cattle-pc round [protein-condition] of cattle-herd
 
     ;; Récupérer les conditions corporelles des troupeaux de moutons
     let sheep-cc [corporal-condition] of sheep-herd
-    let sheep-pc round [protein-condition] of sheep-herd
-
-
-    ;; Vérifier si **une des deux** conditions est en dessous du seuil
-    let cattle-one-starving (cattle-cc < cattle-low-threshold-cc)
-    let sheep-one-starving (sheep-cc < sheep-low-threshold-cc)
 
     ;; Si **une des deux** conditions des troupeaux est en dessous du seuil, exécuter `do-first-strategy`
-    if [cattle-cc <= 3] of cattle-herd [
+    if cattle-cc <= cattle-high-threshold-cc [
       do-first-strategy
 ;    show word "toutouuu  " cattle-cc
     ]
-     if [sheep-cc <= 3] of sheep-herd  [
+     if sheep-cc <= sheep-high-threshold-cc  [
       do-first-strategy
 ;        show word "toutouuu  " sheep-cc
     ]
 
     ;; Si **les deux** conditions des deux troupea sont en dessous des seuils, quitter le modèle
-    if [cattle-cc <= 1] of cattle-herd [
+    if cattle-cc <= cattle-low-threshold-cc [
       ;; Masquer et déplacer le troupeau de bovins
       if [have-left] of cattle-herd = FALSE [
         ask cattle-herd  [
@@ -1984,7 +2001,7 @@ to choose-strategy
         ]
       ]
     ]
-    if [sheep-cc <= 1] of sheep-herd [
+    if sheep-cc <= sheep-low-threshold-cc [
       ;; Masquer et déplacer le troupeau de moutons
       if [have-left] of sheep-herd = FALSE [
         ask sheep-herd [
@@ -1995,84 +2012,96 @@ to choose-strategy
 end
 
 to do-first-strategy
-  ;; Store the foyer's variables in local variables
-  let home-patch original-home-patch
-  show word "home-patch   " home-patch
-  let my-known-space known-space
-  show word "my known-space     " my-known-space
-  ;; Find patches within 12 units of home-patch and not in known-space
-  let undiscovered-patches patches with [
-    distance home-patch <= 12 and not member? self my-known-space
-  ]
-  show word "undiscovered-patches      "  undiscovered-patches
-  ask undiscovered-patches [set pcolor red ]
-  ifelse any? undiscovered-patches [
-    ;; Se déplacer vers un patch aléatoire parmi ces patches
-    move-to one-of undiscovered-patches
-    ;; Obtenir les patches sur la ligne entre la nouvelle position et le campement
-    let line-patches patches-between patch-here home-patch
-    ;; Ajouter ces patches au known-space du foyer
-    set known-space (patch-set known-space line-patches)
-    ;; Retourner au campement principal
-    move-to home-patch
-    ;; ajouter les patches aux catégories d'espaces connus
-    set close-known-space known-space in-radius 12
-    set original-camp-known-space close-known-space
-    ;; Partager le known-space mis à jour avec les troupeaux
-    ask cattle-herd [
-      set known-space [known-space] of foyer-owner
-      set original-camp-known-space [original-camp-known-space] of foyer-owner
-      if is-in-temporary-camp = false [
-        set close-known-space [close-known-space] of foyer-owner
-      ]
+
+  ifelse ([current-home-patch] of cattle-herd = original-home-patch) and ([current-home-patch] of sheep-herd = original-home-patch) [
+    ;; Store the foyer's variables in local variables
+    let home-patch original-home-patch
+    show word "home-patch   " current-home-patch
+    let my-known-space known-space
+    show word "my known-space     " my-known-space
+    ;; Find patches within 12 units of home-patch and not in known-space
+    let undiscovered-patches patches with [
+      distance home-patch <= 6 and not member? self my-known-space
     ]
-    ask sheep-herd [
-      set known-space [known-space] of foyer-owner
-      set original-camp-known-space [original-camp-known-space] of foyer-owner
-      if is-in-temporary-camp = false [
-        set close-known-space [close-known-space] of foyer-owner
-      ]
-    ]
-  ] [
-    if any? friends [
-      call-one-friend
-    ]
-    let further-undiscovered-patches patches with [distance home-patch > 12 and not member? self my-known-space]
-    if any? further-undiscovered-patches [
-      move-to further-undiscovered-patches
+    show word "undiscovered-patches      "  undiscovered-patches
+    ifelse any? undiscovered-patches [
+      ;; Se déplacer vers un patch aléatoire parmi ces patches
+      move-to one-of undiscovered-patches
+      ;; Obtenir les patches sur la ligne entre la nouvelle position et le campement
       let line-patches patches-between patch-here home-patch
       ;; Ajouter ces patches au known-space du foyer
-      set known-space (patch-set known-space line-patches)
+      set known-space (patch-set my-known-space line-patches)
       ;; Retourner au campement principal
-      move-to home-patch
+      move-to original-home-patch
       ;; ajouter les patches aux catégories d'espaces connus
-      set close-known-space known-space in-radius 12
+      set close-known-space known-space in-radius 6
       set original-camp-known-space close-known-space
-      set distant-known-space known-space with [distance home-patch > 12]
+      ;; Partager le known-space mis à jour avec les troupeaux
       ask cattle-herd [
         set known-space [known-space] of foyer-owner
         set original-camp-known-space [original-camp-known-space] of foyer-owner
-        ifelse is-in-temporary-camp = false [
+        if is-in-temporary-camp = false [
           set close-known-space [close-known-space] of foyer-owner
-          set distant-known-space [distant-known-space] of foyer-owner
-        ] [
-          set close-known-space known-space in-radius 12
-          set distant-known-space known-space with [distance home-patch > 12]
         ]
       ]
       ask sheep-herd [
         set known-space [known-space] of foyer-owner
         set original-camp-known-space [original-camp-known-space] of foyer-owner
-        ifelse is-in-temporary-camp = false [
+        if is-in-temporary-camp = false [
           set close-known-space [close-known-space] of foyer-owner
-          set distant-known-space [distant-known-space] of foyer-owner
-        ] [
-          set close-known-space known-space in-radius 12
-          set distant-known-space known-space with [distance home-patch > 12]
         ]
       ]
+    ] [
+      ;    if any? friends [
+      ;      call-one-friend
+      ;    ]
+      ifelse far-exploration-count <= 5 [
+        let further-undiscovered-patches patches with [distance home-patch > 6 and not member? self my-known-space]
+        if any? further-undiscovered-patches [
+          move-to one-of further-undiscovered-patches
+          let line-patches patches-between patch-here home-patch
+          ;; Ajouter ces patches au known-space du foyer
+          set known-space (patch-set my-known-space line-patches)
+          ;; Retourner au campement principal
+          move-to original-home-patch
+          ;; ajouter les patches aux catégories d'espaces connus
+          set close-known-space known-space in-radius 6
+          set original-camp-known-space close-known-space
+          set distant-known-space known-space with [distance home-patch > 6]
+          ask cattle-herd [
+            set known-space [known-space] of foyer-owner
+            set original-camp-known-space [original-camp-known-space] of foyer-owner
+            ifelse is-in-temporary-camp = false [
+              set close-known-space [close-known-space] of foyer-owner
+              set distant-known-space [distant-known-space] of foyer-owner
+            ] [
+              let tr-home-patch current-home-patch
+              set close-known-space known-space in-radius 6
+              set distant-known-space known-space with [distance tr-home-patch > 6]
+            ]
+          ]
+          ask sheep-herd [
+            set known-space [known-space] of foyer-owner
+            set original-camp-known-space [original-camp-known-space] of foyer-owner
+            ifelse is-in-temporary-camp = false [
+              set close-known-space [close-known-space] of foyer-owner
+              set distant-known-space [distant-known-space] of foyer-owner
+            ] [
+              let tr-home-patch current-home-patch
+              set close-known-space known-space in-radius 6
+              set distant-known-space known-space with [distance tr-home-patch > 6]
+            ]
+          ]
+          set far-exploration-count far-exploration-count + 1
+        ]
+      ] [
+        stop
+      ]
     ]
+  ] [
+    stop
   ]
+
 end
 
 to do-second-strategy
@@ -2453,28 +2482,88 @@ end
 
 
 ; Fonction pour calculer la croissance logistique des fruits
-to-report growth-fruit-logistic [input-tree-type tree-age pop-size current-fruit max-fruit]
+to-report growth-fruit-logistic [input-tree-type current-fruit max-fruit season landscape]
   let r 0
   ifelse  max-fruit = 0 [
     report 0  ; Pas de croissance si max-wood est zéro
   ] [
     if input-tree-type = "nutritive" [
-      if current-season = "Nduungu" [set r 0.05]
-      if current-season = "Ceedu" [set r -0.03]
-      if current-season = "Dabbuunde" [set r 0.01]
-      if current-season = "Ceetcelde" [set r 0.005]
+      if landscape = "Baldiol" [
+        if current-season = "Nduungu" [set r 0.05]
+        if current-season = "Ceedu" [set r -0.03]
+        if current-season = "Dabbuunde" [set r 0.01]
+        if current-season = "Ceetcelde" [set r -0.01]
+      ]
+       if landscape = "Caangol" [
+        if current-season = "Nduungu" [set r 0.05]
+        if current-season = "Ceedu" [set r -0.03]
+        if current-season = "Dabbuunde" [set r 0.01]
+        if current-season = "Ceetcelde" [set r 0.005]
+      ]
+       if landscape = "Seeno" [
+        if current-season = "Nduungu" [set r 0.1]
+        if current-season = "Ceedu" [set r -0.3]
+        if current-season = "Dabbuunde" [set r 0.02]
+        if current-season = "Ceetcelde" [set r -0.005]
+      ]
+       if landscape = "Sangre" [
+        if current-season = "Nduungu" [set r 0.05]
+        if current-season = "Ceedu" [set r -0.03]
+        if current-season = "Dabbuunde" [set r -0.01]
+        if current-season = "Ceetcelde" [set r 0.005]
+      ]
     ]
     if input-tree-type = "lessNutritive" [
-      if current-season = "Nduungu" [set r 0.04]
-      if current-season = "Ceedu" [set r 0.025]
-      if current-season = "Dabbuunde" [set r 0.01]
-      if current-season = "Ceetcelde" [set r 0.005]
+      if landscape = "Baldiol" [
+        if current-season = "Nduungu" [set r 0.05]
+        if current-season = "Ceedu" [set r -0.03]
+        if current-season = "Dabbuunde" [set r 0.01]
+        if current-season = "Ceetcelde" [set r 0.005]
+      ]
+       if landscape = "Caangol" [
+        if current-season = "Nduungu" [set r 0.05]
+        if current-season = "Ceedu" [set r -0.03]
+        if current-season = "Dabbuunde" [set r 0.01]
+        if current-season = "Ceetcelde" [set r 0.005]
+      ]
+       if landscape = "Seeno" [
+        if current-season = "Nduungu" [set r 0.05]
+        if current-season = "Ceedu" [set r -0.03]
+        if current-season = "Dabbuunde" [set r 0.01]
+        if current-season = "Ceetcelde" [set r 0.005]
+      ]
+       if landscape = "Sangre" [
+        if current-season = "Nduungu" [set r 0.05]
+        if current-season = "Ceedu" [set r -0.03]
+        if current-season = "Dabbuunde" [set r 0.01]
+        if current-season = "Ceetcelde" [set r 0.005]
+      ]
     ]
     if input-tree-type = "fruity" [
-      if current-season = "Nduungu" [set r 0.06]
-      if current-season = "Ceedu" [set r 0.04]
-      if current-season = "Dabbuunde" [set r 0.02]
-      if current-season = "Ceetcelde" [set r 0.01]
+      if landscape = "Baldiol" [
+        if current-season = "Nduungu" [set r 0.05]
+        if current-season = "Ceedu" [set r -0.03]
+        if current-season = "Dabbuunde" [set r 0.01]
+        if current-season = "Ceetcelde" [set r 0.005]
+      ]
+       if landscape = "Caangol" [
+        if current-season = "Nduungu" [set r 0.05]
+        if current-season = "Ceedu" [set r -0.05]
+        if current-season = "Dabbuunde" [set r 0.03]
+        if current-season = "Ceetcelde" [set r -0.05]
+      ]
+       if landscape = "Seeno" [
+        if current-season = "Nduungu" [set r 0.05]
+        if current-season = "Ceedu" [set r -0.03]
+        if current-season = "Dabbuunde" [set r 0.01]
+        if current-season = "Ceetcelde" [set r 0.005]
+      ]
+       if landscape = "Sangre" [
+        if current-season = "Nduungu" [set r 0.05]
+        if current-season = "Ceedu" [set r -0.03]
+        if current-season = "Dabbuunde" [set r 0.01]
+        if current-season = "Ceetcelde" [set r 0.005]
+      ]
     ]
     let growth r * (precision current-fruit 5) * (precision (1 - (current-fruit / max-fruit)) 5)
     report growth
@@ -2482,62 +2571,121 @@ to-report growth-fruit-logistic [input-tree-type tree-age pop-size current-fruit
 end
 
  ;Fonction pour calculer la croissance logistique des feuilles
-to-report growth-leaf-logistic [input-tree-type tree-age pop-size current-leaf max-leaf]
+to-report growth-leaf-logistic [input-tree-type current-leaf max-leaf season landscape]
   let r 0
   ifelse  max-leaf = 0 [
     report 0  ; Pas de croissance si max-wood est zéro
   ] [
-    if input-tree-type = "nutritive" [
-      if current-season = "Nduungu" [set r 0.05]
-      if current-season = "Ceedu" [set r 0.03]
-      if current-season = "Dabbuunde" [set r 0.01]
-      if current-season = "Ceetcelde" [set r 0.005]
+     if input-tree-type = "nutritive" [
+      if landscape = "Baldiol" [
+        if season = "Nduungu" [set r 0.05]
+        if season = "Ceedu" [set r -0.03]
+        if season = "Dabbuunde" [set r 0.01]
+        if season = "Ceetcelde" [set r 0.005]
+      ]
+       if landscape = "Caangol" [
+        if season = "Nduungu" [set r 0.05]
+        if season = "Ceedu" [set r -0.03]
+        if season = "Dabbuunde" [set r 0.01]
+        if season = "Ceetcelde" [set r 0.005]
+      ]
+       if landscape = "Seeno" [
+        if season = "Nduungu" [set r 0.05]
+        if season = "Ceedu" [set r -0.03]
+        if season = "Dabbuunde" [set r 0.01]
+        if season = "Ceetcelde" [set r 0.005]
+      ]
+       if landscape = "Sangre" [
+        if season = "Nduungu" [set r 0.05]
+        if season = "Ceedu" [set r -0.03]
+        if season = "Dabbuunde" [set r 0.01]
+        if season = "Ceetcelde" [set r 0.005]
+      ]
     ]
     if input-tree-type = "lessNutritive" [
-      if current-season = "Nduungu" [set r 0.04]
-      if current-season = "Ceedu" [set r 0.025]
-      if current-season = "Dabbuunde" [set r 0.01]
-      if current-season = "Ceetcelde" [set r 0.005]
+      if landscape = "Baldiol" [
+        if season = "Nduungu" [set r 0.05]
+        if season = "Ceedu" [set r -0.03]
+        if season = "Dabbuunde" [set r 0.01]
+        if season = "Ceetcelde" [set r 0.005]
+      ]
+       if landscape = "Caangol" [
+        if season = "Nduungu" [set r 0.05]
+        if season = "Ceedu" [set r -0.03]
+        if season = "Dabbuunde" [set r 0.01]
+        if season = "Ceetcelde" [set r 0.005]
+      ]
+       if landscape = "Seeno" [
+        if season = "Nduungu" [set r 0.05]
+        if season = "Ceedu" [set r -0.03]
+        if season = "Dabbuunde" [set r 0.01]
+        if season = "Ceetcelde" [set r 0.005]
+      ]
+       if landscape = "Sangre" [
+        if season = "Nduungu" [set r 0.05]
+        if season = "Ceedu" [set r -0.03]
+        if season = "Dabbuunde" [set r 0.01]
+        if season = "Ceetcelde" [set r 0.005]
+      ]
     ]
     if input-tree-type = "fruity" [
-      if current-season = "Nduungu" [set r 0.06]
-      if current-season = "Ceedu" [set r 0.04]
-      if current-season = "Dabbuunde" [set r 0.02]
-      if current-season = "Ceetcelde" [set r 0.01]
+      if landscape = "Baldiol" [
+        if season = "Nduungu" [set r 0.05]
+        if season = "Ceedu" [set r -0.03]
+        if season = "Dabbuunde" [set r 0.01]
+        if season = "Ceetcelde" [set r 0.005]
+      ]
+       if landscape = "Caangol" [
+        if season = "Nduungu" [set r 0.05]
+        if season = "Ceedu" [set r -0.03]
+        if season = "Dabbuunde" [set r 0.01]
+        if season = "Ceetcelde" [set r 0.005]
+      ]
+       if landscape = "Seeno" [
+        if season = "Nduungu" [set r 0.05]
+        if season = "Ceedu" [set r -0.03]
+        if season = "Dabbuunde" [set r 0.01]
+        if season = "Ceetcelde" [set r 0.005]
+      ]
+       if landscape = "Sangre" [
+        if season = "Nduungu" [set r 0.05]
+        if season = "Ceedu" [set r -0.03]
+        if season = "Dabbuunde" [set r 0.01]
+        if season = "Ceetcelde" [set r 0.005]
+      ]
     ]
-    ; Afficher les valeurs pour débogage
-
     let growth precision (r * (precision current-leaf 5) * (precision (1 - (current-leaf / max-leaf)) 5)) 5
     if abs(growth) > 1e10 [
-    report 0
-  ]report growth
+      report 0
+    ]
+    report growth
   ]
 
 end
 
 ;Fonction pour calculer la croissance logistique du bois
-to-report growth-wood-logistic [input-tree-type tree-age pop-size current-wood max-wood]
+to-report growth-wood-logistic [input-tree-type current-wood max-wood season]
   let r 0
   ifelse  max-wood = 0 [
     report 0  ; Pas de croissance si max-wood est zéro
   ] [
     if input-tree-type = "nutritive" [
-      if current-season = "Nduungu" [set r 0.05]
-      if current-season = "Ceedu" [set r 0.03]
-      if current-season = "Dabbuunde" [set r 0.01]
-      if current-season = "Ceetcelde" [set r 0.005]
+      if season = "Nduungu" [set r 0.05]
+      if season = "Ceedu" [set r 0.03]
+      if season = "Dabbuunde" [set r 0.01]
+      if season = "Ceetcelde" [set r 0.005]
     ]
     if input-tree-type = "lessNutritive" [
-      if current-season = "Nduungu" [set r 0.04]
-      if current-season = "Ceedu" [set r 0.025]
-      if current-season = "Dabbuunde" [set r 0.01]
-      if current-season = "Ceetcelde" [set r 0.005]
+      if season = "Nduungu" [set r 0.04]
+      if season = "Ceedu" [set r 0.025]
+      if season = "Dabbuunde" [set r 0.01]
+      if season = "Ceetcelde" [set r 0.005]
     ]
     if input-tree-type = "fruity" [
-      if current-season = "Nduungu" [set r 0.06]
-      if current-season = "Ceedu" [set r 0.04]
-      if current-season = "Dabbuunde" [set r 0.02]
-      if current-season = "Ceetcelde" [set r 0.01]
+      if season = "Nduungu" [set r 0.06]
+      if season = "Ceedu" [set r 0.04]
+      if season = "Dabbuunde" [set r 0.02]
+      if season = "Ceetcelde" [set r 0.01]
     ]
 
     let growth  r * (precision current-wood 5) * (precision (1 - (current-wood / max-wood)) 5)
@@ -2548,17 +2696,19 @@ end
 
 
 ; Trouver le meilleur patch : d'abord la qualité, ensuite la quantité, enfin la proximité
-to-report find-best-nearest-patch [known-spaces]
+to-report find-best-nearest-patch [known-spaces my-shepherd]
   let viable-patches known-spaces with [current-grass >= 40]
-show viable-patches
+  show word "known-space       " known-spaces
+show word "viable-patches     " viable-patches
   ifelse any? viable-patches [
-    ifelse shepherd-type = "good" [
+    ifelse my-shepherd = "bon" [
     ; Étape 1 : Sélectionner les patches avec la meilleure qualité d'herbe
     let best-quality-patches viable-patches with-max [q]
-
+show word "best-quality-patches      " best-quality-patches
     ; Étape 2 : Parmi les patches avec la meilleure qualité, sélectionner ceux avec la plus grande quantité d'herbe
     let max-grass-patches best-quality-patches with-max [current-grass]
 
+show word "max-grass-patches       " max-grass-patches
     ; Étape 3 : Choisir le patch le plus proche parmi ceux avec la meilleure qualité et la plus grande quantité d'herbe
     report min-one-of max-grass-patches [distance myself]
     ] [
@@ -2570,7 +2720,13 @@ show viable-patches
       report min-one-of max-grass-patches [distance myself]
     ]
   ] [
-    report nobody  ; Si aucun patch viable n'est trouvé
+
+      ; Étape 2 : Parmi les patches avec la meilleure qualité, sélectionner ceux avec la plus grande quantité d'herbe
+      let max-grass-patches viable-patches with-max [current-grass]
+
+      ; Étape 3 : Choisir le patch le plus proche parmi ceux avec la meilleure qualité et la plus grande quantité d'herbe
+      report min-one-of max-grass-patches [distance myself]
+    ; Si aucun patch viable n'est trouvé
   ]
 end
 
@@ -2600,20 +2756,15 @@ to-report patches-between [ p1 p2 ]
   let distancey y2 - y1
 
   let n max (list abs distancex abs distancey)
-   let result no-patches  ; Initialise un agentset vide
-
-  ifelse n = 0 [
-    set result patch x1 y1
-  ] [
-    let xinc dx / n
-    let yinc dy / n
-    let x x1
-    let y y1
-    repeat (n + 1) [
-      set result (patch-set result patch round x round y)
-      set x x + xinc
-      set y y + yinc
-    ]
+ let xinc distancex / n
+  let yinc distancey / n
+  let x x1
+  let y y1
+  let result patch-set patch x1 y1
+  repeat n [
+    set x x + xinc
+    set y y + yinc
+    set result (patch-set result patch round x round y)
   ]
   report result
 end
@@ -2918,7 +3069,7 @@ good-shepherd-percentage
 good-shepherd-percentage
 0
 100
-100.0
+0.0
 1
 1
 NIL
