@@ -1516,7 +1516,6 @@ end
 to renew-tree-population
   let total-new-trees 0
   ; Cette procédure sera appelée uniquement en Nduungu une fois par saison
-  if renewal-flag = false [
     ask patches [
       let new-trees-by-type []
 
@@ -1525,7 +1524,7 @@ to renew-tree-population
         ; Récupérer le taux de germination pour le type d'arbre et la qualité de l'année
         let germination-rate get-germination-rate tree-type current-year-type
         ; Calculer les nouvelles pousses
-        let new-trees floor (current-fruit-stock * germination-rate)
+        let new-trees floor ((current-fruit-stock * 1000 ) * germination-rate)
 
         ; Ajouter les nouvelles pousses au total pour ce type d'arbre
         let current-type-entry filter [x -> item 0 x = tree-type] new-trees-by-type
@@ -1565,9 +1564,6 @@ to renew-tree-population
           ]
         ]
       ]
-      ; Marquer le renouvellement comme effectué pour cette saison
-      set renewal-flag true
-    ]
   ]
 end
 
