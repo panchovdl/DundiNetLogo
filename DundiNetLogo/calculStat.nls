@@ -45,6 +45,8 @@ globals [
   sumSmallHerder
   sumMediumHerder
   sumLargeHerder
+  
+  meanDistantKnownSpace
 ]
 
 to calculStat
@@ -138,4 +140,6 @@ to calculStat
   set sumSmallHerder count foyers with [herder-type = "petit"]
   set sumMediumHerder count foyers with [herder-type = "moyen"]
   set sumLargeHerder count foyers with [herder-type = "grand"]
+ set meanDistantKnownSpace meanKnownSpace sheeps
+  
 end

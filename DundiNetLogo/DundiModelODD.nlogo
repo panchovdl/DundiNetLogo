@@ -2788,6 +2788,24 @@ to-report patches-between [ p1 p2 ]
   ]
   report result
 end
+
+to-report meanKnownSpace [agents]
+ ; Initialiser une variable pour stocker la somme des counts
+let _total-count 0
+ ; Initialiser une variable pour stocker le nombre de moutons
+let _number-of-sheep count agents
+; Parcourir chaque mouton et compter les patches
+ask agents [
+  let patches-agentset [distant-known-space] of self  ; Récupérer l'agentset des patches pour ce mouton
+  let count-patches count patches-agentset /  count patches          ; Compter le nombre de patches
+  set _total-count _total-count + count-patches         ; Ajouter à la somme totale
+]
+
+;; Calculer la moyenne
+  ifelse _number-of-sheep = 0 [report 0]
+  [report _total-count / _number-of-sheep * 100]
+end
+
 @#$#@#$#@
 GRAPHICS-WINDOW
 100
@@ -3051,10 +3069,10 @@ NIL
 HORIZONTAL
 
 PLOT
-1000
-165
 1310
-315
+15
+1620
+165
 Weight-gain
 NIL
 NIL
@@ -3090,10 +3108,10 @@ PENS
 "cattles" 1.0 0 -16449023 true "" "plot cattlesTempCamp"
 
 PLOT
-1310
-15
-1615
+1005
 165
+1310
+315
 partis dans le saloum
 NIL
 NIL
@@ -3111,7 +3129,7 @@ PENS
 PLOT
 1310
 165
-1615
+1645
 315
 CATTLE weight per head
 NIL
@@ -3176,10 +3194,11 @@ NIL
 0.0
 10.0
 true
-false
+true
 "" ""
 PENS
-"default" 1.0 0 -16777216 true "" "plot mean [distant-known-space] of foyers"
+"sheep" 1.0 0 -16777216 true "" "plot meanDistantKnownSpace"
+"cattle" 1.0 0 -2674135 true "" "plot meanKnownSpace cattles"
 
 PLOT
 1445
@@ -3202,7 +3221,7 @@ PENS
 PLOT
 1310
 315
-1615
+1640
 465
 SHEEP weight per head
 NIL
