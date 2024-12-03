@@ -1083,6 +1083,11 @@ to go
 
   ; Vérifiez si une année complète s'est écoulée
   if year-counter >= total-ticks-per-year [
+    ask patches [
+      set current-monocot-grass 100
+      set current-dicot-grass 100
+      set current-grass current-monocot-grass + current-dicot-grass
+    ]
     set year-counter 0                ; Au premier jour de chaque nouvelle année, remet le compteur d'année à 0
     set renewal-flag false            ; Au premier jour de chaque nouvelle année, relance la création d'une nouvelle population d'arbres d'un an
     update-year-type                  ; Au premier jour de chaque nouvelle année, redéfinit si l'année sera bonne, moyenne, mauvaise
@@ -1252,13 +1257,13 @@ end
 to assign-grass-proportions ; Réassigner la proportion de monocotylédones (p) en fonction du type de sol
 
     if soil-type = "Baldiol" [
-      set p random-float (0.0 - 0.2) + 0.4  ; Intervalle [0.4, 0.6]
+      set p random-float (0.0 - 0.2) + 0.3  ; Intervalle [0.3, 0.5]
     ]
     if soil-type = "Caangol" [
       set p random-float (0.0 - 0.3) + 0.1  ; Intervalle [0.1, 0.4]
     ]
     if soil-type = "Sangre" [
-      set p random-float (0.0 - 0.3) + 0.2  ; Intervalle [0.2, 0.5]
+      set p random-float (0.0 - 0.3) + 0.3  ; Intervalle [0.3, 0.6]
     ]
     if soil-type = "Seeno" [
       set p random-float (0.0 - 0.2) + 0.8  ; Intervalle [0.6, 0.8]
@@ -1330,7 +1335,7 @@ to grow-grass  ; - Version 2.2.
     let new-mono-grass 0
     let new-dicot-grass 0
     if current-season = "Nduungu" [
-      set r_grass 0.16
+      set r_grass 0.5
       set new-mono-grass current-monocot-grass + r_grass * current-monocot-grass * (K * p - current-monocot-grass) / (K * p)
     ; Croissance logistique pour les dicotylédones
       set new-dicot-grass current-dicot-grass + r_grass * current-dicot-grass * (K * (1 - p) - current-dicot-grass) / (K * (1 - p))
@@ -3342,7 +3347,7 @@ interface-number-of-camp-i
 interface-number-of-camp-i
 0
 200
-91.0
+25.0
 1
 1
 NIL

@@ -124,6 +124,10 @@ to calculStat
 ;  set meanLeavesConsumedCattle mean [leaves-consumed] of cattles with [have-left = false]
 ;  set meanFruitsConsumedSheep  mean [fruits-consumed] of sheeps with [have-left = false]
 ;  set meanLeavesConsumedSheep mean [leaves-consumed] of sheeps with [have-left = false]
+  
+  
+  
+  
   if ticks > 0 [
     if TreeDensitySatisfaction-oldes < totalTreesOldes [
       set traj-trees traj-trees  + 1
