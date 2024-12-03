@@ -2121,6 +2121,7 @@ end
 to do-second-strategy
   move-to original-home-patch          ; Déplacer au campement principal
   set have-left true
+  set is-in-temporary-camp false
   hide-turtle
 end
 
@@ -3335,7 +3336,7 @@ HORIZONTAL
 SLIDER
 55
 116
-92
+88
 261
 interface-number-of-camp-i
 interface-number-of-camp-i
