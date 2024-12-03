@@ -238,6 +238,8 @@ sheeps-own [
   shepherd-type                    ; Caractéristique d'élevage du foyer (grand moyen petit)
   pasture-strategy                 ; Stratégies de pâturage
   have-left                        ; Indique si le troupeau est parti vers le sud ou hors de la zone de l'UP
+  leaves-eaten
+  fruits-eaten
 ]
 
 
@@ -251,6 +253,8 @@ cattles-own [
   shepherd-type                    ; Caractéristique d'élevage du foyer (grand moyen petit)
   pasture-strategy                 ; Stratégies de pâturage
   have-left                        ; Indique si le troupeau est parti vers le sud ou hors de la zone de l'UP
+  leaves-eaten
+  fruits-eaten
 ]
 
 
@@ -1512,7 +1516,6 @@ end
 to renew-tree-population
   let total-new-trees 0
   ; Cette procédure sera appelée uniquement en Nduungu une fois par saison
-  if renewal-flag = false [
     ask patches [
       let new-trees-by-type []
 
@@ -1521,7 +1524,7 @@ to renew-tree-population
         ; Récupérer le taux de germination pour le type d'arbre et la qualité de l'année
         let germination-rate get-germination-rate tree-type current-year-type
         ; Calculer les nouvelles pousses
-        let new-trees floor (current-fruit-stock * germination-rate)
+        let new-trees floor ((current-fruit-stock * 1000 ) * germination-rate)
 
         ; Ajouter les nouvelles pousses au total pour ce type d'arbre
         let current-type-entry filter [x -> item 0 x = tree-type] new-trees-by-type
@@ -1561,9 +1564,6 @@ to renew-tree-population
           ]
         ]
       ]
-      ; Marquer le renouvellement comme effectué pour cette saison
-      set renewal-flag true
-    ]
   ]
 end
 
@@ -1882,7 +1882,9 @@ to consume-tree-resources [patch-of-grass-eaten remaining-needs] ;; contexte tro
         let leaves_share ([current-leaf-stock] of one-tree-population / total_resources)
         let fruits_share ([current-fruit-stock] of one-tree-population / total_resources)
         let leaves-consumed amount-consumed * leaves_share
+        set leaves-eaten leaves-consumed
         let fruits-consumed amount-consumed * fruits_share
+        set fruits-eaten fruits-consumed
 
         ;; Mettre à jour les stocks dans la population d'arbres
         ask one-tree-population [
