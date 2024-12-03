@@ -120,11 +120,11 @@ to calculStat
   set totalTrees1years sum [population-size] of tree-populations with [tree-pop-age = 1] / count patches
   set totalTreesOldes sum [population-size] of tree-populations with [tree-pop-age >= 4] / count patches
   set totalTreesYoung sum [population-size] of tree-populations with [tree-pop-age < 4] / count patches
-;  set meanFruitsConsumedCattle mean [fruits-consumed] of cattles with [have-left = false]
-;  set meanLeavesConsumedCattle mean [leaves-consumed] of cattles with [have-left = false]
-;  set meanFruitsConsumedSheep  mean [fruits-consumed] of sheeps with [have-left = false]
-;  set meanLeavesConsumedSheep mean [leaves-consumed] of sheeps with [have-left = false]
-  
+
+  set meanFruitsConsumedCattle sum [fruits-eaten] of cattles with [have-left = false]
+  set meanLeavesConsumedCattle sum [leaves-eaten] of cattles with [have-left = false]
+  set meanFruitsConsumedSheep  sum [fruits-eaten] of sheeps with [have-left = false]
+  set meanLeavesConsumedSheep sum [leaves-eaten] of sheeps with [have-left = false]
   
   
   

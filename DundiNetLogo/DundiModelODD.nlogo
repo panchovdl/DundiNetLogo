@@ -238,6 +238,8 @@ sheeps-own [
   shepherd-type                    ; Caractéristique d'élevage du foyer (grand moyen petit)
   pasture-strategy                 ; Stratégies de pâturage
   have-left                        ; Indique si le troupeau est parti vers le sud ou hors de la zone de l'UP
+  leaves-eaten
+  fruits-eaten
 ]
 
 
@@ -251,6 +253,8 @@ cattles-own [
   shepherd-type                    ; Caractéristique d'élevage du foyer (grand moyen petit)
   pasture-strategy                 ; Stratégies de pâturage
   have-left                        ; Indique si le troupeau est parti vers le sud ou hors de la zone de l'UP
+  leaves-eaten
+  fruits-eaten
 ]
 
 
@@ -1882,7 +1886,9 @@ to consume-tree-resources [patch-of-grass-eaten remaining-needs] ;; contexte tro
         let leaves_share ([current-leaf-stock] of one-tree-population / total_resources)
         let fruits_share ([current-fruit-stock] of one-tree-population / total_resources)
         let leaves-consumed amount-consumed * leaves_share
+        set leaves-eaten leaves-consumed
         let fruits-consumed amount-consumed * fruits_share
+        set fruits-eaten fruits-consumed
 
         ;; Mettre à jour les stocks dans la population d'arbres
         ask one-tree-population [
