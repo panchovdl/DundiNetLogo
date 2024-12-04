@@ -356,7 +356,7 @@ to setup
   update-year-type
   set-season-durations
 
-  set initial-number-of-camps interface-number-of-camp-i
+  set initial-number-of-camps number-of-camps
   set space-camp-min 2
   set space-camp-max 15
   set space-camp-standard-deviation 5
@@ -2954,20 +2954,20 @@ waterStock
 11
 
 CHOOSER
-640
-545
-796
-590
+270
+530
+426
+575
 visualization-mode
 visualization-mode
 "soil-type" "tree-cover" "grass-cover" "grass-quality" "known-space"
 4
 
 BUTTON
-475
-485
-565
-518
+300
+495
+390
+528
 visualize
   update-visualization
 NIL
@@ -3143,10 +3143,10 @@ PENS
 "minWeight" 1.0 0 -13791810 true "" "plot minCattlesLiveWeight"
 
 BUTTON
-600
-195
-710
-228
+5
+605
+85
+638
 removeGrass
 ask patches [set current-grass  0.1\nset current-monocot-grass 0.1\nset current-dicot-grass 0.1]
 NIL
@@ -3158,24 +3158,6 @@ NIL
 NIL
 NIL
 1
-
-PLOT
-1000
-465
-1245
-615
-Sum grass
-NIL
-NIL
-0.0
-10.0
-0.0
-10.0
-true
-false
-"" ""
-PENS
-"default" 1.0 0 -14835848 true "" "plot totalGrass"
 
 PLOT
 1245
@@ -3246,10 +3228,10 @@ year-index
 11
 
 PLOT
-800
-315
-1000
+845
 465
+1045
+615
 mean grass per Ha
 NIL
 NIL
@@ -3261,13 +3243,13 @@ true
 false
 "" ""
 PENS
-"default" 1.0 0 -16777216 true "" "plot meanGrass / 100"
+"default" 1.0 0 -13840069 true "" "plot meanGrass / 100"
 
 PLOT
-600
-315
 800
-475
+315
+1000
+465
 trees-evolve
 NIL
 NIL
@@ -3279,15 +3261,15 @@ true
 true
 "" ""
 PENS
-"oldes" 1.0 0 -16777216 true "" "plot totalTreesOldes"
+"olds" 1.0 0 -16777216 true "" "plot totalTreesOldes"
 "youngs" 1.0 0 -7500403 true "" "plot totalTreesYoung"
 "satisfaction" 1.0 0 -2674135 true "" "plot TreeDensitySatisfaction-oldes"
 
 PLOT
-800
-490
-1000
-640
+645
+465
+845
+615
 Trees Resources Consumption
 NIL
 NIL
@@ -3305,10 +3287,10 @@ PENS
 "pen-3" 1.0 0 -955883 true "" "plot meanLeavesConsumedSheep"
 
 SLIDER
-220
-490
-432
-523
+5
+485
+217
+518
 SheepNECSatifactionIndex
 SheepNECSatifactionIndex
 0
@@ -3320,10 +3302,10 @@ NIL
 HORIZONTAL
 
 PLOT
-10
-490
-210
-640
+1045
+465
+1245
+615
 MST NEC
 NIL
 NIL
@@ -3339,10 +3321,10 @@ PENS
 "cattle" 1.0 0 -16777216 true "" "plot  MSTCattle-NEC"
 
 SLIDER
-220
-530
-417
-563
+5
+525
+202
+558
 CattleNECSatifactionIndex
 CattleNECSatifactionIndex
 0
@@ -3356,10 +3338,10 @@ HORIZONTAL
 SLIDER
 55
 116
-88
-261
-interface-number-of-camp-i
-interface-number-of-camp-i
+92
+262
+number-of-camps
+number-of-camps
 0
 200
 37.0
@@ -3389,12 +3371,12 @@ PENS
 "pen-2" 1.0 0 -2674135 true "" "plot SheepNECSatifactionIndex"
 
 SLIDER
-595
-275
-807
-308
-TreeDensitySatisfaction-oldes
-TreeDensitySatisfaction-oldes
+5
+565
+215
+598
+TreeDensitySatisfaction-olds
+TreeDensitySatisfaction-olds
 0
 8000
 4914.0

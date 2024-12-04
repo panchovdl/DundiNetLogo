@@ -131,7 +131,7 @@ to calculStat
   
   
   if ticks > 0 [
-    if TreeDensitySatisfaction-oldes < totalTreesOldes [
+    if TreeDensitySatisfaction-olds < totalTreesOldes [
       set traj-trees traj-trees  + 1
     ]
     set MST-trees traj-trees / ticks
