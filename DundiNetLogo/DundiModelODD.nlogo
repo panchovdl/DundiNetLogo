@@ -2786,21 +2786,21 @@ to-report patches-between [ p1 p2 ]
   report result
 end
 
-to-report meanKnownSpace [agents]
- ; Initialiser une variable pour stocker la somme des counts
+to-report percentKnownSpaceOf [agents]
+ ; return the % of know-space of a set of agents (input parameter)
 let _total-count 0
- ; Initialiser une variable pour stocker le nombre de moutons
-let _number-of-sheep count agents
+ ; Initialiser une variable pour stocker le nombre de agents
+let _number-of-agents count agents
 ; Parcourir chaque mouton et compter les patches
 ask agents [
   let patches-agentset [distant-known-space] of self  ; Récupérer l'agentset des patches pour ce mouton
-  let count-patches count patches-agentset /  count patches          ; Compter le nombre de patches
+  let count-patches count patches-agentset /  count patches          ; Compter le nombre de patches / total space
   set _total-count _total-count + count-patches         ; Ajouter à la somme totale
 ]
 
 ;; Calculer la moyenne
-  ifelse _number-of-sheep = 0 [report 0]
-  [report _total-count / _number-of-sheep * 100]
+  ifelse _number-of-agents = 0 [report 0]
+  [report _total-count / _number-of-agents * 100]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -3182,7 +3182,7 @@ PLOT
 465
 1445
 615
-distant-kown-space
+%-kown-space
 NIL
 NIL
 0.0
@@ -3193,8 +3193,8 @@ true
 true
 "" ""
 PENS
-"sheep" 1.0 0 -16777216 true "" "plot meanDistantKnownSpace"
-"cattle" 1.0 0 -2674135 true "" "plot meanKnownSpace cattles"
+"sheep" 1.0 0 -13791810 true "" "plot percentKnownSpace"
+"cattle" 1.0 0 -16777216 true "" "plot percentKnownSpaceOf cattles"
 
 PLOT
 1445
@@ -3362,7 +3362,7 @@ interface-number-of-camp-i
 interface-number-of-camp-i
 0
 200
-1.0
+37.0
 1
 1
 NIL
