@@ -1087,7 +1087,7 @@ to go
 
   ; Vérifiez si une année complète s'est écoulée
   if year-counter >= total-ticks-per-year [
-    ask patches [
+    ask patches with [current-grass < 200] [
       set current-monocot-grass 100
       set current-dicot-grass 100
       set current-grass current-monocot-grass + current-dicot-grass
@@ -1652,7 +1652,7 @@ to move-and-eat ; Mouvement et consommation des troupeaux - bovins puis ovins
         set close-known-space known-space in-radius 6
         set distant-known-space known-space who-are-not close-known-space
         ask foyer-owner [
-          set known-space (patch-set known-space [known-space] of myself)
+          set known-space (patch-set known-space ([known-space] of myself))
           set close-known-space known-space in-radius 6
           set distant-known-space known-space who-are-not close-known-space
 ]
@@ -2036,7 +2036,6 @@ end
 
 to do-first-strategy
 
-  ifelse ([current-home-patch] of cattle-herd = original-home-patch) and ([current-home-patch] of sheep-herd = original-home-patch) [
     ;; Store the foyer's variables in local variables
     let home-patch original-home-patch
     let my-known-space known-space
@@ -2118,9 +2117,6 @@ to do-first-strategy
         stop
       ]
     ]
-  ] [
-    stop
-  ]
 
 end
 
@@ -2965,7 +2961,7 @@ CHOOSER
 visualization-mode
 visualization-mode
 "soil-type" "tree-cover" "grass-cover" "grass-quality" "known-space"
-2
+4
 
 BUTTON
 475
@@ -3032,7 +3028,7 @@ good-shepherd-percentage
 good-shepherd-percentage
 0
 100
-0.0
+100.0
 1
 1
 NIL
@@ -3366,7 +3362,7 @@ interface-number-of-camp-i
 interface-number-of-camp-i
 0
 200
-25.0
+1.0
 1
 1
 NIL
