@@ -596,8 +596,8 @@ to setup-foyers
       set close-known-space known-space with [
         distance [current-home-patch] of myself <= 6
       ]
-
       set original-camp-known-space close-known-space
+      set distant-known-space known-space who-are-not close-known-space
 
       set cattle-low-threshold-cc 1
       set sheep-low-threshold-cc 1
@@ -1093,7 +1093,6 @@ to go
       set current-grass current-monocot-grass + current-dicot-grass
     ]
     set year-counter 0                ; Au premier jour de chaque nouvelle année, remet le compteur d'année à 0
-    set renewal-flag false            ; Au premier jour de chaque nouvelle année, relance la création d'une nouvelle population d'arbres d'un an
     update-year-type                  ; Au premier jour de chaque nouvelle année, redéfinit si l'année sera bonne, moyenne, mauvaise
     set-season-durations              ; Au premier jour de chaque nouvelle année et en fonction de l'année, redéfinit les durées pour chacune des siaosn pour l'année en cours
     update-tree-age                   ; Au premier jour de chaque nouvelle année, fait grandir les populations d'arbres d'un an
@@ -1345,19 +1344,19 @@ to grow-grass  ; - Version 2.2.
       set new-dicot-grass current-dicot-grass + r_grass * current-dicot-grass * (K * (1 - p) - current-dicot-grass) / (K * (1 - p))
     ]
     if current-season = "Dabbuunde" [
-      set r_grass -0.01
+      set r_grass -0.005
       set new-mono-grass current-monocot-grass + r_grass * current-monocot-grass
     ; Croissance logistique pour les dicotylédones
       set new-dicot-grass current-dicot-grass + r_grass * current-dicot-grass
     ]
     if current-season = "Ceedu" [
-      set r_grass -0.02
+      set r_grass -0.001
       set new-mono-grass current-monocot-grass + r_grass * current-monocot-grass * (K * p - current-monocot-grass) / (K * p)
     ; Croissance logistique pour les dicotylédones
       set new-dicot-grass current-dicot-grass + r_grass * current-dicot-grass * (K * (1 - p) - current-dicot-grass) / (K * (1 - p))
     ]
     if current-season = "Ceetcelde" [
-      set r_grass -0.02  ; Même pour les deux types
+      set r_grass -0.002  ; Même pour les deux types
       set new-mono-grass current-monocot-grass + r_grass * current-monocot-grass * (K * p - current-monocot-grass) / (K * p)
     ; Croissance logistique pour les dicotylédones
       set new-dicot-grass current-dicot-grass + r_grass * current-dicot-grass * (K * (1 - p) - current-dicot-grass) / (K * (1 - p))
@@ -1469,9 +1468,9 @@ end
 
 to update-year-type
   ; Vérifier qu'on ne dépasse pas la liste
-  if year-counter >= total-ticks-per-year [
     set year-index year-index + 1
-  ]
+  if year-index = 21 [
+    set year-index 1 ]
   ; Obtenir le type d'année
   set current-year-type item year-index year-types
 end
@@ -2807,7 +2806,6 @@ ask agents [
   ifelse _number-of-sheep = 0 [report 0]
   [report _total-count / _number-of-sheep * 100]
 end
-
 @#$#@#$#@
 GRAPHICS-WINDOW
 100
