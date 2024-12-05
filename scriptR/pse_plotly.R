@@ -1,11 +1,18 @@
+rm(list = ls())
+
 library(ggplot2)
 library(dplyr)
 library(reshape2)
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+source("petitParceur_openMole.R")
 df <- read.csv("../results//M0_results_pse_muse.csv", header = T)
 
 names(df)
+
+df$mTotalTreesOld <- sapply(df$totalTreesOldes, pp_mean)
+df$mTotalcattles <- sapply(df$totalCattles, pp_mean)
+df$mTotalsheeps <- sapply(df$totalSheeps, pp_mean)
 
 ggplot(df, aes(x = objective.MSTCattleNEC, y = objective.MSTTrees, colour = goodShepherdPercentage, size = evolution.samples))+
   geom_point()+
@@ -46,13 +53,17 @@ plot_ly(data = df[sel,],
         z = ~goodShepherdPercentage,   # Axe Z (3ème dimension)
         type = 'scatter3d', 
         mode = 'markers', 
-        color = ~interfaceNumberOfCampI,  # Coloration par nbBoats
+        color = ~mTotalcattles,  # Coloration par nbBoats
         #size = ~evolution.samples,  # Taille par evolution.samples
         marker = list(sizemode = 'diameter'),
         text = ~paste("goodShepherdPercentage: ", goodShepherdPercentage, 
                       "<br>proportionBigHerders: ", proportionBigHerders, 
                       "<br>proportionMediumHerders: ", proportionMediumHerders,
-                      "<br>interfaceNumberOfCampI: ", interfaceNumberOfCampI),
+                      "<br>interfaceNumberOfCampI: ", interfaceNumberOfCampI,
+                      "<br>TotalOldTree: ", mTotalTreesOld,
+                      "<br>TotalCattles: ", mTotalcattles,
+                      "<br>TotalSheeps: ", mTotalsheeps
+                      ),
         hoverinfo = 'text') %>%
   layout(title = 'Scatter Plot with Custom Popups',
          xaxis = list(title = 'Objective MSTCattle'),
