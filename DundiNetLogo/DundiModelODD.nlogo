@@ -2973,10 +2973,10 @@ waterStock
 11
 
 CHOOSER
-640
-545
-796
-590
+475
+520
+580
+565
 visualization-mode
 visualization-mode
 "soil-type" "tree-cover" "grass-cover" "grass-quality" "known-space"
@@ -3462,10 +3462,10 @@ PENS
 "Sangre" 1.0 0 -955883 true "" "plot meanTreesInSangre"
 
 SLIDER
-480
-770
-712
-803
+780
+655
+995
+688
 SatisfactionMeanTreesInCaangol
 SatisfactionMeanTreesInCaangol
 50
@@ -3477,10 +3477,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-490
-730
-702
-763
+780
+620
+995
+653
 SatisfactionMeanTreesInSeeno
 SatisfactionMeanTreesInSeeno
 12
@@ -3490,6 +3490,57 @@ SatisfactionMeanTreesInSeeno
 1
 NIL
 HORIZONTAL
+
+SLIDER
+780
+690
+995
+723
+SatisfactionMeanTreesInBaldiol
+SatisfactionMeanTreesInBaldiol
+0
+100
+40.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+780
+725
+995
+758
+SatisfactionMeanTreesInSangre
+SatisfactionMeanTreesInSangre
+0
+100
+50.0
+1
+1
+NIL
+HORIZONTAL
+
+PLOT
+1350
+615
+1550
+765
+MST-tree by soil
+NIL
+NIL
+0.0
+10.0
+0.0
+1.0
+true
+false
+"" ""
+PENS
+"Seeno" 1.0 0 -2674135 true "" "plot MST-Seeno"
+"Baldiol" 1.0 0 -7500403 true "" "plot MST-Baldiol"
+"pen-2" 1.0 0 -955883 true "" "plot MST-Sangre"
+"pen-3" 1.0 0 -16777216 true "" "plot MST-Caangol"
 
 @#$#@#$#@
 ## WHAT IS IT?

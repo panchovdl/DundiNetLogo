@@ -39,6 +39,16 @@ globals [
   meanTreesInBaldiol
   meanTreesInSeeno
   
+  traj-satisfaction-Seeno
+  traj-satisfaction-Baldiol
+  traj-satisfaction-Sangre
+  traj-satisfaction-Caangol
+  
+  MST-Seeno
+  MST-Baldiol
+  MST-Sangre
+  MST-Caangol
+  
   
   totalGrass
   totalTrees
@@ -147,6 +157,26 @@ to calculStat
       set traj-trees traj-trees  + 1
     ]
     set MST-trees traj-trees / ticks
+  ]
+  
+  if ticks > 0 [
+    if SatisfactionMeanTreesInSeeno < meanTreesInSeeno [
+     set traj-satisfaction-Seeno traj-satisfaction-Seeno + 1  
+    ]
+    if SatisfactionMeanTreesInBaldiol < meanTreesInBaldiol [
+     set traj-satisfaction-Baldiol traj-satisfaction-Baldiol + 1  
+    ]
+    if SatisfactionMeanTreesInSangre < meanTreesInSangre [
+     set traj-satisfaction-Sangre traj-satisfaction-Sangre + 1  
+    ]
+    if SatisfactionMeanTreesInCaangol < meanTreesInCaangol [
+     set traj-satisfaction-Caangol traj-satisfaction-Caangol + 1  
+    ]
+    
+    set MST-Seeno traj-satisfaction-Seeno / ticks
+    set MST-Baldiol traj-satisfaction-Baldiol / ticks
+    set MST-Sangre traj-satisfaction-Sangre / ticks
+    set MST-Caangol traj-satisfaction-Caangol / ticks
   ]
   
   set sumSmallHerder count foyers with [herder-type = "petit"]
