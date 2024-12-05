@@ -3304,9 +3304,9 @@ PENS
 
 PLOT
 800
-490
+465
 1000
-640
+615
 Trees Resources Consumption
 NIL
 NIL
@@ -3441,11 +3441,11 @@ PENS
 "default" 1.0 0 -16777216 true "" "plot MST-trees"
 
 PLOT
-670
-715
-870
-865
-plot 1
+1000
+615
+1350
+765
+Mean trees by soil-type
 NIL
 NIL
 0.0
@@ -3453,13 +3453,43 @@ NIL
 0.0
 10.0
 true
-false
+true
 "" ""
 PENS
-"default" 1.0 0 -16777216 true "" "plot meanTreesInCaangol"
-"pen-1" 1.0 0 -7500403 true "" "plot meanTreesInBaldiol"
-"pen-2" 1.0 0 -2674135 true "" "plot meanTreesInSeeno"
-"pen-3" 1.0 0 -955883 true "" "plot meanTreesInSangre"
+"Caangol" 1.0 0 -16777216 true "" "plot meanTreesInCaangol"
+"Baldiol" 1.0 0 -7500403 true "" "plot meanTreesInBaldiol"
+"Seeno" 1.0 0 -2674135 true "" "plot meanTreesInSeeno"
+"Sangre" 1.0 0 -955883 true "" "plot meanTreesInSangre"
+
+SLIDER
+480
+770
+712
+803
+SatisfactionMeanTreesInCaangol
+SatisfactionMeanTreesInCaangol
+50
+150
+93.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+490
+730
+702
+763
+SatisfactionMeanTreesInSeeno
+SatisfactionMeanTreesInSeeno
+12
+50
+50.0
+1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?

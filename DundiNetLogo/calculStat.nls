@@ -34,6 +34,12 @@ globals [
   traj-trees
   MST-trees
   
+  meanTreesInCaangol
+  meanTreesInSangre
+  meanTreesInBaldiol
+  meanTreesInSeeno
+  
+  
   totalGrass
   totalTrees
   meanGrass
@@ -46,7 +52,7 @@ globals [
   sumMediumHerder
   sumLargeHerder
   
-  percentKnownSpace
+  meanDistantKnownSpace
 ]
 
 to calculStat
@@ -108,6 +114,8 @@ to calculStat
     set MSTSheep-NEC (mean[sheepNEC-satisfaction] of foyers) / ticks
     set MSTCattle-NEC (mean[cattleNEC-satisfaction] of foyers) / ticks
   ]
+  
+  
   set totalGrass sum [current-grass] of patches
   set meanGrass mean [current-grass] of patches
   set totalTrees sum [population-size] of tree-populations
@@ -128,10 +136,14 @@ to calculStat
   set meanFruitsConsumedSheep  sum [fruits-eaten] of sheeps with [have-left = false]
   set meanLeavesConsumedSheep sum [leaves-eaten] of sheeps with [have-left = false]
   
+  set meanTreesInCaangol (sum [population-size] of tree-populations-on patches with [soil-type = "Caangol"] / caangol-surface) / 100
+  set meanTreesInSangre (sum [population-size] of tree-populations-on patches with [soil-type = "Sangre"] / sangre-surface) / 100
+  set meanTreesInBaldiol (sum [population-size] of tree-populations-on patches with [soil-type = "Baldiol"] / baldiol-surface) / 100
+  set meanTreesInSeeno (sum [population-size] of tree-populations-on patches with [soil-type = "Seeno"] / seeno-surface) / 100
   
   
   if ticks > 0 [
-    if TreeDensitySatisfaction-olds < totalTreesOldes [
+    if TreeDensitySatisfaction-oldes < totalTreesOldes [
       set traj-trees traj-trees  + 1
     ]
     set MST-trees traj-trees / ticks
@@ -140,6 +152,6 @@ to calculStat
   set sumSmallHerder count foyers with [herder-type = "petit"]
   set sumMediumHerder count foyers with [herder-type = "moyen"]
   set sumLargeHerder count foyers with [herder-type = "grand"]
- set percentKnownSpace percentKnownSpaceOf sheeps
+ set meanDistantKnownSpace meanKnownSpace sheeps
   
 end
