@@ -37,6 +37,10 @@ globals [
   space-camp-standard-deviation
   space-camp-mean
 
+  caangol-surface
+  seeno-surface
+  sangre-surface
+  baldiol-surface
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; indicateurs
@@ -97,7 +101,8 @@ patches-own [
   ; Variables d'initialisation des populations ligneuses
 
   tree-cover                       ; Couverture d'arbres
-  max-tree-cover                   ; Maximum d'individus atteignable sur un km² (définit selon le type de sol)
+  max-tree-cover                   ; maximum d'arbres atteignable par cellule (pour visualisation)
+  max-tree-number                   ; Maximum d'individus atteignable sur un km² (définit selon le type de sol)
   num-nutritious                   ; Nombre d'arbres appréciés par le bétail en fonction du tree-cover
   num-less-nutritious              ; Nombre d'arbres peu / pas apprécié par le bétail en fonction du tree-cover
   num-fruity                       ; Nombre d'arbres fruitiers (jujubier, baobab, balanites) par le bétail en fonction du tree-cover
@@ -356,7 +361,7 @@ to setup
   update-year-type
   set-season-durations
 
-  set initial-number-of-camps number-of-camps
+  set initial-number-of-camps interface-number-of-camp-i
   set space-camp-min 2
   set space-camp-max 15
   set space-camp-standard-deviation 5
@@ -371,6 +376,12 @@ to setup
   setup-herds  ; Créer les troupeaux
   setup-trees  ; Créer les arbres
 
+
+  set caangol-surface count patches with [soil-type = "Caangol"]
+  set sangre-surface count patches with [soil-type = "Sangre"]
+  set baldiol-surface count patches with [soil-type = "Baldiol"]
+  set seeno-surface count patches with [soil-type = "Seeno"]
+
   ; Définir les seuils
   set seuil-bon-UF 0.6    ; Qualité de l'herbe - à ajuster selon les données du manuel de Boudet (1975)
   set seuil-moyen-UF 0.45  ; À ajuster
@@ -384,6 +395,7 @@ to setup
   calculStat
   update-visualization
   display-labels
+
 
   reset-ticks
 
@@ -404,6 +416,7 @@ to setup-landscape
       set num-less-nutritious round (tree-cover * 0.25)
       set num-fruity round (tree-cover * 0.25)
       set patch-sensitivity 2
+      set max-tree-number 8000
     ]
     if soil-type = "Caangol" [
       set K 300000  ; Stock de production maximal de Matière Sèche (MS - DM[en]) sur 1 km² pour Caangol
@@ -412,6 +425,7 @@ to setup-landscape
       set num-less-nutritious round (tree-cover * 0.25)
       set num-fruity round (tree-cover * 0.25)
       set patch-sensitivity 2
+      set max-tree-number 20000
     ]
     if soil-type = "Sangre" [
       set K 80000  ; Stock de production maximal de Matière Sèche (MS - DM[en]) sur 1 km² pour Sangre
@@ -420,6 +434,7 @@ to setup-landscape
       set num-less-nutritious round (tree-cover * 0.25)
       set num-fruity round (tree-cover * 0.0001)
       set patch-sensitivity 3
+      set max-tree-number 15000
     ]
     if soil-type = "Seeno" [
       set K 200000  ; Stock de production maximal de Matière Sèche (MS - DM[en]) sur 1 km² pour Seeno
@@ -428,6 +443,7 @@ to setup-landscape
       set num-less-nutritious round (tree-cover * 0.25)
       set num-fruity round (tree-cover * 0.25)
       set patch-sensitivity 1
+      set max-tree-number 5000
     ]
     if soil-type = "" [
       set current-grass 1
@@ -1523,7 +1539,8 @@ to renew-tree-population
         ; Récupérer le taux de germination pour le type d'arbre et la qualité de l'année
         let germination-rate get-germination-rate tree-type current-year-type
         ; Calculer les nouvelles pousses
-        let new-trees floor ((current-fruit-stock * 1000 ) * germination-rate)
+        let new-trees floor ((current-fruit-stock * 100 ) * germination-rate)
+      set new-trees min (list new-trees [max-tree-number] of patch-here)
 
         ; Ajouter les nouvelles pousses au total pour ce type d'arbre
         let current-type-entry filter [x -> item 0 x = tree-type] new-trees-by-type
@@ -1616,7 +1633,7 @@ end
 to move-and-eat ; Mouvement et consommation des troupeaux - bovins puis ovins
 
   ;; Find the best patch within known space
-  let best-patch find-best-nearest-patch known-space shepherd-type
+  let best-patch find-best-nearest-patch known-space shepherd-type head max-daily-DM-ingestible-per-head
 ;  let home-patch current-home-patch
   let my-known-space known-space
   move-to current-home-patch
@@ -1713,13 +1730,13 @@ to move-and-eat ; Mouvement et consommation des troupeaux - bovins puis ovins
       set preference-mono 0.8
     ] [
       ; Pendant les autres saisons, préférence de 80% pour l'espèce avec le ratio MAD/UF le plus élevé
-      let monocot-MAD-UF-ratio [monocot-MAD-per-kg-MS] of patch-here / [monocot-UF-per-kg-MS] of patch-here
-      let dicot-MAD-UF-ratio [dicot-MAD-per-kg-MS] of patch-here / [dicot-UF-per-kg-MS] of patch-here
+      let monocot-MAD-UF-ratio (([monocot-MAD-per-kg-MS] of patch-here / [monocot-UF-per-kg-MS] of patch-here) * current-monocot-grass)
+      let dicot-MAD-UF-ratio (([dicot-MAD-per-kg-MS] of patch-here / [dicot-UF-per-kg-MS] of patch-here) * current-dicot-grass)
 
       ifelse monocot-MAD-UF-ratio >= dicot-MAD-UF-ratio [
         set preference-mono 0.8
       ] [
-        set preference-mono 0.5
+        set preference-mono 0.3
       ]
     ]
 
@@ -1889,8 +1906,8 @@ to consume-tree-resources [patch-of-grass-eaten remaining-needs] ;; contexte tro
         ask one-tree-population [
         set current-leaf-stock (current-leaf-stock - leaves-consumed)
         set current-fruit-stock  (current-fruit-stock - fruits-consumed)
-        if current-leaf-stock < 0 [ set current-leaf-stock 0 ]
-        if current-fruit-stock < 0 [ set current-fruit-stock 0 ]
+        if current-leaf-stock < 0 [ set current-leaf-stock 0.0001 ]
+        if current-fruit-stock < 0 [ set current-fruit-stock 0.0001 ]
         ]
 
         ;; Calculer les UF et MAD ingérées depuis cette population
@@ -2713,21 +2730,23 @@ end
 
 
 ; Trouver le meilleur patch : d'abord la qualité, ensuite la quantité, enfin la proximité
-to-report find-best-nearest-patch [known-spaces my-shepherd]
+to-report find-best-nearest-patch [known-spaces my-shepherd heads max-daily-DM-ingestible-heads]
   let viable-patches known-spaces with [current-grass >= 40]
+  let max-daily-ingestible (heads * max-daily-DM-ingestible-heads)
 ;  show word "known-space       " known-spaces
 ;show word "viable-patches     " viable-patches
   ifelse any? viable-patches [
     ifelse my-shepherd = "bon" [
     ; Étape 1 : Sélectionner les patches avec la meilleure qualité d'herbe
-    let best-quality-patches viable-patches with-max [q]
 ;show word "best-quality-patches      " best-quality-patches
     ; Étape 2 : Parmi les patches avec la meilleure qualité, sélectionner ceux avec la plus grande quantité d'herbe
-    let max-grass-patches best-quality-patches with-max [current-grass]
+    let max-grass-patches viable-patches with [current-grass >= (max-daily-ingestible) = true]
+
+      let best-quality-patches max-grass-patches with-max [q]
 
 ;show word "max-grass-patches       " max-grass-patches
     ; Étape 3 : Choisir le patch le plus proche parmi ceux avec la meilleure qualité et la plus grande quantité d'herbe
-    report min-one-of max-grass-patches [distance myself]
+    report min-one-of best-quality-patches [distance myself]
     ] [
 
       ; Étape 2 : Parmi les patches avec la meilleure qualité, sélectionner ceux avec la plus grande quantité d'herbe
@@ -2786,21 +2805,21 @@ to-report patches-between [ p1 p2 ]
   report result
 end
 
-to-report percentKnownSpaceOf [agents]
- ; return the % of know-space of a set of agents (input parameter)
+to-report meanKnownSpace [agents]
+ ; Initialiser une variable pour stocker la somme des counts
 let _total-count 0
- ; Initialiser une variable pour stocker le nombre de agents
-let _number-of-agents count agents
+ ; Initialiser une variable pour stocker le nombre de moutons
+let _number-of-sheep count agents
 ; Parcourir chaque mouton et compter les patches
 ask agents [
   let patches-agentset [distant-known-space] of self  ; Récupérer l'agentset des patches pour ce mouton
-  let count-patches count patches-agentset /  count patches          ; Compter le nombre de patches / total space
+  let count-patches count patches-agentset /  count patches          ; Compter le nombre de patches
   set _total-count _total-count + count-patches         ; Ajouter à la somme totale
 ]
 
 ;; Calculer la moyenne
-  ifelse _number-of-agents = 0 [report 0]
-  [report _total-count / _number-of-agents * 100]
+  ifelse _number-of-sheep = 0 [report 0]
+  [report _total-count / _number-of-sheep * 100]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -2954,20 +2973,20 @@ waterStock
 11
 
 CHOOSER
-270
-530
-426
-575
+640
+545
+796
+590
 visualization-mode
 visualization-mode
 "soil-type" "tree-cover" "grass-cover" "grass-quality" "known-space"
-4
+2
 
 BUTTON
-300
-495
-390
-528
+475
+485
+565
+518
 visualize
   update-visualization
 NIL
@@ -3143,10 +3162,10 @@ PENS
 "minWeight" 1.0 0 -13791810 true "" "plot minCattlesLiveWeight"
 
 BUTTON
-5
-605
-85
-638
+600
+195
+710
+228
 removeGrass
 ask patches [set current-grass  0.1\nset current-monocot-grass 0.1\nset current-dicot-grass 0.1]
 NIL
@@ -3160,11 +3179,29 @@ NIL
 1
 
 PLOT
+1000
+465
+1245
+615
+Sum grass
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -14835848 true "" "plot totalGrass"
+
+PLOT
 1245
 465
 1445
 615
-%-kown-space
+distant-kown-space
 NIL
 NIL
 0.0
@@ -3175,8 +3212,8 @@ true
 true
 "" ""
 PENS
-"sheep" 1.0 0 -13791810 true "" "plot percentKnownSpace"
-"cattle" 1.0 0 -16777216 true "" "plot percentKnownSpaceOf cattles"
+"sheep" 1.0 0 -16777216 true "" "plot meanDistantKnownSpace"
+"cattle" 1.0 0 -2674135 true "" "plot meanKnownSpace cattles"
 
 PLOT
 1445
@@ -3228,10 +3265,10 @@ year-index
 11
 
 PLOT
-845
+800
+315
+1000
 465
-1045
-615
 mean grass per Ha
 NIL
 NIL
@@ -3243,13 +3280,13 @@ true
 false
 "" ""
 PENS
-"default" 1.0 0 -13840069 true "" "plot meanGrass / 100"
+"default" 1.0 0 -16777216 true "" "plot meanGrass / 100"
 
 PLOT
-800
+600
 315
-1000
-465
+800
+475
 trees-evolve
 NIL
 NIL
@@ -3261,15 +3298,15 @@ true
 true
 "" ""
 PENS
-"olds" 1.0 0 -16777216 true "" "plot totalTreesOldes"
+"oldes" 1.0 0 -16777216 true "" "plot totalTreesOldes"
 "youngs" 1.0 0 -7500403 true "" "plot totalTreesYoung"
 "satisfaction" 1.0 0 -2674135 true "" "plot TreeDensitySatisfaction-oldes"
 
 PLOT
-645
-465
-845
-615
+800
+490
+1000
+640
 Trees Resources Consumption
 NIL
 NIL
@@ -3287,10 +3324,10 @@ PENS
 "pen-3" 1.0 0 -955883 true "" "plot meanLeavesConsumedSheep"
 
 SLIDER
-5
-485
-217
-518
+220
+490
+432
+523
 SheepNECSatifactionIndex
 SheepNECSatifactionIndex
 0
@@ -3302,10 +3339,10 @@ NIL
 HORIZONTAL
 
 PLOT
-1045
-465
-1245
-615
+10
+490
+210
+640
 MST NEC
 NIL
 NIL
@@ -3321,10 +3358,10 @@ PENS
 "cattle" 1.0 0 -16777216 true "" "plot  MSTCattle-NEC"
 
 SLIDER
-5
-525
-202
-558
+220
+530
+417
+563
 CattleNECSatifactionIndex
 CattleNECSatifactionIndex
 0
@@ -3338,13 +3375,13 @@ HORIZONTAL
 SLIDER
 55
 116
-92
-262
-number-of-camps
-number-of-camps
+88
+261
+interface-number-of-camp-i
+interface-number-of-camp-i
 0
 200
-37.0
+1.0
 1
 1
 NIL
@@ -3371,12 +3408,12 @@ PENS
 "pen-2" 1.0 0 -2674135 true "" "plot SheepNECSatifactionIndex"
 
 SLIDER
-5
-565
-215
-598
-TreeDensitySatisfaction-olds
-TreeDensitySatisfaction-olds
+595
+275
+807
+308
+TreeDensitySatisfaction-oldes
+TreeDensitySatisfaction-oldes
 0
 8000
 4914.0
@@ -3402,6 +3439,27 @@ false
 "" ""
 PENS
 "default" 1.0 0 -16777216 true "" "plot MST-trees"
+
+PLOT
+670
+715
+870
+865
+plot 1
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot meanTreesInCaangol"
+"pen-1" 1.0 0 -7500403 true "" "plot meanTreesInBaldiol"
+"pen-2" 1.0 0 -2674135 true "" "plot meanTreesInSeeno"
+"pen-3" 1.0 0 -955883 true "" "plot meanTreesInSangre"
 
 @#$#@#$#@
 ## WHAT IS IT?
