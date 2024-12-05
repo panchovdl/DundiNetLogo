@@ -1,0 +1,23 @@
+import _file_.DundiModelODD._
+import _file_.environement_explo._
+
+// laisser tourner 250 heures
+val evolution = NSGA2Evolution(
+  evaluation = dundiModelODDTask,
+  parallelism = 100,
+  termination = 100000,
+  genome = Seq(
+      goodShepherdPercentage in (0.0, 100.0),
+      proportionBigHerders in (0.0, 49.0),
+      proportionMediumHerders in (0.0, 49.0),
+      interfaceNumberOfCampI in (60.0, 130.0)
+  ),
+  objective = Seq(
+    -MSTCattleNEC, //Attention pour maximiser un probleme on prendra l'oposé
+    -MSTTrees
+    ),
+  // distribution = Island(10 minutes), // doit durée plus que le temps de calcul
+  stochastic = Stochastic(seed = mySeed, sample = 30)
+) hook (workDirectory / "MO_results_nsga2_muse", frequency = 10)
+
+evolution on muse
