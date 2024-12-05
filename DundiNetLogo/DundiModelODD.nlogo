@@ -362,7 +362,7 @@ to setup
   update-year-type
   set-season-durations
 
-  set initial-number-of-camps interface-number-of-camp-i
+  set initial-number-of-camps number-of-camps
   set space-camp-min 2
   set space-camp-max 15
   set space-camp-standard-deviation 5
@@ -2873,9 +2873,9 @@ NIL
 
 BUTTON
 5
-45
-77
-78
+115
+60
+148
 GO 10
 while [ticks < 3650] [go]\n
 NIL
@@ -2924,7 +2924,7 @@ totalSheeps
 SLIDER
 1655
 10
-1853
+1820
 43
 max-ponds-4-months
 max-ponds-4-months
@@ -2939,7 +2939,7 @@ HORIZONTAL
 SLIDER
 1656
 48
-1854
+1816
 81
 max-ponds-5-months
 max-ponds-5-months
@@ -2954,7 +2954,7 @@ HORIZONTAL
 SLIDER
 1657
 87
-1855
+1817
 120
 max-ponds-6-months
 max-ponds-6-months
@@ -2967,10 +2967,10 @@ NIL
 HORIZONTAL
 
 MONITOR
-1658
-128
-1856
-173
+1660
+125
+1795
+170
 NIL
 waterStock
 17
@@ -2978,9 +2978,9 @@ waterStock
 11
 
 CHOOSER
-475
+460
 520
-580
+565
 565
 visualization-mode
 visualization-mode
@@ -3005,10 +3005,10 @@ NIL
 1
 
 BUTTON
-80
-10
-135
-43
+5
+45
+60
+78
 NIL
 go
 NIL
@@ -3067,7 +3067,7 @@ proportion-big-herders
 proportion-big-herders
 0
 100
-100.0
+34.0
 1
 1
 NIL
@@ -3082,7 +3082,7 @@ proportion-medium-herders
 proportion-medium-herders
 0
 100
-0.0
+33.0
 1
 1
 NIL
@@ -3167,10 +3167,10 @@ PENS
 "minWeight" 1.0 0 -13791810 true "" "plot minCattlesLiveWeight"
 
 BUTTON
-600
-195
-710
-228
+40
+750
+120
+783
 removeGrass
 ask patches [set current-grass  0.1\nset current-monocot-grass 0.1\nset current-dicot-grass 0.1]
 NIL
@@ -3182,24 +3182,6 @@ NIL
 NIL
 NIL
 1
-
-PLOT
-1000
-465
-1245
-615
-Sum grass
-NIL
-NIL
-0.0
-10.0
-0.0
-10.0
-true
-false
-"" ""
-PENS
-"default" 1.0 0 -14835848 true "" "plot totalGrass"
 
 PLOT
 1245
@@ -3270,10 +3252,10 @@ year-index
 11
 
 PLOT
-800
-315
-1000
+1025
 465
+1245
+615
 mean grass per Ha
 NIL
 NIL
@@ -3285,13 +3267,13 @@ true
 false
 "" ""
 PENS
-"default" 1.0 0 -16777216 true "" "plot meanGrass / 100"
+"default" 1.0 0 -13840069 true "" "plot meanGrass / 100"
 
 PLOT
-600
-315
-800
-475
+780
+310
+1000
+470
 trees-evolve
 NIL
 NIL
@@ -3303,16 +3285,16 @@ true
 true
 "" ""
 PENS
-"oldes" 1.0 0 -16777216 true "" "plot totalTreesOldes"
+"olds" 1.0 0 -16777216 true "" "plot totalTreesOldes"
 "youngs" 1.0 0 -7500403 true "" "plot totalTreesYoung"
-"satisfaction" 1.0 0 -2674135 true "" "plot TreeDensitySatisfaction-oldes"
+"satis" 1.0 0 -2674135 true "" "plot TreeDensitySatisfaction-olds"
 
 PLOT
-800
+780
 465
-1000
+1025
 615
-Trees Resources Consumption
+Tree  Consumption
 NIL
 NIL
 0.0
@@ -3320,18 +3302,18 @@ NIL
 0.0
 10.0
 true
-false
+true
 "" ""
 PENS
-"default" 1.0 0 -16777216 true "" "plot meanFruitsConsumedCattle"
-"pen-1" 1.0 0 -7500403 true "" "plot meanLeavesConsumedCattle"
-"pen-2" 1.0 0 -2674135 true "" "plot meanFruitsConsumedSheep"
-"pen-3" 1.0 0 -955883 true "" "plot meanLeavesConsumedSheep"
+"fruits cattle" 1.0 0 -2674135 true "" "plot meanFruitsConsumedCattle"
+"leaves cattle" 1.0 0 -12087248 true "" "plot meanLeavesConsumedCattle"
+"fruits sheep" 1.0 0 -612749 true "" "plot meanFruitsConsumedSheep"
+"leaves sheep" 1.0 0 -5509967 true "" "plot meanLeavesConsumedSheep"
 
 SLIDER
-220
+0
 490
-432
+212
 523
 SheepNECSatifactionIndex
 SheepNECSatifactionIndex
@@ -3344,10 +3326,10 @@ NIL
 HORIZONTAL
 
 PLOT
-10
-490
-210
-640
+780
+620
+980
+770
 MST NEC
 NIL
 NIL
@@ -3363,9 +3345,9 @@ PENS
 "cattle" 1.0 0 -16777216 true "" "plot  MSTCattle-NEC"
 
 SLIDER
-220
+0
 530
-417
+197
 563
 CattleNECSatifactionIndex
 CattleNECSatifactionIndex
@@ -3379,14 +3361,14 @@ HORIZONTAL
 
 SLIDER
 65
-80
-98
-225
-interface-number-of-camp-i
-interface-number-of-camp-i
+86
+102
+226
+number-of-camps
+number-of-camps
 0
 200
-92.0
+20.0
 1
 1
 NIL
@@ -3410,15 +3392,15 @@ true
 PENS
 "Cattles" 1.0 0 -16777216 true "" "plot meanCattlesNEC"
 "Sheeps" 1.0 0 -8275240 true "" "plot meanSheepsNEC"
-"pen-2" 1.0 0 -2674135 true "" "plot SheepNECSatifactionIndex"
+"satis" 1.0 0 -2674135 true "" "plot SheepNECSatifactionIndex"
 
 SLIDER
-595
-275
-807
-308
-TreeDensitySatisfaction-oldes
-TreeDensitySatisfaction-oldes
+0
+570
+160
+603
+TreeDensitySatisfaction-olds
+TreeDensitySatisfaction-olds
 0
 8000
 6010.0
@@ -3429,9 +3411,9 @@ HORIZONTAL
 
 PLOT
 800
-165
+160
 1000
-315
+310
 MST of olders trees
 NIL
 NIL
@@ -3467,10 +3449,10 @@ PENS
 "Sangre" 1.0 0 -955883 true "" "plot meanTreesInSangre"
 
 SLIDER
-780
-655
-995
-688
+0
+640
+215
+673
 SatisfactionMeanTreesInCaangol
 SatisfactionMeanTreesInCaangol
 50
@@ -3482,10 +3464,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-780
-620
-995
-653
+0
+605
+215
+638
 SatisfactionMeanTreesInSeeno
 SatisfactionMeanTreesInSeeno
 12
@@ -3497,10 +3479,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-780
-690
-995
-723
+0
+675
+215
+708
 SatisfactionMeanTreesInBaldiol
 SatisfactionMeanTreesInBaldiol
 0
@@ -3512,10 +3494,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-780
-725
-995
-758
+0
+710
+215
+743
 SatisfactionMeanTreesInSangre
 SatisfactionMeanTreesInSangre
 0
@@ -3558,6 +3540,23 @@ T
 1
 T
 OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+350
+610
+442
+643
+hide trees
+ask tree-populations-here [hide-turtle]
+NIL
+1
+T
+PATCH
 NIL
 NIL
 NIL
