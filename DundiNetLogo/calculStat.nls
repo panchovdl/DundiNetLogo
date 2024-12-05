@@ -145,12 +145,7 @@ to calculStat
   set meanLeavesConsumedCattle sum [leaves-eaten] of cattles with [have-left = false]
   set meanFruitsConsumedSheep  sum [fruits-eaten] of sheeps with [have-left = false]
   set meanLeavesConsumedSheep sum [leaves-eaten] of sheeps with [have-left = false]
-  
-  set meanTreesInCaangol (sum [population-size] of tree-populations-on patches with [soil-type = "Caangol"] / caangol-surface) / 100
-  set meanTreesInSangre (sum [population-size] of tree-populations-on patches with [soil-type = "Sangre"] / sangre-surface) / 100
-  set meanTreesInBaldiol (sum [population-size] of tree-populations-on patches with [soil-type = "Baldiol"] / baldiol-surface) / 100
-  set meanTreesInSeeno (sum [population-size] of tree-populations-on patches with [soil-type = "Seeno"] / seeno-surface) / 100
-  
+   
   
   if ticks > 0 [
     if TreeDensitySatisfaction-oldes < totalTreesOldes [
@@ -159,6 +154,12 @@ to calculStat
     set MST-trees traj-trees / ticks
   ]
   
+  
+  set meanTreesInCaangol (sum [population-size] of tree-populations-on patches with [soil-type = "Caangol"] / caangol-surface) / 100
+  set meanTreesInSangre (sum [population-size] of tree-populations-on patches with [soil-type = "Sangre"] / sangre-surface) / 100
+  set meanTreesInBaldiol (sum [population-size] of tree-populations-on patches with [soil-type = "Baldiol"] / baldiol-surface) / 100
+  set meanTreesInSeeno (sum [population-size] of tree-populations-on patches with [soil-type = "Seeno"] / seeno-surface) / 100
+ 
   if ticks > 0 [
     if SatisfactionMeanTreesInSeeno < meanTreesInSeeno [
      set traj-satisfaction-Seeno traj-satisfaction-Seeno + 1  

@@ -1,5 +1,6 @@
 __includes["calculStat.nls"]
-extensions [csv]
+extensions [csv ] ;profiler]
+
 
 globals [
   size-x                 ; Taille horizontale du monde
@@ -1091,7 +1092,8 @@ end
   ;;;;;;;;;;;;;;;;;;;;
 
 to go
-
+;  profiler:reset
+;  profiler:start
   ; Mise à jour du modèle général et temporalité
   update-season
   if current-season != last-season [
@@ -1157,6 +1159,8 @@ to go
   update-plot
 
   tick
+;  profiler:stop
+;  print profiler:report
 end
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2518,7 +2522,7 @@ end
 ; Fonction pour calculer la croissance logistique des fruits
 to-report growth-fruit-logistic [input-tree-type current-fruit max-fruit season landscape]
   let r 0
-  ifelse  max-fruit = 0 [
+  ifelse  max-fruit <= 0.0001 [
     report 0  ; Pas de croissance si max-wood est zéro
   ] [
     if input-tree-type = "nutritive" [
@@ -2599,7 +2603,8 @@ to-report growth-fruit-logistic [input-tree-type current-fruit max-fruit season 
         if current-season = "Ceetcelde" [set r 0.005]
       ]
     ]
-    let growth r * (precision current-fruit 5) * (precision (1 - (current-fruit / max-fruit)) 5)
+
+    let growth r * (precision current-fruit 3) * (precision (1 - (current-fruit / max-fruit)) 3)
     report growth
   ]
 end
@@ -2607,7 +2612,7 @@ end
  ;Fonction pour calculer la croissance logistique des feuilles
 to-report growth-leaf-logistic [input-tree-type current-leaf max-leaf season landscape]
   let r 0
-  ifelse  max-leaf = 0 [
+  ifelse  max-leaf <= 0.0001 [
     report 0  ; Pas de croissance si max-wood est zéro
   ] [
      if input-tree-type = "nutritive" [
@@ -2869,11 +2874,11 @@ NIL
 BUTTON
 5
 45
-68
+77
 78
+GO 10
+while [ticks < 3650] [go]\n
 NIL
-go\n
-T
 1
 T
 OBSERVER
@@ -3000,10 +3005,10 @@ NIL
 1
 
 BUTTON
-4
 80
-67
-113
+10
+135
+43
 NIL
 go
 NIL
@@ -3047,7 +3052,7 @@ good-shepherd-percentage
 good-shepherd-percentage
 0
 100
-100.0
+0.0
 1
 1
 NIL
@@ -3373,15 +3378,15 @@ NIL
 HORIZONTAL
 
 SLIDER
-55
-116
-88
-261
+65
+80
+98
+225
 interface-number-of-camp-i
 interface-number-of-camp-i
 0
 200
-1.0
+92.0
 1
 1
 NIL
@@ -3416,7 +3421,7 @@ TreeDensitySatisfaction-oldes
 TreeDensitySatisfaction-oldes
 0
 8000
-4914.0
+6010.0
 1
 1
 NIL
@@ -3541,6 +3546,23 @@ PENS
 "Baldiol" 1.0 0 -7500403 true "" "plot MST-Baldiol"
 "pen-2" 1.0 0 -955883 true "" "plot MST-Sangre"
 "pen-3" 1.0 0 -16777216 true "" "plot MST-Caangol"
+
+BUTTON
+5
+80
+68
+113
+NIL
+go
+T
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
