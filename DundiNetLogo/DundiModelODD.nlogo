@@ -3914,6 +3914,113 @@ NetLogo 6.4.0
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
+<experiments>
+  <experiment name="oat_pierre" repetitions="1" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <exitCondition>ticks = 3650</exitCondition>
+    <metric>totalFoyers</metric>
+    <metric>totalSheeps</metric>
+    <metric>totalCattles</metric>
+    <metric>waterStock</metric>
+    <metric>sheepsTempCamp</metric>
+    <metric>cattlesTempCamp</metric>
+    <metric>sheepsHaveLeft</metric>
+    <metric>cattlesHaveLeft</metric>
+    <metric>sheepsWeightGain</metric>
+    <metric>cattlesWeightGain</metric>
+    <metric>meanSheepsLiveWeight</metric>
+    <metric>maxSheepsLiveWeight</metric>
+    <metric>minSheepsLiveWeight</metric>
+    <metric>meanCattlesLiveWeight</metric>
+    <metric>maxCattlesLiveWeight</metric>
+    <metric>minCattlesLiveWeight</metric>
+    <metric>meanSheepsNEC</metric>
+    <metric>meanCattlesNEC</metric>
+    <metric>MSTSheep-NEC</metric>
+    <metric>MSTCattle-NEC</metric>
+    <metric>totalTrees8years</metric>
+    <metric>totalTrees7years</metric>
+    <metric>totalTrees6years</metric>
+    <metric>totalTrees5years</metric>
+    <metric>totalTrees4years</metric>
+    <metric>totalTrees3years</metric>
+    <metric>totalTrees2years</metric>
+    <metric>totalTrees1years</metric>
+    <metric>totalTreesOldes</metric>
+    <metric>totalTreesYoung</metric>
+    <metric>traj-trees</metric>
+    <metric>MST-trees</metric>
+    <metric>meanTreesInCaangol</metric>
+    <metric>meanTreesInSangre</metric>
+    <metric>meanTreesInBaldiol</metric>
+    <metric>meanTreesInSeeno</metric>
+    <metric>traj-satisfaction-Seeno</metric>
+    <metric>traj-satisfaction-Baldiol</metric>
+    <metric>traj-satisfaction-Sangre</metric>
+    <metric>traj-satisfaction-Caangol</metric>
+    <metric>MST-Seeno</metric>
+    <metric>MST-Baldiol</metric>
+    <metric>MST-Sangre</metric>
+    <metric>MST-Caangol</metric>
+    <metric>totalGrass</metric>
+    <metric>totalTrees</metric>
+    <metric>meanGrass</metric>
+    <metric>meanFruitsConsumedCattle</metric>
+    <metric>meanLeavesConsumedCattle</metric>
+    <metric>meanFruitsConsumedSheep</metric>
+    <metric>meanLeavesConsumedSheep</metric>
+    <metric>sumSmallHerder</metric>
+    <metric>sumMediumHerder</metric>
+    <metric>sumLargeHerder</metric>
+    <enumeratedValueSet variable="SatisfactionMeanTreesInCaangol">
+      <value value="93"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="max-ponds-5-months">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="visualization-mode">
+      <value value="&quot;grass-cover&quot;"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="good-shepherd-percentage" first="0" step="10" last="100"/>
+    <enumeratedValueSet variable="SatisfactionMeanTreesInBaldiol">
+      <value value="40"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="max-ponds-6-months">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="SheepNECSatifactionIndex">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="SatisfactionMeanTreesInSeeno">
+      <value value="50"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="CattleNECSatifactionIndex">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="number-of-camps">
+      <value value="1"/>
+      <value value="10"/>
+      <value value="50"/>
+      <value value="100"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="TreeDensitySatisfaction-olds">
+      <value value="6010"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="max-ponds-4-months">
+      <value value="4"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="proportion-big-herders">
+      <value value="34"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="SatisfactionMeanTreesInSangre">
+      <value value="50"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="proportion-medium-herders">
+      <value value="33"/>
+    </enumeratedValueSet>
+  </experiment>
+</experiments>
 @#$#@#$#@
 @#$#@#$#@
 default
