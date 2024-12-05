@@ -11,8 +11,3 @@ pp_mean <- function(s) {
   mean_value <- mean(numbers_numeric)
   return(mean_value)
 }
-
-# Exemple d'utilisation
-s <- "[5.0,1.0,3.0,3.0,5.0,7]"
-moyenne <- calculate_mean(s)
-print(moyenne)
