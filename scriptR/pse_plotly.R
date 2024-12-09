@@ -26,33 +26,34 @@ library(plotly)
 
 sel <- df$evolution.samples >= 1
 
-# Création du graphique avec des info-bulles personnalisées
+## creation d'un graph interactif en 3D
 a <- plot_ly(data = df[sel,],
-        x = ~objective.MSTCattleNEC, 
-        y = ~objective.MSTTrees, 
-        z = ~mTotalcattles,   # Axe Z (3ème dimension)
-        type = 'scatter3d', 
-        mode = 'markers', 
-        color = ~mCattlesLiveWeight,  # Coloration par nbBoats
-        #size = ~evolution.samples,  # Taille par evolution.samples
-        marker = list(sizemode = 'diameter'),
-        text = ~paste("goodShepherdPercentage: ", goodShepherdPercentage, 
-                      "<br>proportionBigHerders: ", proportionBigHerders, 
-                      "<br>proportionMediumHerders: ", proportionMediumHerders,
-                      "<br>interfaceNumberOfCampI: ", interfaceNumberOfCampI,
-                      "<br>TotalOldTree: ", mTotalTreesOld,
-                      "<br>TotalCattles: ", mTotalcattles,
-                      "<br>TotalSheeps: ", mTotalsheeps,
-                      "<br>mCattlesLiveWeight: ", mCattlesLiveWeight
-                      ),
-        hoverinfo = 'text') %>%
+             x = ~objective.MSTCattleNEC, 
+             y = ~objective.MSTTrees, 
+             z = ~mTotalcattles,   # Axe Z (3ème dimension)
+             type = 'scatter3d', 
+             mode = 'markers', 
+             color = ~mCattlesLiveWeight,  # Coloration par nbBoats
+             marker = list(sizemode = 'diameter'),
+             text = ~paste(
+               "<span style='font-size:18px;'>",  # Début du style
+               "🔪goodShepherdPercentage: ", signif(goodShepherdPercentage, digits = 2), 
+               "<br>🐮🧑 proportionBigHerders: ", signif(proportionBigHerders, digits = 2), 
+               "<br>🐮🧑proportionMediumHerders: ", signif(proportionMediumHerders, digits = 2),
+               "<br>🛖 interfaceNumberOfCampI: ", signif(interfaceNumberOfCampI, digits = 2),
+               "<br> &#127795; TotalOldTree: ", signif(mTotalTreesOld, digits = 2),
+               "<br> &#128003; TotalCattles: ", signif(mTotalcattles, digits = 2),
+               "<br> 🍖 mCattlesLiveWeight: ", signif(mCattlesLiveWeight, digits = 2),
+               "</span>"  # Fin du style
+             ),
+             hoverinfo = 'text') %>%
   layout(title = 'Scatter Plot with Custom Popups',
-         xaxis = list(title = 'Objective MSTCattle'),
-         yaxis = list(title = 'Objective MSTTrees'),
-         zaxis = list(title = 'mTotalcattles'),
+         scene = list(
+           xaxis = list(title = 'Objective MSTCattle'),
+           yaxis = list(title = 'Objective MSTTrees'),
+           zaxis = list(title = 'mTotalcattles')),
          plot_bgcolor = 'rgba(0,0,0,0)',  # Correspond à theme_bw()
          paper_bgcolor = 'rgba(0,0,0,0)')
-
 
 a
 
