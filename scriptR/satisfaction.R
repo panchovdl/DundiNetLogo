@@ -6,7 +6,7 @@ library(reshape2)
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 source("petitParceur_openMole.R")
-data <- read.csv("../results//M0_directSampling_vo.csv", header = T)
+data <- read.csv("../results//M0_directSampling_muse.csv", header = T)
 
 names(data)
 
@@ -44,13 +44,13 @@ data$state_b <- factor(data$state_b, levels = c("Satisfactory and Durable", "Sat
 ))
 
 biomS <- ggplot(data = data)+
-  geom_tile(aes(x = interfaceNumberOfCampI, y = totalTreesOldes, fill = state_b))+
+  geom_tile(aes(x = interfaceNumberOfCampI, y = goodShepherdPercentage, fill = state_b))+
   scale_fill_manual(values = c('#1a9850','#ffc0cb','#ffffff','#90ee90','#ffffff','#d73027'))+
   theme_light()+
   theme(axis.text.x = element_text(angle = 45, hjust = 1), 
         legend.position = "bottom")+
-  facet_grid(~goodShepherdPercentage)+
+  facet_grid(proportionMediumHerders~proportionBigHerders, labeller = label_both)+
   labs(title = "From biomass perspective", subtitle = "regarding the system",
-       x = "Boat Number", y = "Initial Biomass", fill = "State")
+       x = "Camps", y = "good shepherd", fill = "State")
 biomS
 
