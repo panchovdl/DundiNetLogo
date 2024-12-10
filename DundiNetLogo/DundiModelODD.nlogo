@@ -1,11 +1,11 @@
 __includes["calculStat.nls"]
-extensions [csv ] ;profiler]
+extensions [csv table] ;profiler]
 
 
 globals [
   size-x                 ; Taille horizontale du monde
   size-y                 ; Taille verticale du monde
-;;bbb
+
   current-season         ; Saison actuelle
   last-season            ; Saison précédente
   season-counter         ; Compteur de saison
@@ -18,8 +18,9 @@ globals [
   max-grass              ; pour visualisation
   max-trees              ; pour visualisation
 
-  tree-age-data          ; liste qui stocke les valeurs max de fruits, feuilles, bois et sensibilité pour cette catégorie d'arbres
-  tree-nutrition-data    ; liste qui stocke les valeurs en UF (Unité Fourragère en Kcal/kg MS ingéré) et MAD (Matière Azotée Digestible en g/kg MS ingéré)
+  ; Tables qui enregistrent les valeurs des arbres en fonction de différents paramètres (type, age, sol et saison)
+  tree-age-table ; table: (tree-type, age) -> [max-fruits max-leaves max-woods sensitivities]
+  tree-nutrition-table ; table associative: (tree-type, soil, season) -> [UF MAD]
 
   nduungu-duration       ; Nombre de ticks pour la saison des pluies
   dabbuunde-duration     ; Nombre de ticks pour la saison sèche froide
@@ -43,9 +44,6 @@ globals [
   sangre-surface
   baldiol-surface
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; indicateurs
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   listValueHerdeType
 ]
 
@@ -228,7 +226,7 @@ foyers-own [
  ; Relations
   friends                          ; Amis de l'agent
   far-exploration-count            ; Compteur d'exploration au loin
-  close-exploration-count          ; Compteur d'exploration
+  close-exploration-count          ; Compteur d'exploration proche
   cattleNEC-satisfaction
   sheepNEC-satisfaction
 ]
@@ -1134,6 +1132,7 @@ to go
   grow-grass
   update-grass-quality              ; Indiquer la qualité de l'herbe
   grow-tree-resources
+;  show-tree-populations-info
   ; Activités des agents
 
   ; Activités des troupeaux
@@ -2290,7 +2289,7 @@ end
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 to load-tree-age-data [filename]
-  set tree-age-data []
+  set tree-age-table table:make
   file-open filename
   ; Lire les données ligne par ligne
   while [not file-at-end?] [
@@ -2302,8 +2301,8 @@ to load-tree-age-data [filename]
     let max-leaves item 3 line
     let max-woods item 4 line
     let sensitivities item 5 line
-    ; Ajouter les données à la liste `tree-age-data`
-    set tree-age-data lput (list trees-type ages max-fruits max-leaves max-woods sensitivities) tree-age-data
+    ; Ajouter les données à la table `tree-age-table`
+    table:put tree-age-table (list trees-type ages) (list max-fruits max-leaves max-woods sensitivities)
   ]
   file-close
 end
@@ -2316,7 +2315,7 @@ end
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 to load-tree-nutrition-data [filename]
-  set tree-nutrition-data []
+  set tree-nutrition-table table:make
   file-open filename
   ; Lire les données ligne par ligne
   while [not file-at-end?] [
@@ -2328,7 +2327,7 @@ to load-tree-nutrition-data [filename]
     let tree-UF-data item 3 line
     let tree-MAD-data item 4 line
     ; Ajouter les données à la liste `tree-nutrition-data`
-    set tree-nutrition-data lput (list trees-type landscapes seasons tree-UF-data tree-MAD-data) tree-nutrition-data
+    table:put tree-nutrition-table (list trees-type landscapes seasons) (list tree-UF-data tree-MAD-data)
   ]
   file-close
 end
@@ -2382,18 +2381,9 @@ end
 
 ; Fonctions pour calculer les populations initiales en fonction du type d'arbre, de l'âge et de la taille de la population
 to-report get-age-data [trees-type ages]
-  ; Filtrer les données en utilisant une variable nommée 'x' pour chaque élément
-  let data-filtered filter [ x ->
-    (item 0 x) = trees-type and
-    (item 1 x) = ages
-  ] tree-age-data
-
-  ; Vérifier s'il y a des données filtrées
-  ifelse (length data-filtered > 0)  [
-    let age-data first data-filtered
-
-    ; Retourner une liste sans le type et l'âge, seulement les stocks et la sensibilité
-    report (list (item 2 age-data) (item 3 age-data) (item 4 age-data) (item 5 age-data))
+  ; On vérifie si la clé existe dans la table
+  ifelse table:has-key? tree-age-table (list trees-type ages) [
+    report table:get tree-age-table (list trees-type ages)
   ] [
     ; Si aucune donnée trouvée, retourner des valeurs par défaut
     report (list 0 0 0 0)
@@ -2405,18 +2395,12 @@ end
 
 to-report get-tree-nutritional-values [trees-type soil season]
   ; Parcourir la structure `tree-nutritional-values` pour trouver les valeurs correspondantes
-  let data-filtered filter [i ->
-    (item 0 i) = tree-type and
-    (item 1 i) = soil-type and
-    (item 2 i) = season
-  ] tree-nutrition-data
-  ifelse (length data-filtered > 0) [
-    let nutrition-value first data-filtered
-    report (list (item 3 nutrition-value) (item 4 nutrition-value))
+  ifelse table:has-key? tree-nutrition-table (list trees-type soil season) [
+    report table:get tree-nutrition-table (list trees-type soil season)
   ] [
-    ; Valeurs par défaut si aucune correspondance trouvée
-    report (list 0 0 0 0)
+    report (list 0 0) ; Valeurs par défaut si introuvable
   ]
+
 end
 
 
@@ -3362,7 +3346,7 @@ HORIZONTAL
 SLIDER
 65
 86
-102
+98
 226
 number-of-camps
 number-of-camps
