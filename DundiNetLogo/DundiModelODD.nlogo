@@ -160,7 +160,6 @@ turtles-own [
   ; Caractéristiques des foyers partagé aux troupeaux (Utilisé autant par les troupeaux que les foyers)
   known-space                      ; Tout l'espace connu par les individus
   close-known-space                ; Espace connu à moins d'une journée de déplacement d'un troupeau (12km)
-  original-camp-known-space        ; Espace connu à moins d'une journée de déplacement du campement principal pour un troupeau
   distant-known-space              ; Espace connu à plus d'une journée de déplacement d'un troupeau (12km)
 
   ; Déplacement du campement
@@ -185,9 +184,7 @@ camps-own [
   is-temporary                     ; Booléen indiquant si le camp est temporaire
   wood-needs                       ; Besoins en bois
   wood-quantity                    ; Quantité de bois dans le campement
-
 ]
-
 
 
 
@@ -244,6 +241,7 @@ sheeps-own [
   have-left                        ; Indique si le troupeau est parti vers le sud ou hors de la zone de l'UP
   leaves-eaten
   fruits-eaten
+  original-camp-known-space        ; Espace connu à moins d'une journée de déplacement du campement principal pour un troupeau
 ]
 
 
@@ -259,6 +257,7 @@ cattles-own [
   have-left                        ; Indique si le troupeau est parti vers le sud ou hors de la zone de l'UP
   leaves-eaten
   fruits-eaten
+  original-camp-known-space        ; Espace connu à moins d'une journée de déplacement du campement principal pour un troupeau
 ]
 
 
@@ -611,7 +610,6 @@ to setup-foyers
       set close-known-space known-space with [
         distance [current-home-patch] of myself <= 6
       ]
-      set original-camp-known-space close-known-space
       set distant-known-space known-space who-are-not close-known-space
 
       set cattle-low-threshold-cc 1
@@ -624,6 +622,10 @@ to setup-foyers
       set close-exploration-count 0     ; Compteur d'exploration proche
     ]
   ]
+  show word "populasse" count foyers
+  show word "typo good berger hermano" count foyers with [shepherd-type = "bon"]
+  show word "typo bad berger hermano" count foyers with [shepherd-type = "mauvais"]
+
 end
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -745,11 +747,9 @@ to setup-herds ; Valeurs à définir
 
           ; Espace connu et déplacements
       set known-space [known-space] of foyer-owner
-      set original-camp-known-space known-space
       set close-known-space known-space in-radius 6
-      set distant-known-space known-space with [
-        distance [current-home-patch] of myself > 6
-      ]
+      set distant-known-space known-space who-are-not close-known-space
+      set original-camp-known-space [close-known-space] of foyer-owner
       set have-left false
     ]
     ; Attribuer le troupeau créé à son propriétaire
@@ -1133,21 +1133,29 @@ to go
   update-grass-quality              ; Indiquer la qualité de l'herbe
   grow-tree-resources
 ;  show-tree-populations-info
+
+
   ; Activités des agents
 
   ; Activités des troupeaux
+  ; Activités quotidiennes du couple Berger-Troupeau - Bovins
   ask cattles with [have-left = false] [
-    move-and-eat                        ; Activités quotidiennes du couple Berger-Troupeau - Bovins
+    move
+    update-known-space
+    eat
     update-corporal-conditions head UBT-size UF-ingested MAD-ingested daily-needs-UF daily-needs-MAD max-daily-DM-ingestible-per-head preference-mono
   ]
   ask sheeps with [have-left = false] [
-    move-and-eat                        ; Activités quotidiennes du couple Berger-Troupeau - Petits ruminants
+    move
+    update-known-space
+    eat
     update-corporal-conditions head UBT-size UF-ingested MAD-ingested daily-needs-UF daily-needs-MAD max-daily-DM-ingestible-per-head preference-mono
   ]
 
   ; Activités des Foyers
   ask foyers [
-  choose-strategy                     ; Choix stratégiques pastoraux du chef de ménage
+    choose-strategy                     ; Choix stratégiques pastoraux du chef de ménage
+    update-known-space
   ]
 
   ; Mise à jour des valeurs Stats pour visualisation
@@ -1633,19 +1641,12 @@ end
   ;;; Stratégie alimentaire du troupeau ;;;
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-to move-and-eat ; Mouvement et consommation des troupeaux - bovins puis ovins
+to move ; Mouvement des troupeaux - bovins puis ovins
 
   ;; Find the best patch within known space
-  let best-patch find-best-nearest-patch known-space shepherd-type head max-daily-DM-ingestible-per-head
-;  let home-patch current-home-patch
+  let best-patch find-best-nearest-patch known-space shepherd-type head max-daily-DM-ingestible-per-head current-season
+  let home-patch current-home-patch
   let my-known-space known-space
-  move-to current-home-patch
-  set DM-ingested 0
-  set UF-ingested 0
-  set MAD-ingested 0
-  ; Calculer les besoins énergétiques (UF) et protéiques (MAD) qui peut évoluer à chaque step en fonction du nombre de tête dans le troupeau
-  set daily-needs-UF daily-min-UF-needed-head * head
-  set daily-needs-MAD daily-min-MAD-needed-head * head
 
   if best-patch != nobody [
     ;; Calculate the distance between the best patch and the current home patch
@@ -1668,15 +1669,6 @@ to move-and-eat ; Mouvement et consommation des troupeaux - bovins puis ovins
         let nearby-patches [patches in-radius 3] of current-home-patch
         set known-space (patch-set my-known-space nearby-patches)
 
-        ;; Update close-known-space and distant
-        set close-known-space known-space in-radius 6
-        set distant-known-space known-space who-are-not close-known-space
-        ask foyer-owner [
-          set known-space (patch-set known-space ([known-space] of myself))
-          set close-known-space known-space in-radius 6
-          set distant-known-space known-space who-are-not close-known-space
-]
-
       ] [ ;; The herd is already in a temporary camp
 
         ;; Check if the best patch is in the original camp known space
@@ -1686,14 +1678,6 @@ to move-and-eat ; Mouvement et consommation des troupeaux - bovins puis ovins
           move-to original-home-patch
           set xcor xcor + (random-float 0.9 - 0.45)
           set ycor ycor + (random-float 0.9 - 0.45)
-
-            ;; Return to the original camp
-          set current-home-patch original-home-patch
-          set current-home-camp original-home-camp
-          set is-in-temporary-camp false
-          set known-space [known-space] of foyer-owner
-          set close-known-space [close-known-space] of foyer-owner
-            set distant-known-space [distant-known-space] of foyer-owner
 
         ] [
           ;; Create a temporary camp
@@ -1706,15 +1690,6 @@ to move-and-eat ; Mouvement et consommation des troupeaux - bovins puis ovins
           ;; Add patches within a radius of 3 cells around the camp to known-space
           let nearby-patches [patches in-radius 3] of current-home-patch
           set known-space (patch-set my-known-space nearby-patches)
-
-          ;; Update close-known-space and distant
-          set close-known-space known-space in-radius 6
-          set distant-known-space known-space who-are-not close-known-space
-          ask foyer-owner [
-            set known-space (patch-set known-space [known-space] of myself)
-            set close-known-space known-space in-radius 6
-            set distant-known-space known-space who-are-not close-known-space
-          ]
           ]
         ]
       ] [ ;; The best patch is within 12 units of the current home patch
@@ -1725,7 +1700,20 @@ to move-and-eat ; Mouvement et consommation des troupeaux - bovins puis ovins
         set ycor ycor + (random-float 0.9 - 0.45)
       ]
     ]
+
+end
+
+to eat
+
+  set DM-ingested 0
+  set UF-ingested 0
+  set MAD-ingested 0
+  ; Calculer les besoins énergétiques (UF) et protéiques (MAD) qui peut évoluer à chaque step en fonction du nombre de tête dans le troupeau
+  set daily-needs-UF daily-min-UF-needed-head * head
+  set daily-needs-MAD daily-min-MAD-needed-head * head
+
     ; Déterminer la préférence pour les monocotylédones
+
     set preference-mono 0.5  ; Valeur par défaut
 
     ifelse current-season = "Nduungu" [
@@ -2057,40 +2045,23 @@ end
 to do-first-strategy
 
     ;; Store the foyer's variables in local variables
-    let home-patch original-home-patch
+    let home-patch current-home-patch
     let my-known-space known-space
     ;; Find patches within 12 units of home-patch and not in known-space
-    let undiscovered-patches patches with [
+    let close-undiscovered-patches patches with [
       distance home-patch <= 6 and not member? self my-known-space
     ]
-    ifelse any? undiscovered-patches [
+
+    ifelse any? close-undiscovered-patches [
       ;; Se déplacer vers un patch aléatoire parmi ces patches
-      move-to one-of undiscovered-patches
+      move-to one-of close-undiscovered-patches
       ;; Obtenir les patches sur la ligne entre la nouvelle position et le campement
       let line-patches patches-between patch-here home-patch
       ;; Ajouter ces patches au known-space du foyer
       set known-space (patch-set my-known-space line-patches)
       ;; Retourner au campement principal
       move-to original-home-patch
-      ;; ajouter les patches aux catégories d'espaces connus
-      set close-known-space known-space in-radius 6
-      set original-camp-known-space close-known-space
-      ;; Partager le known-space mis à jour avec les troupeaux
-      ask cattle-herd [
-        set known-space [known-space] of foyer-owner
-        set original-camp-known-space [original-camp-known-space] of foyer-owner
-        if is-in-temporary-camp = false [
-          set close-known-space [close-known-space] of foyer-owner
-        ]
-      ]
-      ask sheep-herd [
-        set known-space [known-space] of foyer-owner
-        set original-camp-known-space [original-camp-known-space] of foyer-owner
-        if is-in-temporary-camp = false [
-          set close-known-space [close-known-space] of foyer-owner
-        ]
-      ]
-    ] [
+  ] [
       ;    if any? friends [
       ;      call-one-friend
       ;    ]
@@ -2103,34 +2074,6 @@ to do-first-strategy
           set known-space (patch-set my-known-space line-patches)
           ;; Retourner au campement principal
           move-to original-home-patch
-          ;; ajouter les patches aux catégories d'espaces connus
-          set close-known-space known-space in-radius 6
-          set original-camp-known-space close-known-space
-          set distant-known-space known-space with [distance home-patch > 6]
-          ask cattle-herd [
-            set known-space [known-space] of foyer-owner
-            set original-camp-known-space [original-camp-known-space] of foyer-owner
-            ifelse is-in-temporary-camp = false [
-              set close-known-space [close-known-space] of foyer-owner
-              set distant-known-space [distant-known-space] of foyer-owner
-            ] [
-              let tr-home-patch current-home-patch
-              set close-known-space known-space in-radius 6
-              set distant-known-space known-space with [distance tr-home-patch > 6]
-            ]
-          ]
-          ask sheep-herd [
-            set known-space [known-space] of foyer-owner
-            set original-camp-known-space [original-camp-known-space] of foyer-owner
-            ifelse is-in-temporary-camp = false [
-              set close-known-space [close-known-space] of foyer-owner
-              set distant-known-space [distant-known-space] of foyer-owner
-            ] [
-              let tr-home-patch current-home-patch
-              set close-known-space known-space in-radius 6
-              set distant-known-space known-space with [distance tr-home-patch > 6]
-            ]
-          ]
           set far-exploration-count far-exploration-count + 1
         ]
       ] [
@@ -2153,6 +2096,26 @@ to call-one-friend
 end
 ;  to color-trees  ;; patch procedure
 ;  set pcolor scale-color (green - 1) trees 0 (2 * max-grass-height)
+
+
+to update-known-space
+let home-patch current-home-patch
+    if breed = cattles or breed = sheeps [
+    set known-space (patch-set known-space ([known-space] of foyer-owner))
+  ]
+  if breed = foyers [
+    set known-space (patch-set known-space ([known-space] of cattle-herd))
+    set known-space (patch-set known-space ([known-space] of sheep-herd))
+  ]
+  ; Pour tous les agents : recalcul du close et du distant-known-space
+  set close-known-space known-space with [distance home-patch <= 6]
+  set distant-known-space known-space who-are-not close-known-space
+  if breed = cattles or breed = sheeps [
+    set original-camp-known-space [close-known-space] of foyer-owner
+  ]
+
+end
+
 
 
 to manage-water-points
@@ -2719,8 +2682,9 @@ end
 
 
 ; Trouver le meilleur patch : d'abord la qualité, ensuite la quantité, enfin la proximité
-to-report find-best-nearest-patch [known-spaces my-shepherd heads max-daily-DM-ingestible-heads]
+to-report find-best-nearest-patch [known-spaces my-shepherd heads max-daily-DM-ingestible-heads seasons]
   let viable-patches known-spaces with [current-grass >= 40]
+  if seasons = "Nduungu" [ set viable-patches viable-patches with [soil-type != "Caangol"]]
   let max-daily-ingestible (heads * max-daily-DM-ingestible-heads)
 ;  show word "known-space       " known-spaces
 ;show word "viable-patches     " viable-patches
@@ -2969,7 +2933,7 @@ CHOOSER
 visualization-mode
 visualization-mode
 "soil-type" "tree-cover" "grass-cover" "grass-quality" "known-space"
-2
+0
 
 BUTTON
 475
@@ -3036,7 +3000,7 @@ good-shepherd-percentage
 good-shepherd-percentage
 0
 100
-0.0
+50.0
 1
 1
 NIL
@@ -3352,7 +3316,7 @@ number-of-camps
 number-of-camps
 0
 200
-20.0
+1.0
 1
 1
 NIL
