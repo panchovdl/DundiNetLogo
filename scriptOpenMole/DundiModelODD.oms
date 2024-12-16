@@ -1,0 +1,159 @@
+
+/*
+This is skeleton to plug your model into OpenMOLE. To go further you should complete it.
+Define some hook, some exploration methods, and optionally some execution environment.
+To do all that please refer to the OpenMOLE documentation.
+*/
+
+val maxPonds4Months = Val[Double]
+val maxPonds5Months = Val[Double]
+val maxPonds6Months = Val[Double]
+val visualizationMode = Val[String]
+val goodShepherdPercentage = Val[Double]
+val proportionBigHerders = Val[Double]
+val proportionMediumHerders = Val[Double]
+val SheepNECSatifactionIndex = Val[Double]
+val CattleNECSatifactionIndex = Val[Double]
+val interfaceNumberOfCampI = Val[Double]
+val TreeDensitySatisfactionOldes = Val[Double]
+val totalFoyers = Val[Double]
+val totalCattles = Val[Double]
+val totalSheeps = Val[Double]
+val waterStock = Val[Double]
+val currentSeason = Val[String]
+val currentYearType = Val[String]
+val yearIndex = Val[Double]
+val SatisfactionMeanTreesInSeeno = Val[Double]
+val SatisfactionMeanTreesInCaangol = Val[Double]
+val SatisfactionMeanTreesInBaldiol = Val[Double]
+val SatisfactionMeanTreesInSangre = Val[Double]
+val MSTSeeno = Val[Double]
+val MSTBaldiol = Val[Double]
+val MSTSangre = Val[Double]
+val MSTCaangol = Val[Double]
+val mySeed = Val[Int]
+
+/*output*/
+val sheepsTempCamp = Val[Double]
+val cattlesTempCamp = Val[Double]
+val sheepsHaveLeft = Val[Double]
+val cattlesHaveLeft = Val[Double]
+val sheepsWeightGain = Val[Double]
+val cattlesWeightGain = Val[Double]
+val meanSheepsLiveWeight = Val[Double]
+val maxSheepsLiveWeight = Val[Double]
+val minSheepsLiveWeight = Val[Double]
+val meanCattlesLiveWeight = Val[Double]
+val maxCattlesLiveWeight = Val[Double]
+val minCattlesLiveWeight = Val[Double]
+val meanSheepsNEC = Val[Double]
+val meanCattlesNEC = Val[Double]
+val MSTSheepNEC = Val[Double]
+val MSTCattleNEC = Val[Double]
+
+val totalTrees8years = Val[Double]
+val totalTrees7years = Val[Double]
+val totalTrees6years = Val[Double]
+val totalTrees5years = Val[Double]
+val totalTrees4years = Val[Double]
+val totalTrees3years = Val[Double]
+val totalTrees2years = Val[Double]
+val totalTrees1years = Val[Double]
+val totalTreesOldes = Val[Double]
+val totalTreesYoung = Val[Double]
+val trajTrees = Val[Double]
+val MSTTrees = Val[Double]
+val meanTreesInCaangol = Val[Double]
+val meanTreesInSangre = Val[Double]
+val meanTreesInBaldiol = Val[Double]
+val meanTreesInSeeno = Val[Double]
+val totalGrass = Val[Double]
+val totalTrees = Val[Double]
+val meanGrass = Val[Double]
+val meanFruitsConsumedCattle = Val[Double]
+val meanLeavesConsumedCattle = Val[Double]
+val meanFruitsConsumedSheep = Val[Double]
+val meanLeavesConsumedSheep = Val[Double]
+
+val sumSmallHerder = Val[Double]
+val sumMediumHerder = Val[Double]
+val sumLargeHerder = Val[Double]
+
+
+
+val dundiModelODDTask = NetLogo6Task(
+  workDirectory / "DundiModelODD.nlogo",
+    Seq("setup","while [ticks <= 3650] [go] ; condition d'arret 10 ans"),
+    seed = mySeed, 
+    embedWorkspace = true) set (
+    inputs += goodShepherdPercentage mapped "good-shepherd-percentage",
+    inputs += proportionBigHerders mapped "proportion-big-herders",
+    inputs += proportionMediumHerders mapped "proportion-medium-herders",
+    inputs += SheepNECSatifactionIndex mapped "SheepNECSatifactionIndex",
+    inputs += CattleNECSatifactionIndex mapped "CattleNECSatifactionIndex",
+    inputs += interfaceNumberOfCampI mapped "interface-number-of-camp-i",
+    inputs += SatisfactionMeanTreesInSeeno mapped "SatisfactionMeanTreesInSeeno",
+    inputs += SatisfactionMeanTreesInCaangol mapped "SatisfactionMeanTreesInCaangol",
+    inputs += SatisfactionMeanTreesInBaldiol mapped "SatisfactionMeanTreesInBaldiol",
+    inputs += SatisfactionMeanTreesInSangre mapped "SatisfactionMeanTreesInSangre",
+    inputs += TreeDensitySatisfactionOldes mapped "TreeDensitySatisfaction-oldes",
+    
+    // pour avoir les input en output
+    outputs += goodShepherdPercentage,
+    outputs += proportionBigHerders,
+    outputs += proportionMediumHerders,
+    outputs += SheepNECSatifactionIndex,
+    outputs += CattleNECSatifactionIndex,
+    outputs += interfaceNumberOfCampI,
+    outputs += SatisfactionMeanTreesInSeeno,
+    outputs += SatisfactionMeanTreesInCaangol,
+    outputs += SatisfactionMeanTreesInBaldiol,
+    outputs += SatisfactionMeanTreesInSangre,
+    outputs += TreeDensitySatisfactionOldes,
+    
+    outputs += totalFoyers mapped "totalFoyers",
+    outputs += totalCattles mapped "totalCattles",
+    outputs += totalSheeps mapped "totalSheeps",
+    outputs += sheepsWeightGain mapped "sheepsWeightGain",
+    outputs += cattlesWeightGain mapped "cattlesWeightGain",
+    outputs += meanSheepsLiveWeight mapped "meanSheepsLiveWeight",
+    outputs += meanCattlesLiveWeight mapped "meanCattlesLiveWeight",
+    outputs += meanSheepsNEC mapped "meanSheepsNEC",
+    outputs += meanCattlesNEC mapped "meanCattlesNEC",
+    outputs += MSTSheepNEC mapped "MSTSheep-NEC",
+    outputs += MSTCattleNEC mapped "MSTCattle-NEC",
+    outputs += totalTreesOldes mapped "totalTreesOldes",
+    outputs += totalTreesYoung mapped "totalTreesYoung",
+    outputs += MSTTrees mapped "MST-trees",
+    outputs += MSTSeeno mapped "MST-Seeno",
+    outputs += MSTBaldiol mapped "MST-Baldiol",
+    outputs += MSTSangre mapped "MST-Sangre",
+    outputs += MSTCaangol mapped "MST-Caangol",
+    outputs += totalGrass mapped "totalGrass",
+    outputs += totalTrees mapped "totalTrees",
+    outputs += meanGrass mapped "meanGrass",
+    outputs += meanFruitsConsumedCattle mapped "meanFruitsConsumedCattle",
+    outputs += meanLeavesConsumedCattle mapped "meanLeavesConsumedCattle",
+    outputs += meanFruitsConsumedSheep mapped "meanFruitsConsumedSheep",
+    outputs += meanLeavesConsumedSheep mapped "meanLeavesConsumedSheep",
+    outputs += sumSmallHerder mapped "sumSmallHerder",
+    outputs += sumMediumHerder mapped "sumMediumHerder",
+    outputs += sumLargeHerder mapped "sumLargeHerder",
+    
+
+
+    //goodShepherdPercentage := 0.0,
+    //proportionBigHerders := 100.0,
+    //proportionMediumHerders := 0.0,
+    //interfaceNumberOfCampI := 91.0,
+    SheepNECSatifactionIndex := 3.0,
+    CattleNECSatifactionIndex := 3.0,
+    TreeDensitySatisfactionOldes := 6000,
+    SatisfactionMeanTreesInSeeno := 20,
+    SatisfactionMeanTreesInCaangol := 100,
+    SatisfactionMeanTreesInBaldiol := 40, 
+    SatisfactionMeanTreesInSangre := 55,
+    mySeed := 42
+  )
+
+dundiModelODDTask hook display

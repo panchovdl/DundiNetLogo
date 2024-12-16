@@ -5,26 +5,184 @@ globals [
   totalCattles
   waterStock
   sheepsTempCamp
-  cattleTempCamp
+  cattlesTempCamp
   sheepsHaveLeft
   cattlesHaveLeft
   sheepsWeightGain
   cattlesWeightGain
   meanSheepsLiveWeight
+  maxSheepsLiveWeight
+  minSheepsLiveWeight
   meanCattlesLiveWeight
+  maxCattlesLiveWeight
+  minCattlesLiveWeight
+  meanSheepsNEC
+  meanCattlesNEC
+  MSTSheep-NEC
+  MSTCattle-NEC
+  
+  totalTrees8years
+  totalTrees7years
+  totalTrees6years
+  totalTrees5years
+  totalTrees4years
+  totalTrees3years
+  totalTrees2years
+  totalTrees1years
+  totalTreesOldes
+  totalTreesYoung
+  traj-trees
+  MST-trees
+  
+  meanTreesInCaangol
+  meanTreesInSangre
+  meanTreesInBaldiol
+  meanTreesInSeeno
+  
+  traj-satisfaction-Seeno
+  traj-satisfaction-Baldiol
+  traj-satisfaction-Sangre
+  traj-satisfaction-Caangol
+  
+  MST-Seeno
+  MST-Baldiol
+  MST-Sangre
+  MST-Caangol
+  
+  
+  totalGrass
+  totalTrees
+  meanGrass
+  meanFruitsConsumedCattle
+  meanLeavesConsumedCattle
+  meanFruitsConsumedSheep 
+  meanLeavesConsumedSheep 
+  
+  sumSmallHerder
+  sumMediumHerder
+  sumLargeHerder
+  
+  meanDistantKnownSpace
 ]
 
 to calculStat
   set totalFoyers count foyers
+  
   set totalSheeps sum [head] of sheeps
   set totalCattles sum [head] of cattles
   set waterStock sum [water-stock] of patches
   set sheepsTempCamp count sheeps with [is-in-temporary-camp = true]
-  set cattleTempCamp count cattles with [is-in-temporary-camp = true]
+  set cattlesTempCamp count cattles with [is-in-temporary-camp = true]
   set sheepsHaveLeft count sheeps with [have-left = true]
   set cattlesHaveLeft count cattles with [have-left = true]
   set sheepsWeightGain mean [weight-gain] of sheeps
   set cattlesWeightGain mean [weight-gain] of cattles
-  set meanCattlesLiveWeight mean [live-weight] of cattles / mean [head]  of cattles
-  set meanSheepsLiveWeight mean [live-weight] of sheeps / mean [head]  of sheeps
+  
+;  min, max & average of Cattle Weight  
+  ifelse count cattles with [have-left = false] > 0 [
+    set meanCattlesLiveWeight (mean [live-weight] of cattles with [have-left = false]) / (mean [head]  of cattles with [have-left = false])
+    let oneMaxCattleHerd one-of cattles with [have-left = false] with-max [live-weight]
+    set maxCattlesLiveWeight ( [live-weight] of oneMaxCattleHerd) / ([head] of oneMaxCattleHerd)
+    let oneMinCattleHerd one-of cattles with [have-left = false] with-min [live-weight]
+    set minCattlesLiveWeight ([live-weight] of oneMinCattleHerd) / ([head] of oneMinCattleHerd)
+  ][
+    set meanCattlesLiveWeight 0
+    set maxCattlesLiveWeight 0
+    set minCattlesLiveWeight 0
+  ]
+ ;  min, max & average of Sheep Weight   
+  ifelse count sheeps with [have-left = false] > 0 [  
+  set meanSheepsLiveWeight (mean [live-weight] of sheeps with [have-left = false]) / (mean [head]  of sheeps with [have-left = false])
+    let oneMaxSheepHerd one-of sheeps with [have-left = false] with-max [live-weight]
+    set maxSheepsLiveWeight ( [live-weight] of oneMaxSheepHerd) / ([head] of oneMaxSheepHerd)
+    let oneMinSheepHerd one-of sheeps with [have-left = false] with-min [live-weight]
+    set minSheepsLiveWeight ([live-weight] of oneMinSheepHerd) / ([head] of oneMinSheepHerd)
+  ][
+    set meanSheepsLiveWeight 0
+    set maxSheepsLiveWeight 0
+    set minSheepsLiveWeight 0
+  ]
+  
+  if count cattles with [have-left = false] > 0[ ;; Est-ce qu'il y a quelque chose a faire dans le else ?
+    set meanCattlesNEC mean [corporal-condition] of cattles with [have-left = false]
+  ]
+  if count sheeps with [have-left = false] > 0 [ ;; Est-ce qu'il y a quelque chose a faire dans le else ?
+    set meanSheepsNEC mean [corporal-condition] of sheeps with [have-left = false]
+  ]
+  
+  if ticks > 0[
+    ask foyers [
+      if SheepNECSatifactionIndex <= [corporal-condition] of sheep-herd [
+        set sheepNEC-satisfaction (sheepNEC-satisfaction + 1)
+      ]
+      
+      if CattleNECSatifactionIndex <= [corporal-condition] of cattle-herd [
+        set cattleNEC-satisfaction (cattleNEC-satisfaction + 1)
+      ]
+    ]
+    
+    set MSTSheep-NEC (mean[sheepNEC-satisfaction] of foyers) / ticks
+    set MSTCattle-NEC (mean[cattleNEC-satisfaction] of foyers) / ticks
+  ]
+  
+  
+  set totalGrass sum [current-grass] of patches
+  set meanGrass mean [current-grass] of patches
+  set totalTrees sum [population-size] of tree-populations
+  set totalTrees8years sum [population-size] of tree-populations with [tree-pop-age >= 8] / count patches
+  set totalTrees7years sum [population-size] of tree-populations with [tree-pop-age = 7] / count patches
+  
+  set totalTrees6years sum [population-size] of tree-populations with [tree-pop-age = 6] / count patches
+  set totalTrees5years sum [population-size] of tree-populations with [tree-pop-age = 5] / count patches
+  set totalTrees4years sum [population-size] of tree-populations with [tree-pop-age = 4] / count patches
+  set totalTrees3years sum [population-size] of tree-populations with [tree-pop-age = 3] / count patches
+  set totalTrees2years sum [population-size] of tree-populations with [tree-pop-age = 2] / count patches
+  set totalTrees1years sum [population-size] of tree-populations with [tree-pop-age = 1] / count patches
+  set totalTreesOldes sum [population-size] of tree-populations with [tree-pop-age >= 4] / count patches
+  set totalTreesYoung sum [population-size] of tree-populations with [tree-pop-age < 4] / count patches
+
+  set meanFruitsConsumedCattle sum [fruits-eaten] of cattles with [have-left = false]
+  set meanLeavesConsumedCattle sum [leaves-eaten] of cattles with [have-left = false]
+  set meanFruitsConsumedSheep  sum [fruits-eaten] of sheeps with [have-left = false]
+  set meanLeavesConsumedSheep sum [leaves-eaten] of sheeps with [have-left = false]
+   
+  
+  if ticks > 0 [
+    if TreeDensitySatisfaction-olds < totalTreesOldes [
+      set traj-trees traj-trees  + 1
+    ]
+    set MST-trees traj-trees / ticks
+  ]
+  
+  
+  set meanTreesInCaangol (sum [population-size] of tree-populations-on patches with [soil-type = "Caangol"] / caangol-surface) / 100
+  set meanTreesInSangre (sum [population-size] of tree-populations-on patches with [soil-type = "Sangre"] / sangre-surface) / 100
+  set meanTreesInBaldiol (sum [population-size] of tree-populations-on patches with [soil-type = "Baldiol"] / baldiol-surface) / 100
+  set meanTreesInSeeno (sum [population-size] of tree-populations-on patches with [soil-type = "Seeno"] / seeno-surface) / 100
+ 
+  if ticks > 0 [
+    if SatisfactionMeanTreesInSeeno < meanTreesInSeeno [
+     set traj-satisfaction-Seeno traj-satisfaction-Seeno + 1  
+    ]
+    if SatisfactionMeanTreesInBaldiol < meanTreesInBaldiol [
+     set traj-satisfaction-Baldiol traj-satisfaction-Baldiol + 1  
+    ]
+    if SatisfactionMeanTreesInSangre < meanTreesInSangre [
+     set traj-satisfaction-Sangre traj-satisfaction-Sangre + 1  
+    ]
+    if SatisfactionMeanTreesInCaangol < meanTreesInCaangol [
+     set traj-satisfaction-Caangol traj-satisfaction-Caangol + 1  
+    ]
+    
+    set MST-Seeno traj-satisfaction-Seeno / ticks
+    set MST-Baldiol traj-satisfaction-Baldiol / ticks
+    set MST-Sangre traj-satisfaction-Sangre / ticks
+    set MST-Caangol traj-satisfaction-Caangol / ticks
+  ]
+  
+  set sumSmallHerder count foyers with [herder-type = "petit"]
+  set sumMediumHerder count foyers with [herder-type = "moyen"]
+  set sumLargeHerder count foyers with [herder-type = "grand"]
+ set meanDistantKnownSpace meanKnownSpace sheeps
+  
 end
