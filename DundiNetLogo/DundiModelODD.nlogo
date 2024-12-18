@@ -149,6 +149,9 @@ turtles-own [
   DM-ingested                      ; Quantité totale d'herbe ingérée (kg de MS)
   UF-ingested                      ; UF totales ingérées
   MAD-ingested                     ; MAD totales ingérées
+  total-UF-ingested-from-trees
+  total-MAD-ingested-from-trees
+  total-DM-ingested-from-trees
   daily-water-consumption          ; Consommation d'eau quotidienne
   preference-mono                  ; Préférence pour les Graminées
 
@@ -1356,12 +1359,12 @@ to grow-grass  ; - Version 2.2.
     let new-mono-grass 0
     let new-dicot-grass 0
     if current-season = "Nduungu" [
-      set r_grass 0.5
+      set r_grass 0.05
       set multiplier 1
     ]
     if current-season = "Dabbuunde" [
-      set r_grass -0.1
-      if current-grass >= (0.9 * K) [ set r_grass -0.8]
+      set r_grass -0.02
+      if current-grass >= (0.9 * K) [ set r_grass -0.1]
     ]
     if current-season = "Ceedu" [
       set r_grass -0.001
@@ -1634,7 +1637,7 @@ to move ; Mouvement des troupeaux - bovins puis ovins
   let best-patch find-best-nearest-patch known-space shepherd-type head max-daily-DM-ingestible-per-head current-season
   let my-known-space known-space
   move-to current-home-patch
-  if best-patch != nobody [
+  ifelse best-patch != nobody [
     ;; Calculate the distance between the best patch and the current home patch
     let distance-to-home distance best-patch
 
@@ -1658,12 +1661,14 @@ to move ; Mouvement des troupeaux - bovins puis ovins
       ] [ ;; The herd is already in a temporary camp
 
         ;; Check if the best patch is in the original camp known space
-        ifelse member? best-patch original-camp-known-space [
+      ifelse member? best-patch original-camp-known-space [
 
-          ;; Move to the best patch
-          move-to original-home-patch
-          set xcor xcor + (random-float 0.9 - 0.45)
-          set ycor ycor + (random-float 0.9 - 0.45)
+        ;; Move to the best patch
+          move-to best-patch
+          set current-home-patch original-home-patch
+        set is-in-temporary-camp false
+        set xcor xcor + (random-float 0.9 - 0.45)
+        set ycor ycor + (random-float 0.9 - 0.45)
 
         ] [
           ;; Create a temporary camp
@@ -1685,6 +1690,12 @@ to move ; Mouvement des troupeaux - bovins puis ovins
       set xcor xcor + (random-float 0.9 - 0.45)
       set ycor ycor + (random-float 0.9 - 0.45)
     ]
+  ] [
+    if is-in-temporary-camp = true [
+      move-to original-home-patch
+      set current-home-patch original-home-patch
+      set is-in-temporary-camp false]
+    stop
   ]
 
 end
@@ -1694,6 +1705,9 @@ to eat
   set DM-ingested 0
   set UF-ingested 0
   set MAD-ingested 0
+  set total-UF-ingested-from-trees 0
+  set total-MAD-ingested-from-trees 0
+  set total-DM-ingested-from-trees 0
   ; Calculer les besoins énergétiques (UF) et protéiques (MAD) qui peut évoluer à chaque step en fonction du nombre de tête dans le troupeau
   set daily-needs-UF daily-min-UF-needed-head * head
   set daily-needs-MAD daily-min-MAD-needed-head * head
@@ -1727,7 +1741,7 @@ to eat
     let average-MAD-per-kg-MS ([monocot-MAD-per-kg-MS] of patch-here * monocot-prop) + ([dicot-MAD-per-kg-MS] of patch-here * (1 - monocot-prop))
 
     ; Calculer la quantité de MS à consommer en fonction de la valeur moyenne du fourrage disponible en UF. Plus la valeur est forte, plus il en mangera
-    let desired-MS-intake (daily-needs-DM * 0.5  + ((daily-needs-DM * 0.5)  * average-UF-per-kg-MS))
+    let desired-MS-intake (daily-needs-DM * 0.7  + ((daily-needs-DM * 0.3)  * average-UF-per-kg-MS))
     ; Assurer que la consommation ne dépasse pas max-daily-DM-ingestible-per-head
     set desired-MS-intake min list desired-MS-intake daily-needs-DM
   show word "desired-MS-intake-per-head   " (desired-MS-intake / head)
@@ -1879,10 +1893,6 @@ to consume-tree-resources [patch-of-grass-eaten remaining-needs] ;; contexte tro
  show word "amount desired from trees " amount-to-consume
     if amount-to-consume <= 0 [ set amount-to-consume 0 ]
 
-    ;; Variables pour accumuler les UF et MAD ingérées
-    let total-UF-ingested-from-trees 0
-    let total-MAD-ingested-from-trees 0
-    let total-DM-ingested-from-trees 0
     ;; Distribuer la consommation proportionnellement
     foreach tree-max-consumable [ [i] ->
       let who-one-tree-population item 0 i
@@ -2917,10 +2927,10 @@ totalSheeps
 11
 
 SLIDER
-1635
-475
-1800
-508
+1675
+665
+1840
+698
 max-ponds-4-months
 max-ponds-4-months
 0
@@ -2932,10 +2942,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-1636
-513
-1796
-546
+1676
+703
+1836
+736
 max-ponds-5-months
 max-ponds-5-months
 0
@@ -2947,10 +2957,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-1637
-552
-1797
-585
+1677
+742
+1837
+775
 max-ponds-6-months
 max-ponds-6-months
 0
@@ -2962,10 +2972,10 @@ NIL
 HORIZONTAL
 
 MONITOR
-1640
-590
-1775
-635
+1680
+780
+1815
+825
 NIL
 waterStock
 17
@@ -3127,7 +3137,7 @@ PLOT
 165
 1310
 315
-partis dans le saloum
+partis hors de la zone
 NIL
 NIL
 0.0
@@ -3144,7 +3154,7 @@ PENS
 PLOT
 1310
 165
-1620
+1645
 315
 CATTLE weight per head
 NIL
@@ -3179,10 +3189,10 @@ NIL
 1
 
 PLOT
-1620
-315
-1820
-465
+1470
+610
+1650
+760
 distant-kown-space
 NIL
 NIL
@@ -3198,10 +3208,10 @@ PENS
 "cattle" 1.0 0 -2674135 true "" "plot meanKnownSpace cattles"
 
 PLOT
-1620
-165
-1820
-315
+1310
+610
+1470
+760
 HistHerderType
 listValueHerdeType
 NIL
@@ -3218,7 +3228,7 @@ PENS
 PLOT
 1310
 315
-1620
+1645
 465
 SHEEP weight per head
 NIL
@@ -3287,7 +3297,7 @@ PENS
 PLOT
 1310
 465
-1620
+1650
 610
 Tree  Consumption
 NIL
@@ -3584,10 +3594,10 @@ ____________________________________________
 1
 
 TEXTBOX
-330
-485
-345
-685
+130
+670
+145
+870
 |||||||||||||||||||||||||||||||||||||||||||||||||||||||
 11
 0.0
