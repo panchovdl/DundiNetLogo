@@ -33,6 +33,12 @@ globals [
   seuil-bon-MAD
   seuil-moyen-MAD
 
+  K-Baldiol                 ; seuil max d'herbe pour les différents types de sols
+  K-Caangol
+  K-Sangre
+  K-Seeno
+
+
   initial-number-of-camps
   space-camp-min
   space-camp-max
@@ -79,7 +85,8 @@ patches-own [
 
   current-grass                    ; Couverture d'herbe en kg
   grass-end-nduungu                ; Couverture d'herbe le dernier jour du Nduungu
-  K                                ; Montant maximum d'herbe
+  K                                ; Montant d'herbe
+  K-max                            ; Montant maximum d'herbe
   patch-sensitivity                ; Sensibilité à la dégradation
   degradation-level                ; Niveau de dégradation
 
@@ -365,6 +372,11 @@ to setup
   set space-camp-standard-deviation 5
   set space-camp-mean (space-camp-min + space-camp-max) / 2
 
+  ; définir les seuil max d'herbe par type de sol
+  set K-Baldiol 120000
+  set K-Caangol 300000
+  set K-Sangre 80000
+  set K-Seeno 200000
 
   ; Lancer l'environnement
   setup-landscape  ; Créer les unités de paysage
@@ -373,6 +385,7 @@ to setup
   setup-foyers ; Créer les foyers
   setup-herds  ; Créer les troupeaux
   setup-trees  ; Créer les arbres
+  setup-agriculture   ; créer les champs
 
 
   set caangol-surface count patches with [soil-type = "Caangol"]
@@ -387,6 +400,7 @@ to setup
   set seuil-moyen-MAD 25
   set max-grass max [K] of patches ; pour visualisation
   set max-trees max [tree-cover] of patches
+
 
   ;Visualiser l'environnement
   reset-ticks
@@ -408,7 +422,8 @@ to setup-landscape
   ask patches [
     set max-tree-cover tree-cover
     if soil-type = "Baldiol" [
-      set K 120000  ; Stock de production maximal de Matière Sèche (MS - DM[en]) sur 1 km² pour "Baldiol"
+      set K K-Baldiol  ; Stock de production de Matière Sèche (MS - DM[en]) sur 1 km² pour "Baldiol"
+      set K-max K-Baldiol ; stock max
       set current-grass 40
       set num-nutritious round (tree-cover * 0.5)
       set num-less-nutritious round (tree-cover * 0.25)
@@ -417,7 +432,8 @@ to setup-landscape
       set max-tree-number 8000
     ]
     if soil-type = "Caangol" [
-      set K 300000  ; Stock de production maximal de Matière Sèche (MS - DM[en]) sur 1 km² pour Caangol
+      set K K-Caangol  ; Stock de production de Matière Sèche (MS - DM[en]) sur 1 km² pour Caangol
+      set K-max K-Caangol ; stock max
       set current-grass 40
       set num-nutritious round (tree-cover * 0.5)
       set num-less-nutritious round (tree-cover * 0.25)
@@ -426,7 +442,8 @@ to setup-landscape
       set max-tree-number 20000
     ]
     if soil-type = "Sangre" [
-      set K 80000  ; Stock de production maximal de Matière Sèche (MS - DM[en]) sur 1 km² pour Sangre
+      set K K-Sangre  ; Stock de production de Matière Sèche (MS - DM[en]) sur 1 km² pour Sangre
+      set K-max K-Sangre ; stock max
       set current-grass 40
       set num-nutritious round (tree-cover * 0.8)
       set num-less-nutritious round (tree-cover * 0.25)
@@ -435,7 +452,8 @@ to setup-landscape
       set max-tree-number 15000
     ]
     if soil-type = "Seeno" [
-      set K 200000  ; Stock de production maximal de Matière Sèche (MS - DM[en]) sur 1 km² pour Seeno
+      set K K-Seeno  ; Stock de production de Matière Sèche (MS - DM[en]) sur 1 km² pour Seeno
+      set K-max K-Seeno ; stock max
       set current-grass 40
       set num-nutritious round (tree-cover * 0.5)
       set num-less-nutritious round (tree-cover * 0.25)
@@ -1041,7 +1059,27 @@ to setup-trees ; Valeurs d'initialisation (âge minimum des arbres découverts)
 end
 
 
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;; Initialisation des zones d'agriculture ;;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+to setup-agriculture                                                                                ; initialisation des champs agri
+  ask patches with [any? turtles-here with [breed = foyers]] [                                      ; pour chaque patch avec un foyer
+    let num-foyer count turtles-here with [breed = foyers]                                          ; on récupère le nombre de foyers par patch
+    ifelse num-foyer > 80 [                                                                         ; en cas de plus de 80 foyers, conserver les couloirs de paturage et faire son agriculture dans les patchs à côté
+      set K (K - ((80 / 100) * K-max))                                                                  ; 80 champs max sur place (80 hectares sur les 100 dispos)
+      let num-champs-voisins (num-foyer - 80)                                                       ; nombre de champs voisins = num-foyers - 80 hectares sur le patch
+      let patchs-voisins neighbors                                                                  ; selection des patchs voisins
+      repeat num-champs-voisins [                                                                   ; boucle de creation des champs voisins
+        ask one-of patchs-voisins[                                                                  ; dans un des champs voisins
+         set K (K - (K-max / 100))                                                                  ; réduction d'un centième de la surface d'herbe cause création champ
+        ]
+      ]
+    ] [
+      set K (K - ((num-foyer / 100) * K-max))                                                             ; modification du K du patch en fonction du nombre de foyers
+    ]
+  ]
+end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Visualisation ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
