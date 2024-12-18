@@ -65,6 +65,7 @@ breed [cattles cattle]
 breed [sheeps sheep]
 breed [tree-populations tree-population]
 breed [mature-tree-pops mature-tree-pop]   ; Pour visualisation
+breed [champs champ]
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;;; Variables des cellules ;;;
@@ -274,6 +275,8 @@ cattles-own [
 ]
 
 
+
+
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;;;;; Agents populations d'arbres ;;;;;
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -299,6 +302,16 @@ tree-populations-own [
   tree-UF-per-kg-MS                ; UF/kg MS pour les arbres
   tree-MAD-per-kg-MS               ; MAD/kg MS pour les arbres
 ]
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;;;; Agents champs ;;;;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+champs-own [
+  foyer-owner                      ; Foyer du champ
+  surface                          ; Surface du champ
+]
+
 
 
 to show-tree-populations-info ; Procédure pour afficher les populations d'arbres
@@ -334,7 +347,6 @@ to show-tree-populations-info ; Procédure pour afficher les populations d'arbre
     ]
   ]
 end
-
 
 
 
@@ -385,7 +397,7 @@ to setup
   set K-Seeno 200000
 
   ; seuils de production des champs
-  set production-residu-hectare-agriculture 1
+  set production-residu-hectare-agriculture 1           ; kg de matière sèche par hectare
 
   ; Lancer l'environnement
   setup-landscape  ; Créer les unités de paysage
@@ -649,7 +661,7 @@ to setup-foyers
       set close-exploration-count 0     ; Compteur d'exploration proche
 
       set stock-residu 0                 ; pas de residu de culture initialement
-      set surface-agriculture 1 / 100      ; pour le moment, 1 hectare par surface agricole
+      set surface-agriculture 1 / 100      ; surface en km²  (de base : 1 hectare par surface agricole )
     ]
   ]
   show word "populasse" count foyers
@@ -1075,26 +1087,35 @@ end
   ;;; Initialisation des zones d'agriculture ;;;
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;;; /!\ Pas de contrôle de surface de culture dans les patchs voisins du campement. Il faudrait une variable interne aux patchs pour faire ce suivi /!\
 to setup-agriculture                                                                                ; initialisation des champs agri
   ask patches with [any? turtles-here with [breed = foyers]] [                                      ; pour chaque patch avec un foyer
-    let num-foyer count turtles-here with [breed = foyers]                                          ; on récupère le nombre de foyers par patch
-    ifelse num-foyer > 80 [                                                                         ; en cas de plus de 80 foyers, conserver les couloirs de paturage et faire son agriculture dans les patchs à côté
-      set K (K - ((80 / 100) * K-max))                                                                  ; 80 champs max sur place (80 hectares sur les 100 dispos)
-      let num-champs-voisins (num-foyer - 80)                                                       ; nombre de champs voisins = num-foyers - 80 hectares sur le patch
-      let patchs-voisins neighbors                                                                  ; selection des patchs voisins
-      repeat num-champs-voisins [                                                                   ; boucle de creation des champs voisins
-        ask one-of patchs-voisins[                                                                  ; dans un des champs voisins
-         set K (K - (K-max / 100))                                                                  ; réduction d'un centième de la surface d'herbe cause création champ
+    let compte-surface-agri 0                                                                       ; surface totale agricole initialisée à 0
+    ask turtles-here with [breed = foyers] [                                                        ; parcours des foyers pour création des champs
+      ; créer les champs, réduire l'herbe disponible sur le patch
+     let surface-agri surface-agriculture
+      ifelse (compte-surface-agri + surface-agriculture) < 80 [                                     ; creation de champ si espace dispo sur le patch
+        set K (K - (surface-agri * K-max))                                                          ; ajustement de l'herbe disponible sur le patch
+        hatch-champs 1 [                                                                            ; creation du champ sur la parcelle
+          set foyer-owner who
+          set surface surface-agri
+        ]
+        set compte-surface-agri (compte-surface-agri + surface-agri)                                ; ajustement du compte de surface agricole de la parcelle
+      ] [                                                                                           ; creation de champ dans le pâtch voisin si pas d'espace dispo sur le patch
+        ask one-of neighbors [                                                                      ; selection d'une parcelle voisine
+        set K (K - K-max * surface-agri)                                                            ; ajustement de l'herbe disponible sur le patch
+        hatch-champs 1 [                                                                            ; creation du champ sur parcelle voisine
+          set foyer-owner who
+          set surface surface-agri
+          ]
         ]
       ]
-    ] [
-      set K (K - ((num-foyer / 100) * K-max))                                                             ; modification du K du patch en fonction du nombre de foyers
     ]
   ]
 end
 
 to stock-residu-cultures                                                                            ; production des stocks de résidu de culture
-  ask patches with [any? turtles-here with [breed = foyers]] [                                        ; trouver tous les foyers de la carte
+  ask patches with [any? turtles-here with [breed = foyers]] [                                       ; trouver tous les foyers de la carte
     ask turtles-here with [breed = foyers] [
      set stock-residu (stock-residu +  surface-agriculture * production-residu-hectare-agriculture)
     ]
