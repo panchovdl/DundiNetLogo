@@ -38,6 +38,8 @@ globals [
   K-Sangre
   K-Seeno
 
+  production-residu-hectare-agriculture   ; production à l'hectare en tonne de résidu de culture
+
 
   initial-number-of-camps
   space-camp-min
@@ -227,6 +229,10 @@ foyers-own [
  ; Pratiques sylvicoles
   owned-trees-pop                  ; Population d'arbres associée
 
+ ; Pratiques agriculture
+  stock-residu                     ; residu de paille d'agriculture
+  surface-agriculture              ; surface cultivée par le foyer
+
  ; Relations
   friends                          ; Amis de l'agent
   far-exploration-count            ; Compteur d'exploration au loin
@@ -377,6 +383,9 @@ to setup
   set K-Caangol 300000
   set K-Sangre 80000
   set K-Seeno 200000
+
+  ; seuils de production des champs
+  set production-residu-hectare-agriculture 1
 
   ; Lancer l'environnement
   setup-landscape  ; Créer les unités de paysage
@@ -638,6 +647,9 @@ to setup-foyers
 
       set far-exploration-count 0       ; Compteur d'exploration au loin
       set close-exploration-count 0     ; Compteur d'exploration proche
+
+      set stock-residu 0                 ; pas de residu de culture initialement
+      set surface-agriculture 1 / 100      ; pour le moment, 1 hectare par surface agricole
     ]
   ]
   show word "populasse" count foyers
@@ -1081,6 +1093,14 @@ to setup-agriculture                                                            
   ]
 end
 
+to stock-residu-cultures                                                                            ; production des stocks de résidu de culture
+  ask patches with [any? turtles-here with [breed = foyers]] [                                        ; trouver tous les foyers de la carte
+    ask turtles-here with [breed = foyers] [
+     set stock-residu (stock-residu +  surface-agriculture * production-residu-hectare-agriculture)
+    ]
+  ]
+end
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Visualisation ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1251,6 +1271,7 @@ to update-season
     ]
     set current-season "Dabbuunde"
     set season-counter 0
+    stock-residu-cultures         ; Début du dabbuunde : recolte des cultures et stock des residus
   ]
   if current-season = "Dabbuunde" and season-counter >= dabbuunde-duration [
     set current-season "Ceedu"
