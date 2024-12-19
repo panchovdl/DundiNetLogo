@@ -3556,7 +3556,7 @@ SatisfactionMeanTreesInSeeno
 SatisfactionMeanTreesInSeeno
 12
 50
-44.0
+26.0
 1
 1
 NIL
@@ -3571,7 +3571,7 @@ SatisfactionMeanTreesInBaldiol
 SatisfactionMeanTreesInBaldiol
 0
 100
-18.0
+40.0
 1
 1
 NIL
@@ -3586,7 +3586,7 @@ SatisfactionMeanTreesInSangre
 SatisfactionMeanTreesInSangre
 0
 100
-28.0
+42.0
 1
 1
 NIL
