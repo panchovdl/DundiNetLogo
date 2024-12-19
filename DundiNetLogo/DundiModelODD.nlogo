@@ -1251,6 +1251,14 @@ to go
   ; Activités des agents
 
   ; Activités quotidiennes du couple Berger-Troupeau - Bovins
+  ask cattles [
+    set fruits-eaten 0
+    set leaves-eaten 0
+  ]
+  ask sheeps [
+    set fruits-eaten 0
+    set leaves-eaten 0
+  ]
   ask cattles with [have-left = false] [
     move
     update-known-space
@@ -1606,7 +1614,7 @@ end
 to update-year-type
   ; Vérifier qu'on ne dépasse pas la liste
   set year-index year-index + 1
-  if year-index = 21 [
+  if year-index >= 20 [
     set year-index 1 ]
   ; Obtenir le type d'année
   set current-year-type item year-index year-types
@@ -3533,7 +3541,7 @@ SatisfactionMeanTreesInCaangol
 SatisfactionMeanTreesInCaangol
 50
 150
-124.0
+106.0
 1
 1
 NIL
@@ -3548,7 +3556,7 @@ SatisfactionMeanTreesInSeeno
 SatisfactionMeanTreesInSeeno
 12
 50
-30.0
+44.0
 1
 1
 NIL
@@ -3563,7 +3571,7 @@ SatisfactionMeanTreesInBaldiol
 SatisfactionMeanTreesInBaldiol
 0
 100
-100.0
+18.0
 1
 1
 NIL
@@ -3578,7 +3586,7 @@ SatisfactionMeanTreesInSangre
 SatisfactionMeanTreesInSangre
 0
 100
-48.0
+28.0
 1
 1
 NIL
@@ -3684,12 +3692,12 @@ SLIDER
 370
 675
 570
-706
+708
 treshold-tree-satisfaction
 treshold-tree-satisfaction
 0.1
 1
-0.8
+0.1
 0.1
 1
 NIL
