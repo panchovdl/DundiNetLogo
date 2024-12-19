@@ -92,8 +92,12 @@ to calculStat
   set cattlesTempCamp count cattles with [is-in-temporary-camp = true]
   set sheepsHaveLeft count sheeps with [have-left = true]
   set cattlesHaveLeft count cattles with [have-left = true]
-  set sheepsWeightGain mean [weight-gain] of sheeps with [have-left = false]
-  set cattlesWeightGain mean [weight-gain] of cattles with [have-left = false]
+  if count sheeps with [have-left = false] > 0 [
+    set sheepsWeightGain mean [weight-gain] of sheeps with [have-left = false]
+  ]
+  if count cattles with [have-left = false] > 0 [
+    set cattlesWeightGain mean [weight-gain] of cattles with [have-left = false]
+  ]
   
 ;  min, max & average of Cattle Weight  
   ifelse count cattles with [have-left = false] > 0 [
