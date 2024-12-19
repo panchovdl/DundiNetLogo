@@ -68,9 +68,9 @@ breed [sheeps sheep]
 breed [tree-populations tree-population]
 breed [mature-tree-pops mature-tree-pop]   ; Pour visualisation
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;;; Variables des cellules ;;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Variables des cellules ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
 patches-own [
@@ -86,7 +86,7 @@ patches-own [
   current-grass                    ; Couverture d'herbe en kg
   K                                ; Montant maximum d'herbe
   patch-sensitivity                ; Sensibilité à la dégradation
-;  degradation-level                ; Niveau de dégradation
+                                   ;  degradation-level                ; Niveau de dégradation
 
   grass-quality                    ; Qualité actuelle de l'herbe
   q                                ; Ratio de qualité
@@ -131,9 +131,9 @@ patches-own [
 ]
 
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;;;;; Ensemble des agents ;;;;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;; Ensemble des agents ;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 turtles-own [
 
@@ -182,9 +182,9 @@ turtles-own [
 
 
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;;;;; Agents Campements ;;;;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;; Agents Campements ;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 camps-own [
   available-space                  ; Nombre de foyers associés
@@ -195,9 +195,9 @@ camps-own [
 
 
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;;;;; Agents Foyers ;;;;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;; Agents Foyers ;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;
 
 foyers-own [
 
@@ -205,29 +205,31 @@ foyers-own [
   ; Gestion du troupeau
   cattle-herd                      ; Troupeau de bovins associé
   cattle-herd-size                 ; Taille du troupeau de bovins associé
+  cattle-herd-count
   sheep-herd                       ; Troupeau de moutons associé
   sheep-herd-size                  ; Taille du troupeau d'ovins associé
+  sheep-herd-count
   shepherd-type                    ; Type de berger du foyer
   herder-type                      ; Caractéristique d'élevage du foyer (grand moyen petit)
   pasture-strategy                 ; Stratégies de pâturage
 
   ; Surveillance de l'état du troupeau
-    ; Bovins
+  ; Bovins
   cattle-low-threshold-cc          ; limite basse NEC
   cattle-low-threshold-pc          ; limite basse MAD
   cattle-high-threshold-cc         ; limite haute NEC
   cattle-high-threshold-pc         ; limite haute MAD
-    ; Ovins
+                                   ; Ovins
   sheep-low-threshold-cc           ; limite basse NEC
   sheep-low-threshold-pc           ; limite basse MAD
   sheep-high-threshold-cc          ; limite haute NEC
   sheep-high-threshold-pc          ; limite haute MAD
 
 
- ; Pratiques sylvicoles
+  ; Pratiques sylvicoles
   owned-trees-pop                  ; Population d'arbres associée
 
- ; Relations
+  ; Relations
   friends                          ; Amis de l'agent
   far-exploration-count            ; Compteur d'exploration au loin
   close-exploration-count          ; Compteur d'exploration proche
@@ -237,9 +239,9 @@ foyers-own [
 
 
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;;;;; Agents troupeau de petits ruminants ;;;;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;; Agents troupeau de petits ruminants ;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 sheeps-own [
   foyer-owner                      ; Foyer du troupeau
@@ -253,9 +255,9 @@ sheeps-own [
 
 
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;;;;; Agents troupeau de bovins ;;;;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;; Agents troupeau de bovins ;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 cattles-own [
   foyer-owner                      ; Foyer du troupeau
@@ -268,9 +270,9 @@ cattles-own [
 ]
 
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;;;;; Agents populations d'arbres ;;;;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;; Agents populations d'arbres ;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 tree-populations-own [
 
@@ -296,7 +298,7 @@ tree-populations-own [
 
 
 to show-tree-populations-info ; Procédure pour afficher les populations d'arbres
-  ; Compter le nombre total de populations d'arbres
+                              ; Compter le nombre total de populations d'arbres
   let total-populations count tree-populations
   show (word "Nombre total de populations d'arbres : " total-populations)
 
@@ -317,14 +319,14 @@ to show-tree-populations-info ; Procédure pour afficher les populations d'arbre
     ; Itérer sur chaque population d'arbres et afficher les détails
     ask tree-populations-here [
       show (word "  Type d'arbre: " tree-type
-                 ", Âge: " tree-pop-age
-                 ", Taille de la population: " population-size
-                 ", Stock max de bois" max-wood-stock
-                       ", Stock actuel de bois" current-wood-stock
-                       ", Stock max de fruits" max-fruit-stock
-                       ", Stock actuel de fruits" current-fruit-stock
-                       ", Stock max de feuilles" max-leaf-stock
-                       ", Stock actuel de feuilles" current-leaf-stock)
+        ", Âge: " tree-pop-age
+        ", Taille de la population: " population-size
+        ", Stock max de bois" max-wood-stock
+        ", Stock actuel de bois" current-wood-stock
+        ", Stock max de fruits" max-fruit-stock
+        ", Stock actuel de fruits" current-fruit-stock
+        ", Stock max de feuilles" max-leaf-stock
+        ", Stock actuel de feuilles" current-leaf-stock)
     ]
   ]
 end
@@ -376,9 +378,9 @@ to setup
   set pM proportion-medium-herders / 100
   set pS (100 - (proportion-big-herders + proportion-medium-herders)) / 100
 
-  set UBT_grand 50
-  set UBT_moyen 25
-  set UBT_petit 5
+  set UBT_grand 100
+  set UBT_moyen 50
+  set UBT_petit 10
 
 
   ; Ici, on calcule sum-UBT à partir du avg-UBT-per-camp
@@ -421,9 +423,9 @@ to setup
 end
 
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;;; Initialisation des patches ;;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Initialisation des patches ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 to setup-landscape
   ask patches [
@@ -480,9 +482,9 @@ to setup-landscape
 end
 
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;;; Initialisation des patches avec mare ;;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Initialisation des patches avec mare ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 to setup-water-patches
   let eligible-patches patches with [init-camp-pref >= 2]
@@ -515,9 +517,9 @@ to setup-water-patches
 end
 
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;;; Initialisation des campements ;;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Initialisation des campements ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 to setup-camps
   ask patches [
@@ -582,23 +584,25 @@ to setup-camps
 end
 
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;;; Initialisation des foyers ;;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Initialisation des foyers ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 to setup-foyers
 
   let total-foyers 0
+  let all-camps camps
+  let total-UBT-created 0
+  let candidate-foyers 0
 
-  let avgUBTperFoyer (pB * UBT_grand + pM * UBT_moyen + pS * UBT_petit)
-    show word "avgUBTperFoyer  " avgUBTperFoyer
-  set total-foyers floor (sum-UBT / avgUBTperFoyer)
 
-  show word "sum-UBT  " sum-UBT
-  show word "total-foyers  " total-foyers
+  ask all-camps [
+    set candidate-foyers candidate-foyers + round (available-space * 0.8)
+  ]
+
   ; Calculer le nombre de bons et mauvais bergers en fonction du pourcentage
-  let num-good-shepherd round (total-foyers * (good-shepherd-percentage / 100))
-  let num-bad-shepherd total-foyers - num-good-shepherd
+  let num-good-shepherd round (candidate-foyers * (good-shepherd-percentage / 100))
+  let num-bad-shepherd candidate-foyers - num-good-shepherd
 
   ; Créer une liste des types de bergers en fonction des proportions
   let shepherd-types []
@@ -608,80 +612,131 @@ to setup-foyers
   ; Mélanger la liste pour attribuer les types aléatoirement
   set shepherd-types shuffle shepherd-types
 
-  ;; Maintenant on doit répartir les types d'éleveurs : on a pB, pM, pS
-  ;; On calcule le nombre par type d'éleveur
-  let nbr_grands floor (total-foyers * pB)
-  let nbr_moyens floor (total-foyers * pM)
-  let nbr_petits (total-foyers - nbr_grands - nbr_moyens)
-
-  ;; Créer une liste pour les types d'éleveurs (grand/moyen/petit)
-  let herder-type-list []
-  repeat nbr_grands [set herder-type-list lput "grand" herder-type-list]
-  repeat nbr_moyens [set herder-type-list lput "moyen" herder-type-list]
-  repeat nbr_petits [set herder-type-list lput "petit" herder-type-list]
-
-  ;; Mélanger la liste pour ne pas avoir tous les grands au début
-  set herder-type-list shuffle herder-type-list
-
   ; Compteur pour suivre l'index dans la liste des types
   let shepherd-type-index 0
-  let herder-type-index 0
-  let foyers-created 0
 
-  ; Boucle de création des foyers
-  ask camps [
-;    let num-foyers round (available-space * 0.8)
-;    let this-camp self
-    if foyers-created >= total-foyers [ stop ] ;; On arrête si on a déjà créé assez de foyers
 
-    let num-foyers-this-camp round (available-space * 0.8)
-    ;; On limite num-foyers-this-camp pour ne pas dépasser total-foyers
-    if num-foyers-this-camp + foyers-created > total-foyers [
-      set num-foyers-this-camp (total-foyers - foyers-created)
+  ;; On va créer les foyers camp par camp, foyer par foyer, jusqu'à atteindre sum-UBT
+  let camp-list sort all-camps
+  let camp-index 0
+  let max-try 10000
+
+  while [total-UBT-created < sum-UBT and max-try > 0] [
+    if camp-index >= length camp-list [
+      set camp-index 0
+    ]
+    let this-camp item camp-index camp-list
+    ; Boucle de création des foyers
+    ask this-camp [
+      if shepherd-type-index >= length shepherd-types [
+        ;; Plus de shepherd dispo ? On arrête
+        stop
+      ]
+      let my-camp self
+      hatch-foyers 1 [
+        set color brown
+        set size 0.1
+        set shape "person"
+        set pasture-strategy "directed"
+
+        set cattle-herd-count 0
+        set sheep-herd-count 0
+        set shepherd-type item shepherd-type-index shepherd-types
+        set shepherd-type-index shepherd-type-index + 1
+
+        set herder-type determine-herder-type
+        set-herd-sizes
+
+
+        ; Définir la taille des troupeaux de bovins en fonction de la catégorie
+        if cattle-herd-size = "grand" [set cattle-herd-count random 20 + 30]
+        if cattle-herd-size = "moyen" [set cattle-herd-count random 15 + 10]
+        if cattle-herd-size = "petit" [set cattle-herd-count random 9 + 1]
+
+
+        ; Définir la taille des troupeaux de moutons en fonction de la catégorie
+        if sheep-herd-size = "grand" [set sheep-herd-count random 40 + 30]
+        if sheep-herd-size = "moyen" [set sheep-herd-count random 20 + 10]
+        if sheep-herd-size = "petit" [set sheep-herd-count random 9 + 1]
+
+        let foyer-UBT ((cattle-herd-count * 1) + (sheep-herd-count * 0.16 ))
+
+        set original-home-camp my-camp  ; Assigne le campement capturé au foyer
+        set current-home-camp original-home-camp
+        set original-home-patch [patch-here] of original-home-camp  ; Stocke la position du campement
+        set current-home-patch original-home-patch
+        set known-space patches in-radius 3
+        set close-known-space known-space with [
+          distance [current-home-patch] of myself <= 6
+        ] ; end set close-known-space
+        set distant-known-space known-space who-are-not close-known-space
+
+        set cattle-low-threshold-cc 1
+        set sheep-low-threshold-cc 1
+        set cattle-high-threshold-cc 3
+        set sheep-high-threshold-cc 3
+
+
+        set far-exploration-count 0       ; Compteur d'exploration au loin
+        set close-exploration-count 0     ; Compteur d'exploration proche
+           ;; Vérifions si on dépasse sum-UBT
+        ifelse total-UBT-created + foyer-UBT > sum-UBT [
+          ;; On dépasse => Ajustement
+          let diff (total-UBT-created + foyer-UBT - sum-UBT)
+          ;; On essaie d'enlever quelques moutons d'abord (plus fin)
+          let sheep_to_remove ceiling (diff / 0.16)
+          if sheep_to_remove > sheep-herd-count [
+            set sheep_to_remove sheep-herd-count
+          ]
+          set sheep-herd-count sheep-herd-count - sheep_to_remove
+
+          let current_foyer_UBT ((cattle-herd-count * 1) + (sheep-herd-count * 0.16))
+          if total-UBT-created + current_foyer_UBT > sum-UBT [
+            let diff2 (total-UBT-created + current_foyer_UBT - sum-UBT)
+            let cattle_to_remove ceiling diff2
+            if cattle_to_remove > cattle-herd-count [
+              set cattle_to_remove cattle-herd-count
+            ]
+            set cattle-herd-count cattle-herd-count - cattle_to_remove
+          ]
+
+          ;; Recalcul final de l'UBT du foyer
+          set foyer-UBT ((cattle-herd-count * 1) + (sheep-herd-count * 0.16))
+          set total-UBT-created total-UBT-created + foyer-UBT
+
+          ;; On a atteint sum-UBT, on stocke les compteurs finaux
+          set cattle-herd-count cattle-herd-count
+          set sheep-herd-count sheep-herd-count
+
+          ;; On a fini, on pourra arrêter la création
+        ] [
+          ;; On ne dépasse pas
+          set total-UBT-created total-UBT-created + foyer-UBT
+          set cattle-herd-count cattle-herd-count
+          set sheep-herd-count sheep-herd-count
+        ]
+
+        if (cattle-herd-count = 0 and sheep-herd-count = 0) [
+          die
+        ]
+      ]; end hatch-foyers
+    ]; end ask camp
+
+    if total-UBT-created >= sum-UBT [
+      ;; sum-UBT atteint, on sort
+      stop
     ]
 
-    let this-camp self
-    hatch-foyers num-foyers-this-camp [
-      set color brown
-      set size 0.1
-      set shape "person"
-      set pasture-strategy "directed"
-      set shepherd-type item shepherd-type-index shepherd-types
-      set shepherd-type-index shepherd-type-index + 1
-      set original-home-camp this-camp  ; Assigne le campement capturé au foyer
-      set current-home-camp original-home-camp
-      set original-home-patch [patch-here] of original-home-camp  ; Stocke la position du campement
-      set current-home-patch original-home-patch
-      set herder-type item herder-type-index herder-type-list
-      set herder-type-index herder-type-index + 1
-      set-herd-sizes
-      set known-space patches in-radius 3
-      set close-known-space known-space with [
-        distance [current-home-patch] of myself <= 6
-      ] ; end set close-known-space
-      set distant-known-space known-space who-are-not close-known-space
+    set camp-index camp-index + 1
+    set max-try max-try - 1
+  ]; end boucle création
 
-      set cattle-low-threshold-cc 1
-      set sheep-low-threshold-cc 1
-      set cattle-high-threshold-cc 3
-      set sheep-high-threshold-cc 3
-
-
-      set far-exploration-count 0       ; Compteur d'exploration au loin
-      set close-exploration-count 0     ; Compteur d'exploration proche
-    ] ; end hatch-foyers
-
-    set foyers-created foyers-created + num-foyers-this-camp
-  ] ; end ask camp
-  show word "populasse" count foyers
-  show word "typo good berger hermano" count foyers with [shepherd-type = "bon"]
-  show word "typo bad berger hermano" count foyers with [shepherd-type = "mauvais"]
 
 end
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;;; Qualification des tailles respectives des bovins et petits ruminants par foyer ;;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Qualification des tailles respectives des bovins et petits ruminants par foyer ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 to set-herd-sizes ; Valeurs à définir
   if herder-type = "grand" [
@@ -724,37 +779,28 @@ to set-herd-sizes ; Valeurs à définir
     set cattle-herd-size "petit"
     set sheep-herd-size "petit"
   ]
+
 end
 
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;;; Initialisation des troupeaux ;;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Initialisation des troupeaux ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 to setup-herds ; Valeurs à définir
   ask foyers [
-    let cattle-herd-count 0
-    let sheep-herd-count 0
-
-    ; Définir la taille des troupeaux de bovins en fonction de la catégorie
-    if cattle-herd-size = "grand" [set cattle-herd-count 50]
-    if cattle-herd-size = "moyen" [set cattle-herd-count 25]
-    if cattle-herd-size = "petit" [set cattle-herd-count 5]
-
-    ; Définir la taille des troupeaux de moutons en fonction de la catégorie
-    if sheep-herd-size = "grand" [set sheep-herd-count 70]
-    if sheep-herd-size = "moyen" [set sheep-herd-count 40]
-    if sheep-herd-size = "petit" [set sheep-herd-count 10]
 
     let my-pasture-strategy pasture-strategy
     let my-shepherd-type shepherd-type  ; Récupérer le herder-type du foyer
-
+    let my-cattle-count cattle-herd-count
+    let my-sheep-count sheep-herd-count
     ; Créer un troupeau de bovins pour le foyer
     let my-cattles []
     hatch-cattles 1 [
 
       ; caractéristiques physiologiques
-      set head cattle-herd-count
+      set head my-cattle-count
+      if head = 0 [ die ]
       set UBT-size 1
       set corporal-condition 5
       set protein-condition 10
@@ -805,14 +851,16 @@ to setup-herds ; Valeurs à définir
     ]
     ; Attribuer le troupeau créé à son propriétaire
     set cattle-herd my-cattles
-
+    if cattle-herd = [] [
+      set cattle-herd nobody]
 
     ; Créer un troupeau de petits ruminants pour le foyer
     let my-sheeps []
     hatch-sheeps 1 [
 
       ; caractéristiques physiologiques
-      set head sheep-herd-count
+      set head my-sheep-count
+      if head = 0 [ die ]
       set UBT-size 0.16
       setxy random-xcor random-ycor
       set corporal-condition 5
@@ -860,13 +908,15 @@ to setup-herds ; Valeurs à définir
     ]
     ; Attribuer le troupeau créé à son propriétaire
     set sheep-herd my-sheeps
+        if sheep-herd = [] [
+      set sheep-herd nobody]
   ]
 end
 
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;;; Initialisation des arbres ;;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Initialisation des arbres ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 to setup-trees ; Valeurs d'initialisation (âge minimum des arbres découverts)
   ask patches [
@@ -1066,9 +1116,9 @@ to setup-trees ; Valeurs d'initialisation (âge minimum des arbres découverts)
 
               hide-turtle
             ]
-            ]
           ]
         ]
+      ]
     ]
     let mature-tree-populations tree-populations-here with [tree-pop-age >= 8]
     if any? mature-tree-populations [
@@ -1145,13 +1195,13 @@ end
 
 
 
-  ;;;;;;;;;;;;;;;;;;;;
-  ;;; Step général ;;;
-  ;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;
+;;; Step général ;;;
+;;;;;;;;;;;;;;;;;;;;
 
 to go
-;  profiler:reset
-;  profiler:start
+  ;  profiler:reset
+  ;  profiler:start
 
 
   ; Mise à jour du modèle général et temporalité
@@ -1179,7 +1229,7 @@ to go
     update-tree-age                               ; Au premier jour de chaque nouvelle année, fait grandir les populations d'arbres d'un an
     renew-tree-population                         ; Au premier jour de chaque nouvelle année, crée une nouvelle population d'arbres d'un an
     ask patches [assign-grass-proportions]        ; Au premier jour de chaque nouvelle année, relance la génération aléatoire des proportions en monocotylédone et dicotylédone
-    ; Retour des troupeaux et mise à jour de l'espace connu
+                                                  ; Retour des troupeaux et mise à jour de l'espace connu
     call-back-herds
     ask foyers [
       set far-exploration-count 0                 ; Compteur d'exploration au loin
@@ -1195,7 +1245,7 @@ to go
   grow-grass
   update-grass-quality              ; Indiquer la qualité de l'herbe
   grow-tree-resources
-;  show-tree-populations-info
+  ;  show-tree-populations-info
 
 
   ; Activités des agents
@@ -1218,7 +1268,11 @@ to go
 
   ; Activités des Foyers
   ask foyers [
-    choose-strategy                     ; Choix stratégiques pastoraux du chef de ménage
+    if cattle-herd != nobody [
+      choose-strategy-for-cattles]
+    if sheep-herd != nobody [
+      choose-strategy-for-sheeps]
+    ; Choix stratégiques pastoraux du chef de ménage
     update-known-space
   ]
 
@@ -1230,13 +1284,13 @@ to go
   update-plot
 
   tick
-;  profiler:stop
-;  print profiler:report
+  ;  profiler:stop
+  ;  print profiler:report
 end
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;;; Retour des troupeaux ;;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Retour des troupeaux ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 to call-back-herds
   ;; Retour des troupeaux de bovins
@@ -1259,9 +1313,9 @@ to call-back-herds
 end
 
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;;; Mise à jour des saisons ;;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Mise à jour des saisons ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 to update-season
   ; Incrémentation des saisons et années
@@ -1288,9 +1342,9 @@ to update-season
 end
 
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;;; Mise à jour des valeurs nutritives de l'herbe. Mise à jour par saison ;;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Mise à jour des valeurs nutritives de l'herbe. Mise à jour par saison ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
 to update-UF-and-MAD
@@ -1325,9 +1379,9 @@ end
 
 
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;;; Mise à jour des valeurs nutritives des arbres. Mise à jour par saison ;;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Mise à jour des valeurs nutritives des arbres. Mise à jour par saison ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 to update-tree-nutritional-values
   ask tree-populations [
@@ -1338,38 +1392,38 @@ to update-tree-nutritional-values
 end
 
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;;; Mise à jour des proportions d'herbe. Mise à jour par an ;;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Mise à jour des proportions d'herbe. Mise à jour par an ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 to assign-grass-proportions ; Réassigner la proportion de monocotylédones (p) en fonction du type de sol
 
-    if soil-type = "Baldiol" [
-      set p random-float (0.0 - 0.2) + 0.3  ; Intervalle [0.3, 0.5]
-    ]
-    if soil-type = "Caangol" [
-      set p random-float (0.0 - 0.3) + 0.1  ; Intervalle [0.1, 0.4]
-    ]
-    if soil-type = "Sangre" [
-      set p random-float (0.0 - 0.3) + 0.3  ; Intervalle [0.3, 0.6]
-    ]
-    if soil-type = "Seeno" [
-      set p random-float (0.0 - 0.2) + 0.8  ; Intervalle [0.6, 0.8]
-    ]
+  if soil-type = "Baldiol" [
+    set p random-float (0.0 - 0.2) + 0.3  ; Intervalle [0.3, 0.5]
+  ]
+  if soil-type = "Caangol" [
+    set p random-float (0.0 - 0.3) + 0.1  ; Intervalle [0.1, 0.4]
+  ]
+  if soil-type = "Sangre" [
+    set p random-float (0.0 - 0.3) + 0.3  ; Intervalle [0.3, 0.6]
+  ]
+  if soil-type = "Seeno" [
+    set p random-float (0.0 - 0.2) + 0.8  ; Intervalle [0.6, 0.8]
+  ]
 
-    ; Assurer que p est entre 0 et 1
-    set p max list 0.2 (min list p 1)
-    ; Réinitialiser les stocks d'herbe en fonction des nouvelles proportions
-    set current-monocot-grass current-grass * p
-    set current-dicot-grass current-grass * (1 - p)
+  ; Assurer que p est entre 0 et 1
+  set p max list 0.2 (min list p 1)
+  ; Réinitialiser les stocks d'herbe en fonction des nouvelles proportions
+  set current-monocot-grass current-grass * p
+  set current-dicot-grass current-grass * (1 - p)
 end
 
 
 
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;;; Mise à jour de la qualité de l'herbe selon les proportions des deux espèces herbacées. Mise à jour quotidienne ;;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Mise à jour de la qualité de l'herbe selon les proportions des deux espèces herbacées. Mise à jour quotidienne ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 to update-grass-quality ; - Version 2
   ask patches [
@@ -1411,9 +1465,9 @@ to update-tree-visualisation
 end
 
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;;; Mise à jour du stock de l'herbe selon les proportions des deux espèces herbacées. Mise à jour quotidienne ;;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Mise à jour du stock de l'herbe selon les proportions des deux espèces herbacées. Mise à jour quotidienne ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
 to grow-grass  ; - Version 2.2.
@@ -1425,18 +1479,18 @@ to grow-grass  ; - Version 2.2.
     let new-mono-grass 0
     let new-dicot-grass 0
     if current-season = "Nduungu" [
-      set r_grass 0.05
+      set r_grass 0.2
       set multiplier 1
     ]
     if current-season = "Dabbuunde" [
-      set r_grass -0.02
-      if current-grass >= (0.9 * K) [ set r_grass -0.1]
+      set r_grass -0.05
+      if current-grass >= (0.9 * K) [ set r_grass -0.4]
     ]
     if current-season = "Ceedu" [
-      set r_grass -0.001
+      set r_grass -0.01
     ]
     if current-season = "Ceetcelde" [
-      set r_grass -0.002  ; Même pour les deux types
+      set r_grass -0.02
     ]
 
     ; Croissance logistique pour les dicotylédones
@@ -1455,9 +1509,9 @@ to grow-grass  ; - Version 2.2.
 
 
     ; Assurer que les valeurs restent positives
-    if current-monocot-grass < 0 [ set current-monocot-grass 1 ]
-    if current-dicot-grass < 0 [ set current-dicot-grass 1]
-    if current-grass < 0 [ set current-grass 1 ]
+    if current-monocot-grass <= 0 [ set current-monocot-grass 1 ]
+    if current-dicot-grass <= 0 [ set current-dicot-grass 1]
+    if current-grass <= 0 [ set current-grass 1 ]
   ]
 end
 
@@ -1545,13 +1599,13 @@ end
 
 
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;;; Mise à jour des types d'années ;;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Mise à jour des types d'années ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 to update-year-type
   ; Vérifier qu'on ne dépasse pas la liste
-    set year-index year-index + 1
+  set year-index year-index + 1
   if year-index = 21 [
     set year-index 1 ]
   ; Obtenir le type d'année
@@ -1560,9 +1614,9 @@ end
 
 
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;;; Mise à jour des durées de saison en fonction du type d'année ;;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Mise à jour des durées de saison en fonction du type d'année ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 to set-season-durations
   if current-year-type = "bonne" [
@@ -1591,78 +1645,78 @@ end
 
 
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;;; Création de nouvelles populations d'arbres d'un an ;;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Création de nouvelles populations d'arbres d'un an ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 to renew-tree-population
   let total-new-trees 0
   ; Cette procédure sera appelée uniquement en Nduungu une fois par saison
-    ask patches [
-      let new-trees-by-type []
+  ask patches [
+    let new-trees-by-type []
 
-      ; Calculer le nombre de nouvelles pousses pour chaque type d'arbre sur le patch
-      ask tree-populations-here [
-        ; Récupérer le taux de germination pour le type d'arbre et la qualité de l'année
-        let germination-rate get-germination-rate tree-type current-year-type
-        ; Calculer les nouvelles pousses
-        let new-trees floor ((current-fruit-stock * 100 ) * germination-rate)
+    ; Calculer le nombre de nouvelles pousses pour chaque type d'arbre sur le patch
+    ask tree-populations-here [
+      ; Récupérer le taux de germination pour le type d'arbre et la qualité de l'année
+      let germination-rate get-germination-rate tree-type current-year-type
+      ; Calculer les nouvelles pousses
+      let new-trees floor ((current-fruit-stock * 100 ) * germination-rate)
       set new-trees min (list new-trees [max-tree-number] of patch-here)
 
-        ; Ajouter les nouvelles pousses au total pour ce type d'arbre
-        let current-type-entry filter [x -> item 0 x = tree-type] new-trees-by-type
-        ifelse length current-type-entry > 0 [
-          ; Si le type existe déjà, additionner les nouvelles pousses à la quantité existante
-          let existing-entry first current-type-entry
-          set new-trees-by-type replace-item (position existing-entry new-trees-by-type) new-trees-by-type
-          (list tree-type (item 1 existing-entry + new-trees))
-        ] [
-          ; Sinon, créer une nouvelle entrée pour ce type d'arbre
-          set new-trees-by-type lput (list tree-type new-trees) new-trees-by-type
-        ]
+      ; Ajouter les nouvelles pousses au total pour ce type d'arbre
+      let current-type-entry filter [x -> item 0 x = tree-type] new-trees-by-type
+      ifelse length current-type-entry > 0 [
+        ; Si le type existe déjà, additionner les nouvelles pousses à la quantité existante
+        let existing-entry first current-type-entry
+        set new-trees-by-type replace-item (position existing-entry new-trees-by-type) new-trees-by-type
+        (list tree-type (item 1 existing-entry + new-trees))
+      ] [
+        ; Sinon, créer une nouvelle entrée pour ce type d'arbre
+        set new-trees-by-type lput (list tree-type new-trees) new-trees-by-type
       ]
+    ]
 
-      ; Créer de nouvelles populations d'arbres pour chaque type d'arbre en fonction des nouvelles pousses calculées
-      foreach new-trees-by-type [ [type-and-count] ->
-        let new-tree-type item 0 type-and-count
-        let number item 1 type-and-count
-        if number > 0 [
-          sprout-tree-populations 1 [
-            set tree-type new-tree-type
-            set tree-pop-age 1
-            set population-size number
-            ; Initialiser les stocks actuels
-            let age-data get-age-data tree-type tree-pop-age
-            set max-fruit-stock item 0 age-data * population-size
-            set max-leaf-stock item 1 age-data * population-size
-            set max-wood-stock item 2 age-data * population-size
-            set current-fruit-stock (max-fruit-stock / 2)
-            set current-leaf-stock (max-leaf-stock / 2)
-            set current-wood-stock max-wood-stock
-            set tree-sensitivity item 3 age-data
-            let nutritional-values get-tree-nutritional-values tree-type [soil-type] of patch-here current-season
-            set tree-UF-per-kg-MS item 0 nutritional-values
-            set tree-MAD-per-kg-MS item 1 nutritional-values
-            hide-turtle
-          ]
+    ; Créer de nouvelles populations d'arbres pour chaque type d'arbre en fonction des nouvelles pousses calculées
+    foreach new-trees-by-type [ [type-and-count] ->
+      let new-tree-type item 0 type-and-count
+      let number item 1 type-and-count
+      if number > 0 [
+        sprout-tree-populations 1 [
+          set tree-type new-tree-type
+          set tree-pop-age 1
+          set population-size number
+          ; Initialiser les stocks actuels
+          let age-data get-age-data tree-type tree-pop-age
+          set max-fruit-stock item 0 age-data * population-size
+          set max-leaf-stock item 1 age-data * population-size
+          set max-wood-stock item 2 age-data * population-size
+          set current-fruit-stock (max-fruit-stock / 2)
+          set current-leaf-stock (max-leaf-stock / 2)
+          set current-wood-stock max-wood-stock
+          set tree-sensitivity item 3 age-data
+          let nutritional-values get-tree-nutritional-values tree-type [soil-type] of patch-here current-season
+          set tree-UF-per-kg-MS item 0 nutritional-values
+          set tree-MAD-per-kg-MS item 1 nutritional-values
+          hide-turtle
         ]
       ]
+    ]
   ]
 end
 
 
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;;; Croissance des stocks des ressources des arbres ;;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Croissance des stocks des ressources des arbres ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 to grow-tree-resources
   ask tree-populations with [population-size > 0] [
-        let age-data get-age-data tree-type tree-pop-age
-        let max-fruit item 0 age-data
-        let max-leaf item 1 age-data
-        let max-wood item 2 age-data
-        set max-wood-stock max-wood * population-size
+    let age-data get-age-data tree-type tree-pop-age
+    let max-fruit item 0 age-data
+    let max-leaf item 1 age-data
+    let max-wood item 2 age-data
+    set max-wood-stock max-wood * population-size
 
     ; Réactualiser le max de bois en fonction de la population restante
 
@@ -1693,9 +1747,9 @@ to grow-tree-resources
 end
 
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;;; Stratégie alimentaire du troupeau ;;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Stratégie alimentaire du troupeau ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 to move ; Mouvement des troupeaux - bovins puis ovins
 
@@ -1727,14 +1781,14 @@ to move ; Mouvement des troupeaux - bovins puis ovins
       ] [ ;; The herd is already in a temporary camp
 
         ;; Check if the best patch is in the original camp known space
-      ifelse member? best-patch original-camp-known-space [
+        ifelse member? best-patch original-camp-known-space [
 
-        ;; Move to the best patch
+          ;; Move to the best patch
           move-to best-patch
           set current-home-patch original-home-patch
-        set is-in-temporary-camp false
-        set xcor xcor + (random-float 0.9 - 0.45)
-        set ycor ycor + (random-float 0.9 - 0.45)
+          set is-in-temporary-camp false
+          set xcor xcor + (random-float 0.9 - 0.45)
+          set ycor ycor + (random-float 0.9 - 0.45)
 
         ] [
           ;; Create a temporary camp
@@ -1779,45 +1833,40 @@ to eat
   set daily-needs-MAD daily-min-MAD-needed-head * head
   set daily-needs-DM max-daily-DM-ingestible-per-head * head
 
-    ; Déterminer la préférence pour les monocotylédones
+  ; Déterminer la préférence pour les monocotylédones
 
-    set preference-mono 0.5  ; Valeur par défaut
+  set preference-mono 0.5  ; Valeur par défaut
 
-    ifelse current-season = "Nduungu" [
-      ; En Nduungu, préférence de 80% pour les monocotylédones
+  ifelse current-season = "Nduungu" [
+    ; En Nduungu, préférence de 80% pour les monocotylédones
+    set preference-mono 0.8
+  ] [
+    ; Pendant les autres saisons, préférence de 80% pour l'espèce avec le ratio MAD/UF le plus élevé
+    let monocot-MAD-UF-ratio (([monocot-MAD-per-kg-MS] of patch-here / [monocot-UF-per-kg-MS] of patch-here) * current-monocot-grass)
+    let dicot-MAD-UF-ratio (([dicot-MAD-per-kg-MS] of patch-here / [dicot-UF-per-kg-MS] of patch-here) * current-dicot-grass)
+
+    ifelse monocot-MAD-UF-ratio >= dicot-MAD-UF-ratio [
       set preference-mono 0.8
     ] [
-      ; Pendant les autres saisons, préférence de 80% pour l'espèce avec le ratio MAD/UF le plus élevé
-      let monocot-MAD-UF-ratio (([monocot-MAD-per-kg-MS] of patch-here / [monocot-UF-per-kg-MS] of patch-here) * current-monocot-grass)
-      let dicot-MAD-UF-ratio (([dicot-MAD-per-kg-MS] of patch-here / [dicot-UF-per-kg-MS] of patch-here) * current-dicot-grass)
-
-      ifelse monocot-MAD-UF-ratio >= dicot-MAD-UF-ratio [
-        set preference-mono 0.8
-      ] [
-        set preference-mono 0.3
-      ]
+      set preference-mono 0.3
     ]
+  ]
 
-    ; Calculer l'UF/kg MS moyen du fourrage disponible
-    let monocot-prop ([current-monocot-grass] of patch-here / [current-grass] of patch-here)
-    let average-UF-per-kg-MS ([monocot-UF-per-kg-MS] of patch-here * monocot-prop) + ([dicot-UF-per-kg-MS] of patch-here * (1 - monocot-prop))
+  ; Calculer l'UF/kg MS moyen du fourrage disponible
+  let monocot-prop ([current-monocot-grass] of patch-here / [current-grass] of patch-here)
+  let average-UF-per-kg-MS ([monocot-UF-per-kg-MS] of patch-here * monocot-prop) + ([dicot-UF-per-kg-MS] of patch-here * (1 - monocot-prop))
 
-    ; Calculer la MAD/kg MS moyenne du fourrage disponible
-    let dicot-prop [current-dicot-grass] of patch-here / [current-grass] of patch-here
-    let average-MAD-per-kg-MS ([monocot-MAD-per-kg-MS] of patch-here * monocot-prop) + ([dicot-MAD-per-kg-MS] of patch-here * (1 - monocot-prop))
+  ; Calculer la MAD/kg MS moyenne du fourrage disponible
+  let dicot-prop [current-dicot-grass] of patch-here / [current-grass] of patch-here
+  let average-MAD-per-kg-MS ([monocot-MAD-per-kg-MS] of patch-here * monocot-prop) + ([dicot-MAD-per-kg-MS] of patch-here * (1 - monocot-prop))
 
-    ; Calculer la quantité de MS à consommer en fonction de la valeur moyenne du fourrage disponible en UF. Plus la valeur est forte, plus il en mangera
-    let desired-MS-intake (daily-needs-DM * 0.7  + ((daily-needs-DM * 0.3)  * average-UF-per-kg-MS))
-    ; Assurer que la consommation ne dépasse pas max-daily-DM-ingestible-per-head
-    set desired-MS-intake min list desired-MS-intake daily-needs-DM
-  show word "desired-MS-intake-per-head   " (desired-MS-intake / head)
-  show word "desired-MS-intake   " desired-MS-intake
-;  show word "preference-mono   " preference-mono
+  ; Calculer la quantité de MS à consommer en fonction de la valeur moyenne du fourrage disponible en UF. Plus la valeur est forte, plus il en mangera
+  let desired-MS-intake (daily-needs-DM * 0.7  + ((daily-needs-DM * 0.3)  * average-UF-per-kg-MS))
+  ; Assurer que la consommation ne dépasse pas max-daily-DM-ingestible-per-head
+  set desired-MS-intake min list desired-MS-intake daily-needs-DM
 
   ; Consommer l'herbe
   consume-grass patch-here desired-MS-intake p preference-mono
-
-    show word "DM-ingested grass " DM-ingested
 
   let max-tree-ratio 0.5  ;; Valeur par défaut pour bovins
   if breed = sheeps [
@@ -1827,29 +1876,18 @@ to eat
   ; Calculer le reste de MS à consommer en fonction de la consommation journalière maximale et la quantité voulue à consommer par le troupeau
   let remaining-DM-to-consume (desired-MS-intake - DM-ingested)
 
-    show word "remaining-DM-to-consume before listing " remaining-DM-to-consume
   set remaining-DM-to-consume min (list remaining-DM-to-consume (daily-needs-DM * max-tree-ratio))
 
-    show word "remaining-DM-to-consume after listing " remaining-DM-to-consume
-    if remaining-DM-to-consume > 0 and DM-ingested > 0 [
-      consume-tree-resources patch-here remaining-DM-to-consume
-    ]
-    ; Mettre à jour la condition corporelle en fonction des UF et MAD ingérées
-;    show word "Heads  " head
-    show word "DM-ingested both " DM-ingested
-;    show word "daily-needs-UF  " daily-needs-UF
-;    show word "UF-ingested  " UF-ingested
-;    show word "daily-needs-MAD  " daily-needs-MAD
-;    show word "MAD-ingested  " MAD-ingested
-
-
+  if remaining-DM-to-consume > 0 and DM-ingested > 0 [
+    consume-tree-resources patch-here remaining-DM-to-consume
+  ]
 
 end
 
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;;; Procédure d'ingestion de l'herbe  ;;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Procédure d'ingestion de l'herbe  ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; Procédure pour consommer l'herbe
 to consume-grass [patch-to-eat amount-to-consume monocot-prop pref-mono]
@@ -1860,15 +1898,9 @@ to consume-grass [patch-to-eat amount-to-consume monocot-prop pref-mono]
 
   ; Calculer les quantités consommées par type sur le patch
   let mono-ingested min (list mono-grass-available (amount-to-consume * pref-mono))
-;  show word "amount desired   " amount-to-consume
-;  show word "mono-grass-available   " mono-grass-available
-; show word "DM-mono-ingested grass " mono-ingested
-; show word "(amount desired * pref-mono) " (amount-to-consume * pref-mono)
 
   let dicot-ingested min (list dicot-grass-available (amount-to-consume * (1 - pref-mono)))
   set DM-ingested mono-ingested + dicot-ingested
-; show word "DM-dicot-ingested grass " dicot-ingested
-; show word "DM-ingested grass " DM-ingested
   ; Calculer les UF ingérées
   let mono-UF-ingested mono-ingested * [monocot-UF-per-kg-MS] of patch-to-eat
   let dicot-UF-ingested dicot-ingested * [dicot-UF-per-kg-MS] of patch-to-eat
@@ -1877,22 +1909,16 @@ to consume-grass [patch-to-eat amount-to-consume monocot-prop pref-mono]
   let mono-MAD-ingested mono-ingested * [monocot-MAD-per-kg-MS] of patch-to-eat
   let dicot-MAD-ingested dicot-ingested * [dicot-MAD-per-kg-MS] of patch-to-eat
   set MAD-ingested mono-MAD-ingested + dicot-MAD-ingested
-;  show word "mono-UF-ingested  " mono-UF-ingested
-;  show word "mono-MAD-ingested  " mono-MAD-ingested
-;  show word "dicot-UF-ingested  " dicot-UF-ingested
-;  show word "dicot-MAD-ingested  " dicot-MAD-ingested
-;  show word "UF-ingested grass " UF-ingested
-;  show word "MAD-ingested grass "MAD-ingested
   ; Calculer les effets de piétinement
   let trampling-effect calculate-trampling-effect current-monocot-grass current-dicot-grass head
 
- ;   ; La quantité d'herbe consommée est limitée par ce qui est disponible
-;  ask patch-to-eat [
- ;   set current-grass current-grass - (grass-ingered + trampling-effect)
- ; ]
- ; report grass-ingered  ; Retourner la quantité d'herbe consommée
+  ;   ; La quantité d'herbe consommée est limitée par ce qui est disponible
+  ;  ask patch-to-eat [
+  ;   set current-grass current-grass - (grass-ingered + trampling-effect)
+  ; ]
+  ; report grass-ingered  ; Retourner la quantité d'herbe consommée
 
-    ; Réduire les stocks d'herbe sur le patch
+  ; Réduire les stocks d'herbe sur le patch
   ask patch-to-eat [
     set current-monocot-grass current-monocot-grass - (mono-ingested + (trampling-effect * monocot-prop))
     set current-dicot-grass current-dicot-grass - (dicot-ingested + (trampling-effect * (1 - monocot-prop)))
@@ -1904,20 +1930,20 @@ to consume-grass [patch-to-eat amount-to-consume monocot-prop pref-mono]
 end
 
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;;; Procédure d'ingestion des feuilles et fruits  ;;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Procédure d'ingestion des feuilles et fruits  ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 to consume-tree-resources [patch-of-grass-eaten remaining-needs] ;; contexte troupeau
-  ;; Obtenir les populations d'arbres matures sur le patch
+                                                                 ;; Obtenir les populations d'arbres matures sur le patch
   let all-trees tree-populations-on patch-of-grass-eaten
   let consumption-treshold 0
   let wood-reduction-per-kg-MS 0; Cf Hiernaux 1994
-  ;; Arbres de plus de 5 ans
+                                ;; Arbres de plus de 5 ans
   set all-trees all-trees with [population-size > 0 and current-leaf-stock > 0 and current-fruit-stock > 0]
   let mature-trees all-trees with [tree-pop-age >= 6]
   let good-trees []
-    ;; Déterminer les arbres ciblés en fonction du type de troupeau
+  ;; Déterminer les arbres ciblés en fonction du type de troupeau
   if shepherd-type = "bon" [
     set consumption-treshold 0.3
     ;; Priorité aux types "nutritive" et "fruity"
@@ -1937,11 +1963,11 @@ to consume-tree-resources [patch-of-grass-eaten remaining-needs] ;; contexte tro
   ]
   if any? good-trees [
     ;; Créer une liste des populations consommables et leurs `max-consumable`
-;  ;; Filtrer les arbres en fonction de la disponibilité des ressources
-;  set good-trees good-trees with [
-;    (current-leaf-stock >= (consumption-treshold * max-leaf-stock)) or (current-fruit-stock >= (consumption-treshold * max-fruit-stock))
-;
-;  ]
+    ;  ;; Filtrer les arbres en fonction de la disponibilité des ressources
+    ;  set good-trees good-trees with [
+    ;    (current-leaf-stock >= (consumption-treshold * max-leaf-stock)) or (current-fruit-stock >= (consumption-treshold * max-fruit-stock))
+    ;
+    ;  ]
     let tree-max-consumable []
     let total-available 0
     ask good-trees [
@@ -1951,12 +1977,8 @@ to consume-tree-resources [patch-of-grass-eaten remaining-needs] ;; contexte tro
         set tree-max-consumable lput (list who max_consumable) tree-max-consumable
       ]
     ]
-    show word "consumable trees" good-trees
-    show word "tree-max-consumable" tree-max-consumable
-    show word "total-available " total-available
     ; Déterminer la quantité à consommer
     let amount-to-consume min list remaining-needs total-available
- show word "amount desired from trees " amount-to-consume
     if amount-to-consume <= 0 [ set amount-to-consume 0 ]
 
     ;; Distribuer la consommation proportionnellement
@@ -1981,10 +2003,10 @@ to consume-tree-resources [patch-of-grass-eaten remaining-needs] ;; contexte tro
 
         ;; Mettre à jour les stocks dans la population d'arbres
         ask one-tree-population [
-        set current-leaf-stock (current-leaf-stock - leaves-consumed)
-        set current-fruit-stock  (current-fruit-stock - fruits-consumed)
-        if current-leaf-stock <= 0 [ set current-leaf-stock 0.1 ]
-        if current-fruit-stock <= 0 [ set current-fruit-stock 0.1 ]
+          set current-leaf-stock (current-leaf-stock - leaves-consumed)
+          set current-fruit-stock  (current-fruit-stock - fruits-consumed)
+          if current-leaf-stock <= 0 [ set current-leaf-stock 0.1 ]
+          if current-fruit-stock <= 0 [ set current-fruit-stock 0.1 ]
         ]
 
         ;; Calculer les UF et MAD ingérées depuis cette population
@@ -1999,8 +2021,8 @@ to consume-tree-resources [patch-of-grass-eaten remaining-needs] ;; contexte tro
 
       ] ;; end if
     ];; end foreach
-    ;; context troupeau
-    ;; Mettre à jour les variables du troupeau
+     ;; context troupeau
+     ;; Mettre à jour les variables du troupeau
     set UF-ingested UF-ingested + total-UF-ingested-from-trees
     set MAD-ingested MAD-ingested + total-MAD-ingested-from-trees
     set DM-ingested DM-ingested + total-DM-ingested-from-trees
@@ -2025,9 +2047,9 @@ to consume-tree-resources [patch-of-grass-eaten remaining-needs] ;; contexte tro
 end
 
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;;; Mise à jour de la condition corporelle  ;;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Mise à jour de la condition corporelle  ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; Procédure pour mettre à jour la condition corporelle des animaux
 to update-corporal-conditions [heads UBT total-UF-ingested total-MAD-ingested daily-need-UF daily-need-MAD max-daily-DM-ingestible-head pref-mono]
@@ -2040,7 +2062,7 @@ to update-corporal-conditions [heads UBT total-UF-ingested total-MAD-ingested da
   let max-UF-ingestible 0.80 * heads * max-daily-DM-ingestible-head
   let max-MAD-ingestible 52 * heads * max-daily-DM-ingestible-head
 
-    ; Calculer le facteur d'énergie
+  ; Calculer le facteur d'énergie
   let energy-factor ((total-UF-ingested - daily-need-UF) / (max-UF-ingestible - daily-need-UF))
   ; Assurer que le facteur est entre 0 et 0.5
   let energy-factor-total max list 0 (min list energy-factor 0.5)
@@ -2050,23 +2072,22 @@ to update-corporal-conditions [heads UBT total-UF-ingested total-MAD-ingested da
 
   ; Assurer que le facteur est entre 0 et 0.5
   let protein-factor-total max list 0 (min list protein-factor 0.5)
-;show word "protein factor" protein-factor-total
   ; Calculer le gain de poids potentiel (en grammes par jour)
   set weight-gain ((protein-factor-total + energy-factor-total) * 1.4 * UBT) - 0.7 * UBT
- ; Mettre à jour le poids vif à partir du gain de poids par tête de bétail
+  ; Mettre à jour le poids vif à partir du gain de poids par tête de bétail
   set live-weight (live-weight + (weight-gain * head))
   if live-weight > max-live-weight [ set live-weight max-live-weight]
 
   ; Calculer la NEC à partir du poids vif en considérant que les vaches sont toutes des N'dama. (AMOUGOU MESSI G., 1998. Méthode d’estimation et variation de la composition corporelle des vaches zébu Gobra et Taurin N’Dama en fonction du niveau d’alimentation. Thèse de Doctorat Vétérinaire EISMV, Dakar, Sénégal, 102 p)
 
   if breed = cattles [
-  set corporal-condition (live-weight - (66.785 * head) ) / (47.1 * head)
+    set corporal-condition (live-weight - (66.785 * head) ) / (47.1 * head)
   ]
 
   ; régression linéaire à partir des valeurs de https://reca-niger.org/IMG/pdf/FT_embouche_ovine_Cirdes.pdf
 
   if breed = sheeps [
-  set corporal-condition (live-weight - (21.21 * head)) / ( 5.75 * head)
+    set corporal-condition (live-weight - (21.21 * head)) / ( 5.75 * head)
   ]
 
   ; Assurer que la NEC reste dans des limites raisonnables (par exemple, entre 1 et 5)
@@ -2123,80 +2144,84 @@ to trample-trees
 
 end
 
-to choose-strategy
-    ;; Récupérer les conditions corporelles des troupeaux de bovins
-    let cattle-cc  [corporal-condition] of cattle-herd
 
-    ;; Récupérer les conditions corporelles des troupeaux de moutons
-    let sheep-cc [corporal-condition] of sheep-herd
 
-    ;; Si **une des deux** conditions des troupeaux est en dessous du seuil, exécuter `do-first-strategy`
-    if cattle-cc <= cattle-high-threshold-cc [
-      do-first-strategy
-;    show word "toutouuu  " cattle-cc
-    ]
-     if sheep-cc <= sheep-high-threshold-cc  [
-      do-first-strategy
-;        show word "toutouuu  " sheep-cc
-    ]
 
-    ;; Si **les deux** conditions des deux troupea sont en dessous des seuils, quitter le modèle
-    if cattle-cc <= cattle-low-threshold-cc [
-      ;; Masquer et déplacer le troupeau de bovins
-      if [have-left] of cattle-herd = FALSE [
-        ask cattle-herd  [
-          do-second-strategy
-        ]
+to choose-strategy-for-cattles
+  ;; Récupérer les conditions corporelles des troupeaux de bovins
+  let cattle-cc  [corporal-condition] of cattle-herd
+
+  ;; Si **une des deux** conditions des troupeaux est en dessous du seuil, exécuter `do-first-strategy`
+  if cattle-cc <= cattle-high-threshold-cc [
+    do-first-strategy
+  ]
+  ;; Si **les deux** conditions des deux troupea sont en dessous des seuils, quitter le modèle
+  if cattle-cc <= cattle-low-threshold-cc [
+    ;; Masquer et déplacer le troupeau de bovins
+    if [have-left] of cattle-herd = FALSE [
+      ask cattle-herd  [
+        do-second-strategy
       ]
     ]
-    if sheep-cc <= sheep-low-threshold-cc [
-      ;; Masquer et déplacer le troupeau de moutons
-      if [have-left] of sheep-herd = FALSE [
-        ask sheep-herd [
-          do-second-strategy
-        ]
+  ]
+end
+
+
+to choose-strategy-for-sheeps
+  ;; Récupérer les conditions corporelles des troupeaux de moutons
+  let sheep-cc [corporal-condition] of sheep-herd
+
+  if sheep-cc <= sheep-high-threshold-cc  [
+    do-first-strategy
+  ]
+  if sheep-cc <= sheep-low-threshold-cc [
+    ;; Masquer et déplacer le troupeau de moutons
+    if [have-left] of sheep-herd = FALSE [
+      ask sheep-herd [
+        do-second-strategy
       ]
     ]
+  ]
 end
 
 to do-first-strategy
 
-    ;; Store the foyer's variables in local variables
-    let home-patch current-home-patch
-    let my-known-space known-space
-    ;; Find patches within 12 units of home-patch and not in known-space
-    let close-undiscovered-patches patches with [
-      distance home-patch <= 6 and not member? self my-known-space
-    ]
+  ;; Store the foyer's variables in local variables
+  let home-patch current-home-patch
+  let my-known-space known-space
+  ;; Find patches within 12 units of home-patch and not in known-space
+  let close-undiscovered-patches patches with [
+    distance home-patch <= 6 and not member? self my-known-space
+  ]
 
-    ifelse any? close-undiscovered-patches [
-      ;; Se déplacer vers un patch aléatoire parmi ces patches
-      move-to one-of close-undiscovered-patches
-      ;; Obtenir les patches sur la ligne entre la nouvelle position et le campement
-      let line-patches patches-between patch-here home-patch
-      ;; Ajouter ces patches au known-space du foyer
-      set known-space (patch-set my-known-space line-patches)
-      ;; Retourner au campement principal
-      move-to original-home-patch
+  ifelse any? close-undiscovered-patches [
+    ;; Se déplacer vers un patch aléatoire parmi ces patches
+    move-to one-of close-undiscovered-patches
+    ;; Obtenir les patches sur la ligne entre la nouvelle position et le campement
+    let line-patches patches-between patch-here home-patch
+    ;; Ajouter ces patches au known-space du foyer
+    set known-space (patch-set my-known-space line-patches)
+    ;; Retourner au campement principal
+    move-to original-home-patch
   ] [
-      ;    if any? friends [
-      ;      call-one-friend
-      ;    ]
-      ifelse far-exploration-count <= 5 [
-        let further-undiscovered-patches patches with [distance home-patch > 6 and not member? self my-known-space]
-        if any? further-undiscovered-patches [
-          move-to one-of further-undiscovered-patches
-          let line-patches patches-between patch-here home-patch
-          ;; Ajouter ces patches au known-space du foyer
-          set known-space (patch-set my-known-space line-patches)
-          ;; Retourner au campement principal
-          move-to original-home-patch
-          set far-exploration-count far-exploration-count + 1
-        ]
-      ] [
-        stop
+    ;    if any? friends [
+    ;      call-one-friend
+    ;    ]
+    ifelse far-exploration-count <= 5 [
+      let further-undiscovered-patches patches with [distance home-patch > 6 and not member? self my-known-space]
+      if any? further-undiscovered-patches [
+        move-to one-of further-undiscovered-patches
+        let line-patches patches-between patch-here home-patch
+        ;; Ajouter ces patches au known-space du foyer
+        set known-space (patch-set my-known-space line-patches)
+        ;; Retourner au campement principal
+        move-to original-home-patch
+        set far-exploration-count far-exploration-count + 1
       ]
+    ] [
+      stop
     ]
+  ]
 
 end
 
@@ -2216,13 +2241,15 @@ end
 
 
 to update-known-space
-let home-patch current-home-patch
-    if breed = cattles or breed = sheeps [
+  let home-patch current-home-patch
+  if breed = cattles or breed = sheeps [
     set known-space (patch-set known-space ([known-space] of foyer-owner))
   ]
   if breed = foyers [
-    set known-space (patch-set known-space ([known-space] of cattle-herd))
-    set known-space (patch-set known-space ([known-space] of sheep-herd))
+    if cattle-herd != nobody [
+      set known-space (patch-set known-space ([known-space] of cattle-herd))]
+    if sheep-herd != nobody [
+      set known-space (patch-set known-space ([known-space] of sheep-herd))]
   ]
   ; Pour tous les agents : recalcul du close et du distant-known-space
   set close-known-space known-space with [distance home-patch <= 6]
@@ -2269,10 +2296,10 @@ to display-knownSpace
     ask known-space [set pcolor [who] of myself]
   ]
   ask cattles [
-  ask known-space [set pcolor [who] of myself]
+    ask known-space [set pcolor [who] of myself]
   ]
   ask sheeps [
-  ask known-space [set pcolor [who] of myself]
+    ask known-space [set pcolor [who] of myself]
   ]
 end
 to color-grass  ;; patch procedure
@@ -2286,39 +2313,21 @@ to display-labels
 end
 
 to update-plot
-;  show "ahahahahah"
-;  set-current-plot "HistHerderType"
-;   ;;pour réaliser un histogram on a besoin d'une liste
-;   set-plot-x-range 0 4
-;;  set-histogram-num-bars 8
   let _typeF (list "petit" "moyen" "grand")
   let _listString  [herder-type] of foyers
   set listValueHerdeType (map [x ->
-  ifelse-value (x = "petit") [1]
-  [ifelse-value (x = "moyen") [2]
-  [ifelse-value (x = "grand") [3]
-  [0]]]] _listString)
-
-;  show _z
-;  set listValueHerdeType []
-;  foreach _typeF [
-;    x -> let _y count foyers with[herder-type = x ]
-;    set listValueHerdeType lput  _y listValueHerdeType
-;  ]
-;  show listValueHerdeType
-;   histogram  listValueHerdeType
-;;   let maxbar modes  _listValueHerdeType
-;;   let maxrange length filter [ ? = item 0 maxbar ]  _listValueHerdeType
-;;  set-plot-y-range 0 max list 10 maxrange
-;  set-plot-y-range 0 100
+    ifelse-value (x = "petit") [1]
+    [ifelse-value (x = "moyen") [2]
+      [ifelse-value (x = "grand") [3]
+        [0]]]] _listString)
 
 end
 
 
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;;;;;;;;;;;;;;; Procédures d'ouverture des fichiers ;;;;;;;;;;;;;;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;; Procédures d'ouverture des fichiers ;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
 
@@ -2431,21 +2440,21 @@ end
 
 
 
-;to-report determine-herder-type
-;  ;; Ensure the sum of the proportions is 100
-;  let proportion-small-herders (100 - (proportion-big-herders + proportion-medium-herders))
-;  let total-proportion proportion-big-herders + proportion-medium-herders + proportion-small-herders
-;  let r random-float 100
-;  ifelse r < proportion-big-herders [
-;    report "grand"
-;  ] [
-;    ifelse r < (proportion-big-herders + proportion-medium-herders) [
-;      report "moyen"
-;    ] [
-;      report "petit"
-;    ]
-;  ]
-;end
+to-report determine-herder-type
+  ;; Ensure the sum of the proportions is 100
+  let proportion-small-herders (100 - (proportion-big-herders + proportion-medium-herders))
+  let total-proportion proportion-big-herders + proportion-medium-herders + proportion-small-herders
+  let r random-float 100
+  ifelse r < proportion-big-herders [
+    report "grand"
+  ] [
+    ifelse r < (proportion-big-herders + proportion-medium-herders) [
+      report "moyen"
+    ] [
+      report "petit"
+    ]
+  ]
+end
 
 
 to-report calculate-herd-size [heads]
@@ -2596,19 +2605,19 @@ to-report growth-fruit-logistic [input-tree-type current-fruit max-fruit season 
         if season = "Dabbuunde" [set r 0.01]
         if season = "Ceetcelde" [set r -0.01]
       ]
-       if landscape = "Caangol" [
+      if landscape = "Caangol" [
         if season = "Nduungu" [set r 0.05]
         if season = "Ceedu" [set r -0.03]
         if season = "Dabbuunde" [set r 0.01]
         if season = "Ceetcelde" [set r 0.005]
       ]
-       if landscape = "Seeno" [
+      if landscape = "Seeno" [
         if season = "Nduungu" [set r 0.1]
         if season = "Ceedu" [set r -0.3]
         if season = "Dabbuunde" [set r 0.02]
         if season = "Ceetcelde" [set r -0.005]
       ]
-       if landscape = "Sangre" [
+      if landscape = "Sangre" [
         if season = "Nduungu" [set r 0.05]
         if season = "Ceedu" [set r -0.03]
         if season = "Dabbuunde" [set r -0.01]
@@ -2622,19 +2631,19 @@ to-report growth-fruit-logistic [input-tree-type current-fruit max-fruit season 
         if season = "Dabbuunde" [set r 0.01]
         if season = "Ceetcelde" [set r 0.005]
       ]
-       if landscape = "Caangol" [
+      if landscape = "Caangol" [
         if season = "Nduungu" [set r 0.05]
         if season = "Ceedu" [set r -0.03]
         if season = "Dabbuunde" [set r 0.01]
         if season = "Ceetcelde" [set r 0.005]
       ]
-       if landscape = "Seeno" [
+      if landscape = "Seeno" [
         if season = "Nduungu" [set r 0.05]
         if season = "Ceedu" [set r -0.03]
         if season = "Dabbuunde" [set r 0.01]
         if season = "Ceetcelde" [set r 0.005]
       ]
-       if landscape = "Sangre" [
+      if landscape = "Sangre" [
         if season = "Nduungu" [set r 0.05]
         if season = "Ceedu" [set r -0.03]
         if season = "Dabbuunde" [set r 0.01]
@@ -2648,19 +2657,19 @@ to-report growth-fruit-logistic [input-tree-type current-fruit max-fruit season 
         if season = "Dabbuunde" [set r 0.01]
         if season = "Ceetcelde" [set r 0.005]
       ]
-       if landscape = "Caangol" [
+      if landscape = "Caangol" [
         if season = "Nduungu" [set r 0.05]
         if season = "Ceedu" [set r -0.05]
         if season = "Dabbuunde" [set r 0.03]
         if season = "Ceetcelde" [set r -0.05]
       ]
-       if landscape = "Seeno" [
+      if landscape = "Seeno" [
         if season = "Nduungu" [set r 0.05]
         if season = "Ceedu" [set r -0.03]
         if season = "Dabbuunde" [set r 0.01]
         if season = "Ceetcelde" [set r 0.005]
       ]
-       if landscape = "Sangre" [
+      if landscape = "Sangre" [
         if season = "Nduungu" [set r 0.05]
         if season = "Ceedu" [set r -0.03]
         if season = "Dabbuunde" [set r 0.01]
@@ -2676,32 +2685,32 @@ to-report growth-fruit-logistic [input-tree-type current-fruit max-fruit season 
   ]
 end
 
- ;Fonction pour calculer la croissance logistique des feuilles
+;Fonction pour calculer la croissance logistique des feuilles
 to-report growth-leaf-logistic [input-tree-type current-leaf max-leaf season landscape]
   let r 0
   ifelse  max-leaf <= 0.0001 [
     report 0  ; Pas de croissance si max-wood est zéro
   ] [
-     if input-tree-type = "nutritive" [
+    if input-tree-type = "nutritive" [
       if landscape = "Baldiol" [
         if season = "Nduungu" [set r 0.05]
         if season = "Ceedu" [set r -0.03]
         if season = "Dabbuunde" [set r 0.01]
         if season = "Ceetcelde" [set r 0.005]
       ]
-       if landscape = "Caangol" [
+      if landscape = "Caangol" [
         if season = "Nduungu" [set r 0.05]
         if season = "Ceedu" [set r -0.03]
         if season = "Dabbuunde" [set r 0.01]
         if season = "Ceetcelde" [set r 0.005]
       ]
-       if landscape = "Seeno" [
+      if landscape = "Seeno" [
         if season = "Nduungu" [set r 0.05]
         if season = "Ceedu" [set r -0.03]
         if season = "Dabbuunde" [set r 0.01]
         if season = "Ceetcelde" [set r 0.005]
       ]
-       if landscape = "Sangre" [
+      if landscape = "Sangre" [
         if season = "Nduungu" [set r 0.05]
         if season = "Ceedu" [set r -0.03]
         if season = "Dabbuunde" [set r 0.01]
@@ -2715,19 +2724,19 @@ to-report growth-leaf-logistic [input-tree-type current-leaf max-leaf season lan
         if season = "Dabbuunde" [set r 0.01]
         if season = "Ceetcelde" [set r 0.005]
       ]
-       if landscape = "Caangol" [
+      if landscape = "Caangol" [
         if season = "Nduungu" [set r 0.05]
         if season = "Ceedu" [set r -0.03]
         if season = "Dabbuunde" [set r 0.01]
         if season = "Ceetcelde" [set r 0.005]
       ]
-       if landscape = "Seeno" [
+      if landscape = "Seeno" [
         if season = "Nduungu" [set r 0.05]
         if season = "Ceedu" [set r -0.03]
         if season = "Dabbuunde" [set r 0.01]
         if season = "Ceetcelde" [set r 0.005]
       ]
-       if landscape = "Sangre" [
+      if landscape = "Sangre" [
         if season = "Nduungu" [set r 0.05]
         if season = "Ceedu" [set r -0.03]
         if season = "Dabbuunde" [set r 0.01]
@@ -2741,19 +2750,19 @@ to-report growth-leaf-logistic [input-tree-type current-leaf max-leaf season lan
         if season = "Dabbuunde" [set r 0.01]
         if season = "Ceetcelde" [set r 0.005]
       ]
-       if landscape = "Caangol" [
+      if landscape = "Caangol" [
         if season = "Nduungu" [set r 0.05]
         if season = "Ceedu" [set r -0.03]
         if season = "Dabbuunde" [set r 0.01]
         if season = "Ceetcelde" [set r 0.005]
       ]
-       if landscape = "Seeno" [
+      if landscape = "Seeno" [
         if season = "Nduungu" [set r 0.05]
         if season = "Ceedu" [set r -0.03]
         if season = "Dabbuunde" [set r 0.01]
         if season = "Ceetcelde" [set r 0.005]
       ]
-       if landscape = "Sangre" [
+      if landscape = "Sangre" [
         if season = "Nduungu" [set r 0.05]
         if season = "Ceedu" [set r -0.03]
         if season = "Dabbuunde" [set r 0.01]
@@ -2809,20 +2818,16 @@ to-report find-best-nearest-patch [known-spaces my-shepherd heads max-daily-DM-i
   let viable-patches known-spaces with [current-grass >= 40]
   let max-daily-ingestible (heads * max-daily-DM-ingestible-heads)
   if seasons = "Nduungu" [ set viable-patches viable-patches with [soil-type != "Caangol" and current-monocot-grass >= (0.5 * max-daily-ingestible)]]
-;  show word "known-space       " known-spaces
-;show word "viable-patches     " viable-patches
   ifelse any? viable-patches [
     ifelse my-shepherd = "bon" [
-    ; Étape 1 : Sélectionner les patches avec la meilleure qualité d'herbe
-;show word "best-quality-patches      " best-quality-patches
-    ; Étape 2 : Parmi les patches avec la meilleure qualité, sélectionner ceux avec la plus grande quantité d'herbe
-    let max-grass-patches viable-patches with [(current-grass >= max-daily-ingestible) = true]
+      ; Étape 1 : Sélectionner les patches avec la meilleure qualité d'herbe
+      ; Étape 2 : Parmi les patches avec la meilleure qualité, sélectionner ceux avec la plus grande quantité d'herbe
+      let max-grass-patches viable-patches with [(current-grass >= max-daily-ingestible) = true]
 
       let best-quality-patches max-grass-patches with-max [q]
 
-;show word "max-grass-patches       " max-grass-patches
-    ; Étape 3 : Choisir le patch le plus proche parmi ceux avec la meilleure qualité et la plus grande quantité d'herbe
-    report min-one-of best-quality-patches [distance myself]
+      ; Étape 3 : Choisir le patch le plus proche parmi ceux avec la meilleure qualité et la plus grande quantité d'herbe
+      report min-one-of best-quality-patches [distance myself]
     ] [
 
       ; Étape 2 : Parmi les patches avec la meilleure qualité, sélectionner ceux avec la plus grande quantité d'herbe
@@ -2833,11 +2838,11 @@ to-report find-best-nearest-patch [known-spaces my-shepherd heads max-daily-DM-i
     ]
   ] [
 
-      ; Étape 2 : Parmi les patches avec la meilleure qualité, sélectionner ceux avec la plus grande quantité d'herbe
-      let max-grass-patches viable-patches with-max [current-grass]
+    ; Étape 2 : Parmi les patches avec la meilleure qualité, sélectionner ceux avec la plus grande quantité d'herbe
+    let max-grass-patches viable-patches with-max [current-grass]
 
-      ; Étape 3 : Choisir le patch le plus proche parmi ceux avec la meilleure qualité et la plus grande quantité d'herbe
-      report min-one-of max-grass-patches [distance myself]
+    ; Étape 3 : Choisir le patch le plus proche parmi ceux avec la meilleure qualité et la plus grande quantité d'herbe
+    report min-one-of max-grass-patches [distance myself]
     ; Si aucun patch viable n'est trouvé
   ]
 end
@@ -2868,7 +2873,7 @@ to-report patches-between [ p1 p2 ]
   let distancey y2 - y1
 
   let n max (list abs distancex abs distancey)
- let xinc distancex / n
+  let xinc distancex / n
   let yinc distancey / n
   let x x1
   let y y1
@@ -2882,18 +2887,18 @@ to-report patches-between [ p1 p2 ]
 end
 
 to-report meanKnownSpace [agents]
- ; Initialiser une variable pour stocker la somme des counts
-let _total-count 0
- ; Initialiser une variable pour stocker le nombre de moutons
-let _number-of-sheep count agents
-; Parcourir chaque mouton et compter les patches
-ask agents [
-  let patches-agentset [distant-known-space] of self  ; Récupérer l'agentset des patches pour ce mouton
-  let count-patches count patches-agentset /  count patches          ; Compter le nombre de patches
-  set _total-count _total-count + count-patches         ; Ajouter à la somme totale
-]
+  ; Initialiser une variable pour stocker la somme des counts
+  let _total-count 0
+  ; Initialiser une variable pour stocker le nombre de moutons
+  let _number-of-sheep count agents
+  ; Parcourir chaque mouton et compter les patches
+  ask agents [
+    let patches-agentset [distant-known-space] of self  ; Récupérer l'agentset des patches pour ce mouton
+    let count-patches count patches-agentset /  count patches          ; Compter le nombre de patches
+    set _total-count _total-count + count-patches         ; Ajouter à la somme totale
+  ]
 
-;; Calculer la moyenne
+  ;; Calculer la moyenne
   ifelse _number-of-sheep = 0 [report 0]
   [report _total-count / _number-of-sheep * 100]
 end
@@ -3051,7 +3056,7 @@ waterStock
 CHOOSER
 580
 430
-672
+675
 475
 visualization-mode
 visualization-mode
@@ -3061,7 +3066,7 @@ visualization-mode
 BUTTON
 580
 390
-670
+675
 423
 visualize
   update-visualization
@@ -3258,7 +3263,7 @@ PLOT
 1470
 610
 1650
-760
+755
 distant-kown-space
 NIL
 NIL
@@ -3277,7 +3282,7 @@ PLOT
 1310
 610
 1470
-760
+755
 HistHerderType
 listValueHerdeType
 NIL
@@ -3439,7 +3444,7 @@ number-of-camps
 number-of-camps
 0
 200
-3.0
+1.0
 1
 1
 NIL
@@ -3474,7 +3479,7 @@ TreeDensitySatisfaction-olds
 TreeDensitySatisfaction-olds
 0
 8000
-6010.0
+5231.0
 1
 1
 NIL
@@ -3528,7 +3533,7 @@ SatisfactionMeanTreesInCaangol
 SatisfactionMeanTreesInCaangol
 50
 150
-93.0
+124.0
 1
 1
 NIL
@@ -3543,7 +3548,7 @@ SatisfactionMeanTreesInSeeno
 SatisfactionMeanTreesInSeeno
 12
 50
-50.0
+30.0
 1
 1
 NIL
@@ -3573,7 +3578,7 @@ SatisfactionMeanTreesInSangre
 SatisfactionMeanTreesInSangre
 0
 100
-100.0
+48.0
 1
 1
 NIL
@@ -3636,14 +3641,14 @@ NIL
 
 SLIDER
 570
-175
+185
 725
-208
+218
 decreasing-factor
 decreasing-factor
 1
 20
-1.0
+8.9
 0.1
 1
 NIL
@@ -3652,13 +3657,13 @@ HORIZONTAL
 SLIDER
 10
 155
-47
+43
 255
 avg-UBT-per-camp
 avg-UBT-per-camp
 10
 800
-270.0
+10.0
 5
 1
 NIL
@@ -3674,6 +3679,21 @@ sum-UBT
 17
 1
 11
+
+SLIDER
+370
+675
+570
+706
+treshold-tree-satisfaction
+treshold-tree-satisfaction
+0.1
+1
+0.8
+0.1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?

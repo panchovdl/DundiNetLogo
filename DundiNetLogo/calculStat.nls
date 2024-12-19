@@ -21,23 +21,41 @@ globals [
   MSTSheep-NEC
   MSTCattle-NEC
   
-  totalTrees8years
-  totalTrees7years
-  totalTrees6years
-  totalTrees5years
-  totalTrees4years
-  totalTrees3years
-  totalTrees2years
-  totalTrees1years
+  meanTrees1yearsByPatch
+  meanTrees2yearsByPatch
+  meanTrees3yearsByPatch
+  meanTrees4yearsByPatch
+  meanTrees5yearsByPatch
+  meanTrees6yearsByPatch
+  meanTrees7yearsByPatch
+  meanTrees8yearsByPatch
+  meanTreesYoungsByPatch
+  meanTreesOldesByPatch
+  totalTrees
   totalTreesOldes
   totalTreesYoung
   traj-trees
   MST-trees
   
+  patches-caangol 
+  patches-seeno 
+  patches-baldiol 
+  patches-sangre 
+  
   meanTreesInCaangol
-  meanTreesInSangre
-  meanTreesInBaldiol
   meanTreesInSeeno
+  meanTreesInBaldiol
+  meanTreesInSangre
+  
+  good-patches-caangol
+  good-patches-seeno 
+  good-patches-baldiol 
+  good-patches-sangre 
+  
+  totalGPCaangol
+  totalGPSeeno
+  totalGPBaldiol
+  totalGPSangre
   
   traj-satisfaction-Seeno
   traj-satisfaction-Baldiol
@@ -51,7 +69,6 @@ globals [
   
   
   totalGrass
-  totalTrees
   meanGrass
   meanFruitsConsumedCattle
   meanLeavesConsumedCattle
@@ -75,8 +92,8 @@ to calculStat
   set cattlesTempCamp count cattles with [is-in-temporary-camp = true]
   set sheepsHaveLeft count sheeps with [have-left = true]
   set cattlesHaveLeft count cattles with [have-left = true]
-  set sheepsWeightGain mean [weight-gain] of sheeps
-  set cattlesWeightGain mean [weight-gain] of cattles
+  set sheepsWeightGain mean [weight-gain] of sheeps with [have-left = false]
+  set cattlesWeightGain mean [weight-gain] of cattles with [have-left = false]
   
 ;  min, max & average of Cattle Weight  
   ifelse count cattles with [have-left = false] > 0 [
@@ -112,15 +129,17 @@ to calculStat
   
   if ticks > 0[
     ask foyers [
-      if SheepNECSatifactionIndex <= [corporal-condition] of sheep-herd [
-        set sheepNEC-satisfaction (sheepNEC-satisfaction + 1)
+      if sheep-herd != nobody [
+        if SheepNECSatifactionIndex <= [corporal-condition] of sheep-herd [
+          set sheepNEC-satisfaction (sheepNEC-satisfaction + 1)
+        ]
       ]
-      
-      if CattleNECSatifactionIndex <= [corporal-condition] of cattle-herd [
-        set cattleNEC-satisfaction (cattleNEC-satisfaction + 1)
+      if cattle-herd != nobody [
+        if CattleNECSatifactionIndex <= [corporal-condition] of cattle-herd [
+          set cattleNEC-satisfaction (cattleNEC-satisfaction + 1)
+        ]
       ]
     ]
-    
     set MSTSheep-NEC (mean[sheepNEC-satisfaction] of foyers) / ticks
     set MSTCattle-NEC (mean[cattleNEC-satisfaction] of foyers) / ticks
   ]
@@ -129,17 +148,17 @@ to calculStat
   set totalGrass sum [current-grass] of patches
   set meanGrass mean [current-grass] of patches
   set totalTrees sum [population-size] of tree-populations
-  set totalTrees8years sum [population-size] of tree-populations with [tree-pop-age >= 8] / count patches
-  set totalTrees7years sum [population-size] of tree-populations with [tree-pop-age = 7] / count patches
   
-  set totalTrees6years sum [population-size] of tree-populations with [tree-pop-age = 6] / count patches
-  set totalTrees5years sum [population-size] of tree-populations with [tree-pop-age = 5] / count patches
-  set totalTrees4years sum [population-size] of tree-populations with [tree-pop-age = 4] / count patches
-  set totalTrees3years sum [population-size] of tree-populations with [tree-pop-age = 3] / count patches
-  set totalTrees2years sum [population-size] of tree-populations with [tree-pop-age = 2] / count patches
-  set totalTrees1years sum [population-size] of tree-populations with [tree-pop-age = 1] / count patches
-  set totalTreesOldes sum [population-size] of tree-populations with [tree-pop-age >= 4] / count patches
-  set totalTreesYoung sum [population-size] of tree-populations with [tree-pop-age < 4] / count patches
+  set meanTrees8yearsByPatch sum [population-size] of tree-populations with [tree-pop-age >= 8] / count patches
+  set meanTrees7yearsByPatch sum [population-size] of tree-populations with [tree-pop-age = 7] / count patches
+  set meanTrees6yearsByPatch sum [population-size] of tree-populations with [tree-pop-age = 6] / count patches
+  set meanTrees5yearsByPatch sum [population-size] of tree-populations with [tree-pop-age = 5] / count patches
+  set meanTrees4yearsByPatch sum [population-size] of tree-populations with [tree-pop-age = 4] / count patches
+  set meanTrees3yearsByPatch sum [population-size] of tree-populations with [tree-pop-age = 3] / count patches
+  set meanTrees2yearsByPatch sum [population-size] of tree-populations with [tree-pop-age = 2] / count patches
+  set meanTrees1yearsByPatch sum [population-size] of tree-populations with [tree-pop-age = 1] / count patches
+  set meanTreesOldesByPatch sum [population-size] of tree-populations with [tree-pop-age > 4] / count patches
+  set meanTreesYoungsByPatch sum [population-size] of tree-populations with [tree-pop-age <= 4] / count patches
 
   set meanFruitsConsumedCattle sum [fruits-eaten] of cattles with [have-left = false]
   set meanLeavesConsumedCattle sum [leaves-eaten] of cattles with [have-left = false]
@@ -147,12 +166,27 @@ to calculStat
   set meanLeavesConsumedSheep sum [leaves-eaten] of sheeps with [have-left = false]
    
   
-  if ticks > 0 [
-    if TreeDensitySatisfaction-olds < totalTreesOldes [
-      set traj-trees traj-trees  + 1
-    ]
-    set MST-trees traj-trees / ticks
-  ]
+;  if ticks > 0 [
+;    if TreeDensitySatisfaction-olds < totalTreesOldes [
+;      set traj-trees traj-trees  + 1
+;    ]
+;    set MST-trees traj-trees / ticks
+;  ]
+  
+
+  set patches-caangol patches with [ soil-type = "Caangol"]
+  set good-patches-caangol patches-caangol with [ (sum [population-size] of tree-populations-here with [tree-pop-age > 4]) > (SatisfactionMeanTreesInCaangol * 100)]
+  set patches-seeno patches with [ soil-type = "Seeno"]
+  set good-patches-seeno patches-seeno with [ (sum [population-size] of tree-populations-here with [tree-pop-age > 4]) > (SatisfactionMeanTreesInSeeno * 100)]
+  set patches-baldiol patches with [ soil-type = "Baldiol"]
+  set good-patches-baldiol patches-baldiol with [ (sum [population-size] of tree-populations-here with [tree-pop-age > 4]) > (SatisfactionMeanTreesInBaldiol * 100)]
+  set patches-sangre patches with [ soil-type = "Sangre"]
+  set good-patches-sangre patches-sangre with [ (sum [population-size] of tree-populations-here with [tree-pop-age > 4]) > (SatisfactionMeanTreesInSangre * 100)]
+  
+  set totalGPSeeno count good-patches-seeno
+  set totalGPCaangol count good-patches-caangol
+  set totalGPBaldiol count good-patches-baldiol
+  set totalGPSangre count good-patches-sangre
   
   
   set meanTreesInCaangol (sum [population-size] of tree-populations-on patches with [soil-type = "Caangol"] / caangol-surface) / 100
@@ -161,16 +195,16 @@ to calculStat
   set meanTreesInSeeno (sum [population-size] of tree-populations-on patches with [soil-type = "Seeno"] / seeno-surface) / 100
  
   if ticks > 0 [
-    if SatisfactionMeanTreesInSeeno < meanTreesInSeeno [
+    if totalGPSeeno >= treshold-tree-satisfaction * seeno-surface [
      set traj-satisfaction-Seeno traj-satisfaction-Seeno + 1  
     ]
-    if SatisfactionMeanTreesInBaldiol < meanTreesInBaldiol [
+    if totalGPBaldiol >= treshold-tree-satisfaction * baldiol-surface [
      set traj-satisfaction-Baldiol traj-satisfaction-Baldiol + 1  
     ]
-    if SatisfactionMeanTreesInSangre < meanTreesInSangre [
+    if totalGPSangre >= treshold-tree-satisfaction * sangre-surface [
      set traj-satisfaction-Sangre traj-satisfaction-Sangre + 1  
     ]
-    if SatisfactionMeanTreesInCaangol < meanTreesInCaangol [
+    if totalGPCaangol >= treshold-tree-satisfaction * caangol-surface [
      set traj-satisfaction-Caangol traj-satisfaction-Caangol + 1  
     ]
     
