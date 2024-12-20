@@ -1249,7 +1249,30 @@ to go
 
 
   ; Activités des agents
-
+  if count cattles > 0 [
+    ask cattles [
+      set DM-ingested 0
+      set UF-ingested 0
+      set MAD-ingested 0
+      set total-UF-ingested-from-trees 0
+      set total-MAD-ingested-from-trees 0
+      set total-DM-ingested-from-trees 0
+      set fruits-eaten 0
+      set leaves-eaten 0
+    ] ; end ask cattles
+  ] ; end count cattles
+  if count sheeps > 0 [
+    ask sheeps [
+      set DM-ingested 0
+      set UF-ingested 0
+      set MAD-ingested 0
+      set total-UF-ingested-from-trees 0
+      set total-MAD-ingested-from-trees 0
+      set total-DM-ingested-from-trees 0
+      set fruits-eaten 0
+      set leaves-eaten 0
+    ]
+  ]
   ; Activités quotidiennes du couple Berger-Troupeau - Bovins
   ask cattles with [have-left = false] [
     move
@@ -1822,12 +1845,6 @@ end
 
 to eat
 
-  set DM-ingested 0
-  set UF-ingested 0
-  set MAD-ingested 0
-  set total-UF-ingested-from-trees 0
-  set total-MAD-ingested-from-trees 0
-  set total-DM-ingested-from-trees 0
   ; Calculer les besoins énergétiques (UF) et protéiques (MAD) qui peut évoluer à chaque step en fonction du nombre de tête dans le troupeau
   set daily-needs-UF daily-min-UF-needed-head * head
   set daily-needs-MAD daily-min-MAD-needed-head * head
@@ -2039,6 +2056,7 @@ to consume-tree-resources [patch-of-grass-eaten remaining-needs] ;; contexte tro
             set current-leaf-stock current-leaf-stock - (max-leaf-stock / population-size)
             set current-wood-stock current-wood-stock - (max-wood-stock / population-size)
             set population-size population-size - 1  ; Supprime un arbre dans la population cible
+            set trees-killed trees-killed + 1
           ]
         ]
       ]
@@ -3143,7 +3161,7 @@ proportion-big-herders
 proportion-big-herders
 0
 100
-0.0
+100.0
 1
 1
 NIL
@@ -3158,7 +3176,7 @@ proportion-medium-herders
 proportion-medium-herders
 0
 100
-64.0
+0.0
 1
 1
 NIL
@@ -3663,7 +3681,7 @@ avg-UBT-per-camp
 avg-UBT-per-camp
 10
 800
-10.0
+120.0
 5
 1
 NIL
