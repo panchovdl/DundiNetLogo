@@ -1551,10 +1551,16 @@ to update-tree-age
       let max-leaf item 1 age-data
       let max-wood item 2 age-data
       let sensitivity item 3 age-data
-      set max-wood-stock max-wood * population-size
-      set max-fruit-stock max-fruit * population-size
-      set max-leaf-stock max-leaf * population-size
-      set tree-sensitivity sensitivity
+      ifelse population-size > 0 [
+        set max-wood-stock max-wood * population-size
+        set max-fruit-stock max-fruit * population-size
+        set max-leaf-stock max-leaf * population-size
+      ] [
+        set max-wood-stock 0
+        set max-fruit-stock 0
+        set max-leaf-stock 0
+      ]
+        set tree-sensitivity sensitivity
 
       if tree-pop-age = 8 and population-size > 0 [
         set advancing-populations lput (list patch-here tree-type population-size current-fruit-stock current-leaf-stock current-wood-stock) advancing-populations
@@ -1750,6 +1756,8 @@ to grow-tree-resources
 
     let new-wood-stock current-wood-stock + wood-growth
     set current-wood-stock min (list new-wood-stock max-wood-stock)
+    if current-wood-stock < 0.4 * max-wood-stock [
+      set current-wood-stock (0.4 * max-wood-stock)]
 
     ; Ratio de bois par population
     set wood-ratio calculate-wood-ratio
@@ -1762,12 +1770,15 @@ to grow-tree-resources
     let fruit-growth growth-fruit-logistic tree-type current-fruit-stock max-fruit-stock current-season ([soil-type] of patch-here)
     let new-fruit-stock current-fruit-stock + fruit-growth
     set current-fruit-stock min (list new-fruit-stock max-fruit-stock)
+    if current-fruit-stock <= 0 [set current-fruit-stock 1 ]
 
     ; Croissance ou décroissance logistique des feuilles
     let leaf-growth growth-leaf-logistic tree-type current-leaf-stock max-leaf-stock current-season ([soil-type] of patch-here)
     let new-leaf-stock current-leaf-stock + leaf-growth
     set current-leaf-stock min (list new-leaf-stock max-leaf-stock)
+    if current-leaf-stock <= 0 [set current-leaf-stock 1 ]
   ]
+  ask tree-populations with [population-size <= 0] [die]
 
 end
 
@@ -1897,7 +1908,7 @@ to eat
 
   set remaining-DM-to-consume min (list remaining-DM-to-consume (daily-needs-DM * max-tree-ratio))
 
-  if remaining-DM-to-consume > 0 and DM-ingested > 0 [
+  if remaining-DM-to-consume > 0 and DM-ingested > 0.2 [
     consume-tree-resources patch-here remaining-DM-to-consume
   ]
 
@@ -2012,7 +2023,7 @@ to consume-tree-resources [patch-of-grass-eaten remaining-needs] ;; contexte tro
 
       let total_resources ([current-leaf-stock] of one-tree-population + [current-fruit-stock] of one-tree-population)
 
-      if total_resources > 0 [
+      if total_resources > 1 [
         let leaves_share ([current-leaf-stock] of one-tree-population / total_resources)
         let fruits_share ([current-fruit-stock] of one-tree-population / total_resources)
         let leaves-consumed amount-consumed * leaves_share
@@ -2024,10 +2035,12 @@ to consume-tree-resources [patch-of-grass-eaten remaining-needs] ;; contexte tro
         ask one-tree-population [
           set current-leaf-stock max list (current-leaf-stock - leaves-consumed) 0
           set current-fruit-stock  max list (current-fruit-stock - fruits-consumed) 0
-          if current-leaf-stock <= 0 [ set current-leaf-stock 0.1 ]
-          if current-fruit-stock <= 0 [ set current-fruit-stock 0.1 ]
-          if current-wood-stock <= 0 [die]
-          set trees-killed trees-killed + [population-size] of self
+          if current-leaf-stock <= 0 [ set current-leaf-stock 1 ]
+          if current-fruit-stock <= 0 [ set current-fruit-stock 1 ]
+          if current-wood-stock <= 0 [
+            die
+            set trees-killed trees-killed + [population-size] of self
+          ]
         ]
 
         ;; Calculer les UF et MAD ingérées depuis cette population
@@ -2061,9 +2074,12 @@ to consume-tree-resources [patch-of-grass-eaten remaining-needs] ;; contexte tro
             set current-wood-stock current-wood-stock - (max-wood-stock / population-size)
             set population-size population-size - 1  ; Supprime un arbre dans la population cible
             set trees-killed trees-killed + 1
-            if current-leaf-stock <= 0 [ set current-leaf-stock 0.1 ]
-            if current-fruit-stock <= 0 [ set current-fruit-stock 0.1 ]
-            if current-wood-stock <= 0 [die]
+            if current-leaf-stock <= 0 [ set current-leaf-stock 1 ]
+            if current-fruit-stock <= 0 [ set current-fruit-stock 1 ]
+            if current-wood-stock <= 0 [
+              die
+              set trees-killed trees-killed + [population-size] of self
+            ]
           ]
         ]
       ]
@@ -2145,7 +2161,10 @@ to trample-trees
         set population-size max list 0 (population-size - 1)
         if population-size > 0 [
           set trees-killed trees-killed + 1
-        ] ; end trees-killed
+        ]; end trees-killed
+       if population-size = 0 [
+         die
+        ] ; end killing tree-population with population size <= 0
       ] ; end additional supp
     ] ; end ask one-of
   ] [
@@ -2161,6 +2180,9 @@ to trample-trees
           if population-size > 0 [
             set trees-killed trees-killed + trees-trampled
           ] ; end trees-killed
+          if population-size = 0 [
+            die
+          ] ; end killing tree-population with population size <= 0
         ] ; end first supp
           ;; Test probabiliste pour éventuellement en retirer un  supplémentaire
         if random-float 1 < fractional [
@@ -2169,8 +2191,11 @@ to trample-trees
           set current-wood-stock current-wood-stock - (max-wood-stock / population-size)
           set population-size max list 0 (population-size - 1)
           if population-size > 0 [
-          set trees-killed trees-killed + 1
-        ] ; end trees-killed
+            set trees-killed trees-killed + 1
+          ] ; end trees-killed
+          if population-size = 0 [
+            die
+          ] ; end killing tree-population with population size <= 0
         ] ; end additional supp
       ] ; end ask one-of
     ] [
@@ -2571,11 +2596,8 @@ end
 
 to-report calculate-wood-ratio
 
-  if max-wood-stock = 0 [
+  ifelse max-wood-stock <= 0 [
     report 1  ; Éviter la division par zéro
-  ]
-  ifelse max-wood-stock = 0 [
-    report 0
   ] [
     report current-wood-stock / max-wood-stock
   ]
@@ -2821,20 +2843,20 @@ to-report growth-wood-logistic [input-tree-type current-wood max-wood season]
     report 0  ; Pas de croissance si max-wood est zéro
   ] [
     if input-tree-type = "nutritive" [
-      if season = "Nduungu" [set r 0.01]
-      if season = "Ceedu" [set r 0.03]
+      if season = "Nduungu" [set r 0.001]
+      if season = "Ceedu" [set r 0.003]
       if season = "Dabbuunde" [set r 0.00001]
       if season = "Ceetcelde" [set r 0.00001]
     ]
     if input-tree-type = "lessNutritive" [
-      if season = "Nduungu" [set r 0.04]
-      if season = "Ceedu" [set r 0.02]
+      if season = "Nduungu" [set r 0.004]
+      if season = "Ceedu" [set r 0.002]
       if season = "Dabbuunde" [set r 0.00001]
       if season = "Ceetcelde" [set r 0.00001]
     ]
     if input-tree-type = "fruity" [
-      if season = "Nduungu" [set r 0.06]
-      if season = "Ceedu" [set r 0.04]
+      if season = "Nduungu" [set r 0.006]
+      if season = "Ceedu" [set r 0.004]
       if season = "Dabbuunde" [set r 000002]
       if season = "Ceetcelde" [set r 0.00001]
     ]
@@ -3004,7 +3026,7 @@ MONITOR
 3
 286
 92
-332
+331
 Total Foyers
 totalFoyers
 17
@@ -3015,7 +3037,7 @@ MONITOR
 3
 386
 92
-432
+431
 Total cattles
 totalCattles
 17
@@ -3026,7 +3048,7 @@ MONITOR
 3
 336
 92
-382
+381
 Total Sheeps
 totalSheeps
 17
@@ -3137,7 +3159,7 @@ MONITOR
 705
 10
 865
-56
+55
 Season
 current-season
 17
@@ -3159,7 +3181,7 @@ SLIDER
 573
 135
 706
-170
+168
 good-shepherd-percentage
 good-shepherd-percentage
 0
@@ -3174,7 +3196,7 @@ SLIDER
 570
 60
 706
-95
+93
 proportion-big-herders
 proportion-big-herders
 0
@@ -3189,7 +3211,7 @@ SLIDER
 572
 98
 707
-133
+131
 proportion-medium-herders
 proportion-medium-herders
 0
@@ -3474,7 +3496,7 @@ HORIZONTAL
 SLIDER
 55
 155
-90
+88
 281
 number-of-camps
 number-of-camps
@@ -3693,7 +3715,7 @@ HORIZONTAL
 SLIDER
 3
 156
-38
+36
 281
 avg-UBT-per-camp
 avg-UBT-per-camp
@@ -3709,7 +3731,7 @@ MONITOR
 5
 435
 93
-481
+480
 NIL
 sum-UBT
 17
@@ -3750,7 +3772,7 @@ PENS
 "default" 1.0 0 -16777216 true "" "plot trees-killed"
 
 TEXTBOX
-972
+996
 22
 1011
 1134
