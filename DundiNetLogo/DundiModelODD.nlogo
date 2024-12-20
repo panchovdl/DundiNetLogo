@@ -317,7 +317,7 @@ to show-tree-populations-info ; Procédure pour afficher les populations d'arbre
     show (word "Patch (" pxcor ", " pycor "): " pop-count " populations.")
 
     ; Itérer sur chaque population d'arbres et afficher les détails
-    ask tree-populations-here [
+    ask tree-populations-here with [current-leaf-stock < 0 or current-fruit-stock < 0] [
       show (word "  Type d'arbre: " tree-type
         ", Âge: " tree-pop-age
         ", Taille de la population: " population-size
@@ -1245,7 +1245,8 @@ to go
   grow-grass
   update-grass-quality              ; Indiquer la qualité de l'herbe
   grow-tree-resources
-  ;  show-tree-populations-info
+  if mean [current-leaf-stock] of tree-populations < 0 [
+    show-tree-populations-info]
 
 
   ; Activités des agents
@@ -1555,7 +1556,7 @@ to update-tree-age
       set max-leaf-stock max-leaf * population-size
       set tree-sensitivity sensitivity
 
-      if tree-pop-age = 8 [
+      if tree-pop-age = 8 and population-size > 0 [
         set advancing-populations lput (list patch-here tree-type population-size current-fruit-stock current-leaf-stock current-wood-stock) advancing-populations
         die
       ]
@@ -1563,6 +1564,7 @@ to update-tree-age
   ]
 
   ; Traiter les populations avancées
+
   foreach advancing-populations [ any-adv-population ->
     let adv-patch item 0 any-adv-population
     let adv-tree-type item 1 any-adv-population
@@ -1745,6 +1747,7 @@ to grow-tree-resources
 
     ; Croissance ou décroissance logistique du bois
     let wood-growth growth-wood-logistic tree-type current-wood-stock max-wood-stock current-season
+
     let new-wood-stock current-wood-stock + wood-growth
     set current-wood-stock min (list new-wood-stock max-wood-stock)
 
@@ -1987,8 +1990,8 @@ to consume-tree-resources [patch-of-grass-eaten remaining-needs] ;; contexte tro
     let tree-max-consumable []
     let total-available 0
     ask good-trees [
-      let max_consumable (current-leaf-stock + current-fruit-stock)
-      if current-leaf-stock >= 1 and current-fruit-stock >= 1 [
+      if current-leaf-stock >= 0.1 and current-fruit-stock >= 0.1 [
+        let max_consumable (current-leaf-stock + current-fruit-stock)
         set total-available total-available + max_consumable
         set tree-max-consumable lput (list who max_consumable) tree-max-consumable
       ]
@@ -2019,10 +2022,12 @@ to consume-tree-resources [patch-of-grass-eaten remaining-needs] ;; contexte tro
 
         ;; Mettre à jour les stocks dans la population d'arbres
         ask one-tree-population [
-          set current-leaf-stock (current-leaf-stock - leaves-consumed)
-          set current-fruit-stock  (current-fruit-stock - fruits-consumed)
+          set current-leaf-stock max list (current-leaf-stock - leaves-consumed) 0
+          set current-fruit-stock  max list (current-fruit-stock - fruits-consumed) 0
           if current-leaf-stock <= 0 [ set current-leaf-stock 0.1 ]
           if current-fruit-stock <= 0 [ set current-fruit-stock 0.1 ]
+          if current-wood-stock <= 0 [die]
+          set trees-killed trees-killed + [population-size] of self
         ]
 
         ;; Calculer les UF et MAD ingérées depuis cette population
@@ -2056,6 +2061,9 @@ to consume-tree-resources [patch-of-grass-eaten remaining-needs] ;; contexte tro
             set current-wood-stock current-wood-stock - (max-wood-stock / population-size)
             set population-size population-size - 1  ; Supprime un arbre dans la population cible
             set trees-killed trees-killed + 1
+            if current-leaf-stock <= 0 [ set current-leaf-stock 0.1 ]
+            if current-fruit-stock <= 0 [ set current-fruit-stock 0.1 ]
+            if current-wood-stock <= 0 [die]
           ]
         ]
       ]
@@ -2128,10 +2136,16 @@ to trample-trees
     ask one-of young-good-trees [
       if trees-trampled > 0 [
         set population-size max list 0 (population-size - trees-trampled)
+        if population-size > 0 [
+          set trees-killed trees-killed + trees-trampled
+        ] ; end trees-killed
       ] ; end first supp
         ;; Test probabiliste pour éventuellement en retirer un  supplémentaire
       if random-float 1 < fractional [
         set population-size max list 0 (population-size - 1)
+        if population-size > 0 [
+          set trees-killed trees-killed + 1
+        ] ; end trees-killed
       ] ; end additional supp
     ] ; end ask one-of
   ] [
@@ -2144,7 +2158,9 @@ to trample-trees
           set current-leaf-stock current-leaf-stock - (trees-trampled * (max-leaf-stock / population-size))
           set current-wood-stock current-wood-stock - (trees-trampled * (max-wood-stock / population-size))
           set population-size max list 0 (population-size - trees-trampled)
-
+          if population-size > 0 [
+            set trees-killed trees-killed + trees-trampled
+          ] ; end trees-killed
         ] ; end first supp
           ;; Test probabiliste pour éventuellement en retirer un  supplémentaire
         if random-float 1 < fractional [
@@ -2152,6 +2168,9 @@ to trample-trees
           set current-leaf-stock current-leaf-stock - (max-leaf-stock / population-size)
           set current-wood-stock current-wood-stock - (max-wood-stock / population-size)
           set population-size max list 0 (population-size - 1)
+          if population-size > 0 [
+          set trees-killed trees-killed + 1
+        ] ; end trees-killed
         ] ; end additional supp
       ] ; end ask one-of
     ] [
@@ -2694,10 +2713,10 @@ to-report growth-fruit-logistic [input-tree-type current-fruit max-fruit season 
       ]
     ]
 
-    let growth r * (precision current-fruit 3) * (precision (1 - (current-fruit / max-fruit)) 3)
-    if abs(growth) > 1e10 [
-      report 0
-    ]
+    let growth r * (precision current-fruit 3) * (precision ((max-fruit - current-fruit) / max-fruit) 3)
+  if abs(growth) > 1e10 [
+    report 0
+  ]
     report growth
   ]
 end
@@ -2754,10 +2773,10 @@ to-report growth-leaf-logistic [input-tree-type current-leaf max-leaf season lan
         if season = "Ceetcelde" [set r 0.005]
       ]
       if landscape = "Sangre" [
-        if season = "Nduungu" [set r 0.05]
+        if season = "Nduungu" [set r 0.005]
         if season = "Ceedu" [set r -0.03]
-        if season = "Dabbuunde" [set r 0.01]
-        if season = "Ceetcelde" [set r 0.005]
+        if season = "Dabbuunde" [set r -0.01]
+        if season = "Ceetcelde" [set r 0.05]
       ]
     ]
     if input-tree-type = "fruity" [
@@ -2786,7 +2805,7 @@ to-report growth-leaf-logistic [input-tree-type current-leaf max-leaf season lan
         if season = "Ceetcelde" [set r 0.005]
       ]
     ]
-    let growth precision (r * (precision current-leaf 5) * (precision (1 - (current-leaf / max-leaf)) 5)) 5
+    let growth r * (precision current-leaf 3) * (precision ((max-leaf - current-leaf) / max-leaf) 3)
     if abs(growth) > 1e10 [
       report 0
     ]
@@ -2820,7 +2839,7 @@ to-report growth-wood-logistic [input-tree-type current-wood max-wood season]
       if season = "Ceetcelde" [set r 0.00001]
     ]
 
-    let growth precision (r * (precision current-wood 5) * (precision (1 - (current-wood / max-wood)) 5)) 5
+    let growth r * (precision current-wood 3) * (precision ((max-wood - current-wood) / max-wood) 3)
     if abs(growth) > 1e10 [
       report 0
     ]
@@ -2948,10 +2967,10 @@ ticks
 30.0
 
 BUTTON
-5
-10
-100
-43
+2
+15
+97
+48
 NIL
 setup
 NIL
@@ -2965,10 +2984,10 @@ NIL
 1
 
 BUTTON
-25
-115
-80
-148
+20
+121
+75
+154
 GO 10
 while [ticks < 3650] [go]\n
 NIL
@@ -2982,10 +3001,10 @@ NIL
 0
 
 MONITOR
-5
-260
-95
-305
+3
+286
+92
+332
 Total Foyers
 totalFoyers
 17
@@ -2993,10 +3012,10 @@ totalFoyers
 11
 
 MONITOR
-5
-360
-95
-405
+3
+386
+92
+432
 Total cattles
 totalCattles
 17
@@ -3004,10 +3023,10 @@ totalCattles
 11
 
 MONITOR
-5
-310
-95
-355
+3
+336
+92
+382
 Total Sheeps
 totalSheeps
 17
@@ -3015,10 +3034,10 @@ totalSheeps
 11
 
 SLIDER
-1675
-665
-1840
-698
+2375
+85
+2540
+118
 max-ponds-4-months
 max-ponds-4-months
 0
@@ -3030,10 +3049,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-1676
-703
-1836
-736
+2376
+123
+2536
+156
 max-ponds-5-months
 max-ponds-5-months
 0
@@ -3045,10 +3064,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-1677
-742
-1837
-775
+2376
+162
+2536
+195
 max-ponds-6-months
 max-ponds-6-months
 0
@@ -3060,10 +3079,10 @@ NIL
 HORIZONTAL
 
 MONITOR
-1680
-780
-1815
-825
+2379
+199
+2514
+244
 NIL
 waterStock
 17
@@ -3071,20 +3090,20 @@ waterStock
 11
 
 CHOOSER
-580
-430
-675
-475
+720
+380
+815
+425
 visualization-mode
 visualization-mode
 "soil-type" "tree-cover" "grass-cover" "grass-quality" "known-space"
-0
+1
 
 BUTTON
-580
-390
-675
-423
+720
+340
+815
+373
 visualize
   update-visualization
 NIL
@@ -3098,10 +3117,10 @@ NIL
 1
 
 BUTTON
-25
-45
-80
-78
+20
+50
+75
+83
 NIL
 go
 NIL
@@ -3117,8 +3136,8 @@ NIL
 MONITOR
 705
 10
-815
-55
+865
+56
 Season
 current-season
 17
@@ -3137,10 +3156,10 @@ current-year-type
 11
 
 SLIDER
-570
-130
-725
-163
+573
+135
+706
+170
 good-shepherd-percentage
 good-shepherd-percentage
 0
@@ -3154,25 +3173,10 @@ HORIZONTAL
 SLIDER
 570
 60
-725
-93
-proportion-big-herders
-proportion-big-herders
-0
-100
-100.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-570
+706
 95
-725
-128
-proportion-medium-herders
-proportion-medium-herders
+proportion-big-herders
+proportion-big-herders
 0
 100
 0.0
@@ -3181,11 +3185,26 @@ proportion-medium-herders
 NIL
 HORIZONTAL
 
+SLIDER
+572
+98
+707
+133
+proportion-medium-herders
+proportion-medium-herders
+0
+100
+7.0
+1
+1
+NIL
+HORIZONTAL
+
 PLOT
-1310
-15
-1620
-165
+1951
+496
+2261
+646
 Weight-gain
 NIL
 NIL
@@ -3202,10 +3221,10 @@ PENS
 "0" 1.0 0 -5298144 true "" "plot 0"
 
 PLOT
-1000
-15
-1310
-165
+1951
+198
+2261
+348
 Parti en demi transhumance
 NIL
 NIL
@@ -3221,10 +3240,10 @@ PENS
 "cattles" 1.0 0 -16449023 true "" "plot cattlesTempCamp"
 
 PLOT
-1000
-165
-1310
-315
+1951
+348
+2261
+498
 partis hors de la zone
 NIL
 NIL
@@ -3240,10 +3259,10 @@ PENS
 "pen-1" 1.0 0 -16777216 true "" "plot cattlesHaveLeft"
 
 PLOT
-1310
-165
-1645
-315
+1615
+198
+1950
+348
 CATTLE weight per head
 NIL
 NIL
@@ -3260,10 +3279,10 @@ PENS
 "minWeight" 1.0 0 -13791810 true "" "plot minCattlesLiveWeight"
 
 BUTTON
-8
-410
-93
-443
+6
+488
+91
+521
 removeGrass
 ask patches [set current-grass  0.1\nset current-monocot-grass 0.1\nset current-dicot-grass 0.1]
 NIL
@@ -3277,10 +3296,10 @@ NIL
 1
 
 PLOT
-1470
-610
-1650
-755
+1660
+863
+1840
+1008
 distant-kown-space
 NIL
 NIL
@@ -3296,10 +3315,10 @@ PENS
 "cattle" 1.0 0 -2674135 true "" "plot meanKnownSpace cattles"
 
 PLOT
-1310
-610
-1470
-755
+706
+61
+866
+206
 HistHerderType
 listValueHerdeType
 NIL
@@ -3314,10 +3333,10 @@ PENS
 "pen-0" 1.0 1 -16777216 true "" "histogram listValueHerdeType"
 
 PLOT
-1310
-315
-1645
-465
+1615
+348
+1950
+498
 SHEEP weight per head
 NIL
 NIL
@@ -3345,10 +3364,10 @@ year-index
 11
 
 PLOT
-1000
-465
-1310
-610
+1296
+862
+1575
+1008
 mean grass per Ha
 NIL
 NIL
@@ -3363,10 +3382,10 @@ PENS
 "default" 1.0 0 -13840069 true "" "plot meanGrass / 100"
 
 PLOT
-780
-610
-1000
-755
+1011
+342
+1283
+488
 trees-evolve
 NIL
 NIL
@@ -3383,10 +3402,10 @@ PENS
 "satis" 1.0 0 -2674135 true "" "plot TreeDensitySatisfaction-olds"
 
 PLOT
-1310
-465
-1650
-610
+1282
+196
+1585
+342
 Tree  Consumption
 NIL
 NIL
@@ -3404,10 +3423,10 @@ PENS
 "leaves sheep" 1.0 0 -5509967 true "" "plot meanLeavesConsumedSheep"
 
 SLIDER
-100
-490
-300
-523
+102
+488
+302
+521
 SheepNECSatifactionIndex
 SheepNECSatifactionIndex
 0
@@ -3419,10 +3438,10 @@ NIL
 HORIZONTAL
 
 PLOT
-780
-315
-1000
-465
+1615
+648
+1874
+798
 MST NEC
 NIL
 NIL
@@ -3438,10 +3457,10 @@ PENS
 "cattle" 1.0 0 -16777216 true "" "plot  MSTCattle-NEC"
 
 SLIDER
-100
-525
-300
-558
+102
+526
+302
+559
 CattleNECSatifactionIndex
 CattleNECSatifactionIndex
 0
@@ -3455,23 +3474,23 @@ HORIZONTAL
 SLIDER
 55
 155
-88
-255
+90
+281
 number-of-camps
 number-of-camps
 0
 200
-1.0
+137.0
 1
 1
 NIL
 VERTICAL
 
 PLOT
-1000
-315
-1310
-465
+1615
+498
+1925
+648
 NEC mean
 NIL
 NIL
@@ -3503,10 +3522,10 @@ NIL
 HORIZONTAL
 
 PLOT
-780
-165
-1000
-315
+1021
+488
+1234
+636
 MST of olders trees
 NIL
 NIL
@@ -3521,10 +3540,10 @@ PENS
 "default" 1.0 0 -16777216 true "" "plot MST-trees"
 
 PLOT
-1000
-610
-1310
-755
+1011
+196
+1283
+342
 Mean trees by soil-type
 NIL
 NIL
@@ -3542,70 +3561,70 @@ PENS
 "Sangre" 1.0 0 -955883 true "" "plot meanTreesInSangre"
 
 SLIDER
-370
+365
+592
 565
-570
-598
+625
 SatisfactionMeanTreesInCaangol
 SatisfactionMeanTreesInCaangol
 50
 150
-106.0
+78.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-370
-530
-570
-563
+365
+556
+565
+589
 SatisfactionMeanTreesInSeeno
 SatisfactionMeanTreesInSeeno
 12
 50
-26.0
+21.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-370
-600
-570
-633
+365
+626
+565
+659
 SatisfactionMeanTreesInBaldiol
 SatisfactionMeanTreesInBaldiol
 0
 100
-40.0
+59.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-370
-635
-570
-668
+365
+662
+565
+695
 SatisfactionMeanTreesInSangre
 SatisfactionMeanTreesInSangre
 0
 100
-42.0
+53.0
 1
 1
 NIL
 HORIZONTAL
 
 PLOT
+1021
+635
+1234
 780
-465
-1000
-610
 MST-tree by soil
 NIL
 NIL
@@ -3623,10 +3642,10 @@ PENS
 "pen-3" 1.0 0 -16777216 true "" "plot MST-Caangol"
 
 BUTTON
-25
-80
-80
-113
+20
+85
+75
+118
 NIL
 go
 T
@@ -3640,10 +3659,10 @@ NIL
 1
 
 BUTTON
-8
-445
-93
-478
+6
+526
+91
+559
 hide trees
 ask tree-populations-here [hide-turtle]
 NIL
@@ -3657,40 +3676,40 @@ NIL
 1
 
 SLIDER
-570
-185
-725
-218
+1063
+925
+1218
+958
 decreasing-factor
 decreasing-factor
 1
 20
-8.9
+1.0
 0.1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-10
-155
-43
-255
+3
+156
+38
+281
 avg-UBT-per-camp
 avg-UBT-per-camp
 10
 800
-120.0
+125.0
 5
 1
 NIL
 VERTICAL
 
 MONITOR
-25
-525
-87
-570
+5
+435
+93
+481
 NIL
 sum-UBT
 17
@@ -3698,19 +3717,226 @@ sum-UBT
 11
 
 SLIDER
-370
-675
-570
-708
+366
+719
+566
+752
 treshold-tree-satisfaction
 treshold-tree-satisfaction
 0.1
 1
-0.1
+0.6
 0.1
 1
 NIL
 HORIZONTAL
+
+PLOT
+1282
+342
+1507
+488
+trees-killed
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot trees-killed"
+
+TEXTBOX
+972
+22
+1011
+1134
+||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+10
+0.0
+1
+
+TEXTBOX
+1013
+15
+2273
+95
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- Outputs ------------------------------------------------------------------------ --------------------------------------------------------------------------------------------------------------------------------------------------
+6
+0.0
+1
+
+TEXTBOX
+1203
+122
+1563
+281
+Trees Satisfaction
+5
+0.0
+1
+
+TEXTBOX
+1590
+100
+1613
+820
+|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+5
+0.0
+1
+
+TEXTBOX
+2272
+19
+2312
+1134
+||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+10
+0.0
+1
+
+TEXTBOX
+1856
+126
+2176
+192
+Herds Satisfaction
+5
+0.0
+1
+
+TEXTBOX
+1016
+815
+2292
+867
+--------------------------------------------------------------------------------------------------------------------------------------------------
+5
+0.0
+1
+
+TEXTBOX
+1013
+1058
+2269
+1154
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+5
+0.0
+1
+
+TEXTBOX
+570
+560
+666
+695
+Per Ha\n------------------------
+10
+0.0
+1
+
+TEXTBOX
+575
+726
+953
+764
+Ratio surface of each landscape filled condition 
+1
+0.0
+1
+
+TEXTBOX
+1452
+1028
+1884
+1080
+Global Behaviors Informations\n
+5
+0.0
+1
+
+TEXTBOX
+1126
+969
+1161
+1114
+i^\n |\n |\n 
+1
+0.0
+1
+
+TEXTBOX
+1063
+1039
+1278
+1065
+For sensitivity analysis
+1
+0.0
+1
+
+TEXTBOX
+680
+295
+698
+476
+||||||||||||||||||||||||||||||||||||||||||||||||||||
+11
+0.0
+1
+
+TEXTBOX
+702
+290
+828
+342
+---------------------------------------------VISU------------------------------------------
+11
+0.0
+1
+
+TEXTBOX
+700
+438
+826
+561
+---------------------------------------------------------------------------------------------
+11
+0.0
+1
+
+TEXTBOX
+833
+295
+851
+477
+||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+11
+0.0
+1
+
+PLOT
+1266
+491
+1581
+666
+Mean tree resources
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+true
+"" ""
+PENS
+"mean leaves" 1.0 0 -13840069 true "" "plot mean [current-leaf-stock] of tree-populations"
+"mean fruits" 1.0 0 -4699768 true "" "plot mean [current-fruit-stock] of tree-populations"
 
 @#$#@#$#@
 ## WHAT IS IT?

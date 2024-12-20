@@ -97,7 +97,7 @@ to calculStat
   ] [
     set sheepsWeightGain 0
   ]
-  ifelse count sheeps with [have-left = false] > 0 [  
+  ifelse count cattles with [have-left = false] > 0 [  
     set cattlesWeightGain mean [weight-gain] of cattles with [have-left = false]
   ] [
     set cattlesWeightGain 0
