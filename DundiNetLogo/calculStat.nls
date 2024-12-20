@@ -134,7 +134,7 @@ to calculStat
     set meanSheepsNEC mean [corporal-condition] of sheeps with [have-left = false]
   ]
   
-  if ticks > 0[
+  if ticks > 0 [
     ask foyers [
       if sheep-herd != nobody [
         if SheepNECSatifactionIndex <= [corporal-condition] of sheep-herd [

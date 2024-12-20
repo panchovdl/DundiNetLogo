@@ -1273,15 +1273,6 @@ to go
       set leaves-eaten 0
     ]
   ]
-  ; Activités quotidiennes du couple Berger-Troupeau - Bovins
-  ask cattles [
-    set fruits-eaten 0
-    set leaves-eaten 0
-  ]
-  ask sheeps [
-    set fruits-eaten 0
-    set leaves-eaten 0
-  ]
   ask cattles with [have-left = false] [
     move
     update-known-space
