@@ -20,6 +20,7 @@ globals [
   meanCattlesNEC
   MSTSheep-NEC
   MSTCattle-NEC
+  trees-killed
   
   meanTrees1yearsByPatch
   meanTrees2yearsByPatch
@@ -84,22 +85,24 @@ globals [
 
 to calculStat
   set totalFoyers count foyers
-  
-  set totalSheeps sum [head] of sheeps
-  set totalCattles sum [head] of cattles
+      set totalCattles sum [head] of cattles
+      set totalSheeps sum [head] of sheeps
+  set cattlesHaveLeft count cattles with [have-left = true]
+  set sheepsHaveLeft count sheeps with [have-left = true]
   set waterStock sum [water-stock] of patches
   set sheepsTempCamp count sheeps with [is-in-temporary-camp = true]
   set cattlesTempCamp count cattles with [is-in-temporary-camp = true]
-  set sheepsHaveLeft count sheeps with [have-left = true]
-  set cattlesHaveLeft count cattles with [have-left = true]
-  if count sheeps with [have-left = false] > 0 [
+  ifelse count sheeps with [have-left = false] > 0 [
     set sheepsWeightGain mean [weight-gain] of sheeps with [have-left = false]
+  ] [
+    set sheepsWeightGain 0
   ]
-  if count cattles with [have-left = false] > 0 [
+  ifelse count sheeps with [have-left = false] > 0 [  
     set cattlesWeightGain mean [weight-gain] of cattles with [have-left = false]
+  ] [
+    set cattlesWeightGain 0
   ]
-  
-;  min, max & average of Cattle Weight  
+  ;  min, max & average of Cattle Weight  
   ifelse count cattles with [have-left = false] > 0 [
     set meanCattlesLiveWeight (mean [live-weight] of cattles with [have-left = false]) / (mean [head]  of cattles with [have-left = false])
     let oneMaxCattleHerd one-of cattles with [have-left = false] with-max [live-weight]
