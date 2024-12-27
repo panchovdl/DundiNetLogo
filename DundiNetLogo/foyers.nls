@@ -1,0 +1,156 @@
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Initialisation des foyers ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+to setup-foyers
+  let total-foyers 0
+  let all-camps camps
+  let total-UBT-created 0
+  let candidate-foyers 0
+
+  ask all-camps [
+    set candidate-foyers candidate-foyers + round (available-space * 0.8)
+  ]
+
+  ; Calculer le nombre de bons et mauvais bergers en fonction du pourcentage
+  let num-good-shepherd round (candidate-foyers * (good-shepherd-percentage / 100))
+  let num-bad-shepherd candidate-foyers - num-good-shepherd
+
+  ; Créer une liste des types de bergers en fonction des proportions
+  let shepherd-types []
+  repeat num-good-shepherd [ set shepherd-types lput "bon" shepherd-types ]
+  repeat num-bad-shepherd [ set shepherd-types lput "mauvais" shepherd-types ]
+
+  ; Mélanger la liste pour attribuer les types aléatoirement
+  set shepherd-types shuffle shepherd-types
+
+  ; Compteur pour suivre l'index dans la liste des types
+  let shepherd-type-index 0
+
+  ;; On va créer les foyers camp par camp, foyer par foyer, jusqu'à atteindre sum-UBT
+  let camp-list sort all-camps
+  let camp-index 0
+  let max-try 10000
+
+  while [total-UBT-created < sum-UBT and max-try > 0] [
+    if camp-index >= length camp-list [
+      set camp-index 0
+    ]
+    let this-camp item camp-index camp-list
+    ; Boucle de création des foyers
+    ask this-camp [
+      if shepherd-type-index >= length shepherd-types [
+        ;; Plus de shepherd dispo ? On arrête
+        stop
+      ]
+      let my-camp self
+      hatch-foyers 1 [
+        set color brown
+        set size 0.1
+        set shape "person"
+        set pasture-strategy "directed"
+
+        set cattle-herd-count 0
+        set sheep-herd-count 0
+        set shepherd-type item shepherd-type-index shepherd-types
+        set shepherd-type-index shepherd-type-index + 1
+
+        set herder-type determine-herder-type
+        set-herd-sizes
+
+        ; Définir les variables d'agriculture
+        set stock-residu 0                 ; pas de residu de culture initialement
+        set surface-agriculture 1 / 100      ; surface en km²  (de base : 1 hectare par surface agricole )
+
+        ;Définir les variables d'exploration
+        set far-exploration-count 0       ; Compteur d'exploration au loin
+        set close-exploration-count 0     ; Compteur d'exploration proche
+
+
+        ; Définir la taille des troupeaux de bovins en fonction de la catégorie
+        if cattle-herd-size = "grand" [set cattle-herd-count random 20 + 30]
+        if cattle-herd-size = "moyen" [set cattle-herd-count random 15 + 10]
+        if cattle-herd-size = "petit" [set cattle-herd-count random 9 + 1]
+
+
+        ; Définir la taille des troupeaux de moutons en fonction de la catégorie
+        if sheep-herd-size = "grand" [set sheep-herd-count random 40 + 30]
+        if sheep-herd-size = "moyen" [set sheep-herd-count random 20 + 10]
+        if sheep-herd-size = "petit" [set sheep-herd-count random 9 + 1]
+
+        let foyer-UBT ((cattle-herd-count * 1) + (sheep-herd-count * 0.16 ))
+
+        set original-home-camp my-camp  ; Assigne le campement capturé au foyer
+        set current-home-camp original-home-camp
+        set original-home-patch [patch-here] of original-home-camp  ; Stocke la position du campement
+        set current-home-patch original-home-patch
+        set known-space patches in-radius 3
+        set close-known-space known-space with [
+          distance [current-home-patch] of myself <= 6
+        ] ; end set close-known-space
+        set distant-known-space known-space who-are-not close-known-space
+
+        set cattle-low-threshold-cc 1
+        set sheep-low-threshold-cc 1
+        set cattle-high-threshold-cc 3
+        set sheep-high-threshold-cc 3
+
+
+        set far-exploration-count 0       ; Compteur d'exploration au loin
+        set close-exploration-count 0     ; Compteur d'exploration proche
+           ;; Vérifions si on dépasse sum-UBT
+        ifelse total-UBT-created + foyer-UBT > sum-UBT [
+          ;; On dépasse => Ajustement
+          let diff (total-UBT-created + foyer-UBT - sum-UBT)
+          ;; On essaie d'enlever quelques moutons d'abord (plus fin)
+          let sheep_to_remove ceiling (diff / 0.16)
+          if sheep_to_remove > sheep-herd-count [
+            set sheep_to_remove sheep-herd-count
+          ]
+          set sheep-herd-count sheep-herd-count - sheep_to_remove
+
+          let current_foyer_UBT ((cattle-herd-count * 1) + (sheep-herd-count * 0.16))
+          if total-UBT-created + current_foyer_UBT > sum-UBT [
+            let diff2 (total-UBT-created + current_foyer_UBT - sum-UBT)
+            let cattle_to_remove ceiling diff2
+            if cattle_to_remove > cattle-herd-count [
+              set cattle_to_remove cattle-herd-count
+            ]
+            set cattle-herd-count cattle-herd-count - cattle_to_remove
+          ]
+
+          ;; Recalcul final de l'UBT du foyer
+          set foyer-UBT ((cattle-herd-count * 1) + (sheep-herd-count * 0.16))
+          set total-UBT-created total-UBT-created + foyer-UBT
+
+          ;; On a atteint sum-UBT, on stocke les compteurs finaux
+          set cattle-herd-count cattle-herd-count
+          set sheep-herd-count sheep-herd-count
+
+          ;; On a fini, on pourra arrêter la création
+        ] [
+          ;; On ne dépasse pas
+          set total-UBT-created total-UBT-created + foyer-UBT
+          set cattle-herd-count cattle-herd-count
+          set sheep-herd-count sheep-herd-count
+        ]
+
+        if (cattle-herd-count = 0 and sheep-herd-count = 0) [
+          die
+        ]
+      ]; end hatch-foyers
+    ]; end ask camp
+
+    if total-UBT-created >= sum-UBT [
+      ;; sum-UBT atteint, on sort
+      stop
+    ]
+
+    set camp-index camp-index + 1
+    set max-try max-try - 1
+  ]; end boucle création
+
+
+end
+

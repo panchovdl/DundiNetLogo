@@ -1,0 +1,85 @@
+to do-first-strategy
+
+  ;; Store the foyer's variables in local variables
+  let home-patch current-home-patch
+  let my-known-space known-space
+  ;; Find patches within 12 units of home-patch and not in known-space
+  let close-undiscovered-patches patches with [
+    distance home-patch <= 6 and not member? self my-known-space
+  ]
+
+  ifelse any? close-undiscovered-patches [
+    ;; Se déplacer vers un patch aléatoire parmi ces patches
+    move-to one-of close-undiscovered-patches
+    ;; Obtenir les patches sur la ligne entre la nouvelle position et le campement
+    let line-patches patches-between patch-here home-patch
+    ;; Ajouter ces patches au known-space du foyer
+    set known-space (patch-set my-known-space line-patches)
+    ;; Retourner au campement principal
+    move-to original-home-patch
+  ] [
+    ;    if any? friends [
+    ;      call-one-friend
+    ;    ]
+    ifelse far-exploration-count <= 5 [
+      let further-undiscovered-patches patches with [distance home-patch > 6 and not member? self my-known-space]
+      if any? further-undiscovered-patches [
+        move-to one-of further-undiscovered-patches
+        let line-patches patches-between patch-here home-patch
+        ;; Ajouter ces patches au known-space du foyer
+        set known-space (patch-set my-known-space line-patches)
+        ;; Retourner au campement principal
+        move-to original-home-patch
+        set far-exploration-count far-exploration-count + 1
+      ]
+    ] [
+      stop
+    ]
+  ]
+
+end
+
+to do-second-strategy
+  move-to original-home-patch          ; Déplacer au campement principal
+  set have-left true
+  set is-in-temporary-camp false
+  hide-turtle
+end
+
+to call-one-friend
+
+
+end
+;  to color-trees  ;; patch procedure
+;  set pcolor scale-color (green - 1) trees 0 (2 * max-grass-height)
+
+
+to update-known-space
+  let home-patch current-home-patch
+  if breed = cattles or breed = sheeps [
+    set known-space (patch-set known-space ([known-space] of foyer-owner))
+  ]
+  if breed = foyers [
+    if cattle-herd != nobody [
+      set known-space (patch-set known-space ([known-space] of cattle-herd))]
+    if sheep-herd != nobody [
+      set known-space (patch-set known-space ([known-space] of sheep-herd))]
+  ]
+  ; Pour tous les agents : recalcul du close et du distant-known-space
+  set close-known-space known-space with [distance home-patch <= 6]
+  set distant-known-space known-space who-are-not close-known-space
+  if breed = cattles or breed = sheeps [
+    set original-camp-known-space [close-known-space] of foyer-owner
+  ]
+
+end
+
+
+to manage-water-points
+  ask patches with [water-point = true] [
+    set water-point false
+  ]
+  ask n-of 5 patches [
+    set water-point true
+  ]
+end

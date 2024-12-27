@@ -1,0 +1,66 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Initialisation des campements ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+to setup-camps
+  ask patches [
+    if soil-type != "Caangol" [
+      if any? neighbors with [soil-type = "Caangol"] [
+        set init-camp-pref 1
+      ]
+      if any? neighbors with [any? neighbors with [soil-type = "Caangol"]] and init-camp-pref = 0 [
+        set init-camp-pref 2
+    ]    ]
+  ]
+  let eligible-patches patches with [soil-type != "Caangol" and has-pond = false]
+  let camp-counter 0
+  ; Boucle de création des campements
+  while [camp-counter < initial-number-of-camps] [
+    ; Sélectionner un patch éligible avec préférence 1
+    let selected-patch one-of eligible-patches with [init-camp-pref = 2]
+
+    ; Si aucun patch avec préférence 1 n'est disponible, sélectionner un patch avec préférence 2
+    if selected-patch = nobody [
+      set selected-patch one-of eligible-patches with [init-camp-pref = 1]
+    ]
+
+    ifelse selected-patch != nobody [
+      ask selected-patch [
+        ; Vérifier qu'il y a moins de 2 campements sur ce patch
+        if count camps-here < 2 [
+          ; Créer un nouveau campement
+          sprout-camps 1 [
+            set color brown
+            set size 0.5
+            set is-temporary false
+            set shape "house"
+            set wood-needs 100
+            set wood-quantity 0
+            set available-space generate-available-space
+            setxy pxcor pycor
+          ]
+          set camp-counter camp-counter + 1
+        ]
+      ]
+    ] [
+      ask selected-patch [
+        ; Vérifier qu'il y a moins de 2 campements sur ce patch
+        if count camps-here < 2 [
+          ; Créer un nouveau campement
+          sprout-camps 1 [
+            set color brown
+            set size 0.5
+            set shape "house"
+            set is-temporary false
+            set wood-needs 100
+            set wood-quantity 0
+            set available-space generate-available-space
+            setxy pxcor pycor
+          ]
+          set camp-counter camp-counter + 1
+        ]
+      ]
+    ]
+  ]
+end
