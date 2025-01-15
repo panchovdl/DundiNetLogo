@@ -41,6 +41,14 @@ globals [
   seuil-bon-MAD
   seuil-moyen-MAD
 
+  K-Baldiol                 ; seuil max d'herbe pour les différents types de sols
+  K-Caangol
+  K-Sangre
+  K-Seeno
+
+  production-residu-hectare-agriculture   ; production à l'hectare en tonne de résidu de culture
+
+
   initial-number-of-camps
   space-camp-min
   space-camp-max
@@ -67,6 +75,7 @@ breed [cattles cattle]
 breed [sheeps sheep]
 breed [tree-populations tree-population]
 breed [mature-tree-pops mature-tree-pop]   ; Pour visualisation
+breed [champs champ]
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Variables des cellules ;;;
@@ -84,7 +93,9 @@ patches-own [
   ; Variables pour le tapis herbacée
 
   current-grass                    ; Couverture d'herbe en kg
-  K                                ; Montant maximum d'herbe
+  grass-end-nduungu                ; Couverture d'herbe le dernier jour du Nduungu
+  K                                ; Montant d'herbe
+  K-max                            ; Montant maximum d'herbe
   patch-sensitivity                ; Sensibilité à la dégradation
                                    ;  degradation-level                ; Niveau de dégradation
 
@@ -229,7 +240,11 @@ foyers-own [
   ; Pratiques sylvicoles
   owned-trees-pop                  ; Population d'arbres associée
 
-  ; Relations
+ ; Pratiques agriculture
+  stock-residu                     ; residu de paille d'agriculture
+  surface-agriculture              ; surface cultivée par le foyer
+
+ ; Relations
   friends                          ; Amis de l'agent
   far-exploration-count            ; Compteur d'exploration au loin
   close-exploration-count          ; Compteur d'exploration proche
@@ -274,6 +289,7 @@ cattles-own [
 ;;;;; Agents populations d'arbres ;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+
 tree-populations-own [
 
   ; Caractéristiques des populations d'arbres
@@ -295,6 +311,16 @@ tree-populations-own [
   tree-UF-per-kg-MS                ; UF/kg MS pour les arbres
   tree-MAD-per-kg-MS               ; MAD/kg MS pour les arbres
 ]
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;;;; Agents champs ;;;;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+champs-own [
+  foyer-owner                      ; Foyer du champ
+  surface                          ; Surface du champ
+]
+
 
 
 to show-tree-populations-info ; Procédure pour afficher les populations d'arbres
@@ -330,7 +356,6 @@ to show-tree-populations-info ; Procédure pour afficher les populations d'arbre
     ]
   ]
 end
-
 
 
 
@@ -386,6 +411,15 @@ to setup
   ; Ici, on calcule sum-UBT à partir du avg-UBT-per-camp
   set sum-UBT (initial-number-of-camps * avg-UBT-per-camp)
 
+  ; définir les seuil max d'herbe par type de sol
+  set K-Baldiol 120000
+  set K-Caangol 300000
+  set K-Sangre 80000
+  set K-Seeno 200000
+
+  ; seuils de production des champs
+  set production-residu-hectare-agriculture 1           ; kg de matière sèche par hectare
+
   ; Lancer l'environnement
   setup-landscape  ; Créer les unités de paysage
   setup-water-patches ; Créer les mares
@@ -393,6 +427,7 @@ to setup
   setup-foyers ; Créer les foyers
   setup-herds  ; Créer les troupeaux
   setup-trees  ; Créer les arbres
+  setup-agriculture   ; créer les champs
 
 
 
@@ -413,6 +448,7 @@ to setup
   set max-grass max [K] of patches ; pour visualisation
   set max-trees max [tree-cover] of patches
 
+
   ;Visualiser l'environnement
   reset-ticks
   calculStat
@@ -431,7 +467,8 @@ to setup-landscape
   ask patches [
     set max-tree-cover tree-cover
     if soil-type = "Baldiol" [
-      set K 120000  ; Stock de production maximal de Matière Sèche (MS - DM[en]) sur 1 km² pour "Baldiol"
+      set K K-Baldiol  ; Stock de production de Matière Sèche (MS - DM[en]) sur 1 km² pour "Baldiol"
+      set K-max K-Baldiol ; stock max
       set current-grass 40
       set num-nutritious round (tree-cover * 0.5)
       set num-less-nutritious round (tree-cover * 0.25)
@@ -440,7 +477,8 @@ to setup-landscape
       set max-tree-number 8000
     ]
     if soil-type = "Caangol" [
-      set K 300000  ; Stock de production maximal de Matière Sèche (MS - DM[en]) sur 1 km² pour Caangol
+      set K K-Caangol  ; Stock de production de Matière Sèche (MS - DM[en]) sur 1 km² pour Caangol
+      set K-max K-Caangol ; stock max
       set current-grass 40
       set num-nutritious round (tree-cover * 0.5)
       set num-less-nutritious round (tree-cover * 0.25)
@@ -449,7 +487,8 @@ to setup-landscape
       set max-tree-number 20000
     ]
     if soil-type = "Sangre" [
-      set K 80000  ; Stock de production maximal de Matière Sèche (MS - DM[en]) sur 1 km² pour Sangre
+      set K K-Sangre  ; Stock de production de Matière Sèche (MS - DM[en]) sur 1 km² pour Sangre
+      set K-max K-Sangre ; stock max
       set current-grass 40
       set num-nutritious round (tree-cover * 0.8)
       set num-less-nutritious round (tree-cover * 0.25)
@@ -458,7 +497,8 @@ to setup-landscape
       set max-tree-number 15000
     ]
     if soil-type = "Seeno" [
-      set K 200000  ; Stock de production maximal de Matière Sèche (MS - DM[en]) sur 1 km² pour Seeno
+      set K K-Seeno  ; Stock de production de Matière Sèche (MS - DM[en]) sur 1 km² pour Seeno
+      set K-max K-Seeno ; stock max
       set current-grass 40
       set num-nutritious round (tree-cover * 0.5)
       set num-less-nutritious round (tree-cover * 0.25)
@@ -589,12 +629,10 @@ end
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 to setup-foyers
-
   let total-foyers 0
   let all-camps camps
   let total-UBT-created 0
   let candidate-foyers 0
-
 
   ask all-camps [
     set candidate-foyers candidate-foyers + round (available-space * 0.8)
@@ -614,7 +652,6 @@ to setup-foyers
 
   ; Compteur pour suivre l'index dans la liste des types
   let shepherd-type-index 0
-
 
   ;; On va créer les foyers camp par camp, foyer par foyer, jusqu'à atteindre sum-UBT
   let camp-list sort all-camps
@@ -646,6 +683,14 @@ to setup-foyers
 
         set herder-type determine-herder-type
         set-herd-sizes
+
+        ; Définir les variables d'agriculture
+        set stock-residu 0                 ; pas de residu de culture initialement
+        set surface-agriculture 1 / 100      ; surface en km²  (de base : 1 hectare par surface agricole )
+
+        ;Définir les variables d'exploration
+        set far-exploration-count 0       ; Compteur d'exploration au loin
+        set close-exploration-count 0     ; Compteur d'exploration proche
 
 
         ; Définir la taille des troupeaux de bovins en fonction de la catégorie
@@ -1138,6 +1183,9 @@ to setup-trees ; Valeurs d'initialisation (âge minimum des arbres découverts)
 end
 
 
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;; Initialisation des zones d'agriculture ;;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 to recalcul-herd-parameters
   set initial-live-weight 250 * UBT-size * head
@@ -1151,6 +1199,41 @@ to recalcul-herd-parameters
   set daily-water-consumption 22 * head * UBT-size
   set size calculate-herd-size head
   set label head
+end
+
+;;; /!\ Pas de contrôle de surface de culture dans les patchs voisins du campement. Il faudrait une variable interne aux patchs pour faire ce suivi /!\
+to setup-agriculture                                                                                ; initialisation des champs agri
+  ask patches with [any? turtles-here with [breed = foyers]] [                                      ; pour chaque patch avec un foyer
+    let compte-surface-agri 0                                                                       ; surface totale agricole initialisée à 0
+    ask turtles-here with [breed = foyers] [                                                        ; parcours des foyers pour création des champs
+      ; créer les champs, réduire l'herbe disponible sur le patch
+     let surface-agri surface-agriculture
+      ifelse (compte-surface-agri + surface-agriculture) < 80 [                                     ; creation de champ si espace dispo sur le patch
+        set K (K - (surface-agri * K-max))                                                          ; ajustement de l'herbe disponible sur le patch
+        hatch-champs 1 [                                                                            ; creation du champ sur la parcelle
+          set foyer-owner who
+          set surface surface-agri
+        ]
+        set compte-surface-agri (compte-surface-agri + surface-agri)                                ; ajustement du compte de surface agricole de la parcelle
+      ] [                                                                                           ; creation de champ dans le pâtch voisin si pas d'espace dispo sur le patch
+        ask one-of neighbors [                                                                      ; selection d'une parcelle voisine
+        set K (K - K-max * surface-agri)                                                            ; ajustement de l'herbe disponible sur le patch
+        hatch-champs 1 [                                                                            ; creation du champ sur parcelle voisine
+          set foyer-owner who
+          set surface surface-agri
+          ]
+        ]
+      ]
+    ]
+  ]
+end
+
+to stock-residu-cultures                                                                            ; production des stocks de résidu de culture
+  ask patches with [any? turtles-here with [breed = foyers]] [                                       ; trouver tous les foyers de la carte
+    ask turtles-here with [breed = foyers] [
+     set stock-residu (stock-residu +  surface-agriculture * production-residu-hectare-agriculture)
+    ]
+  ]
 end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1348,6 +1431,7 @@ to update-season
   if current-season = "Nduungu" and season-counter >= nduungu-duration [
     set current-season "Dabbuunde"
     set season-counter 0
+    stock-residu-cultures         ; Début du dabbuunde : recolte des cultures et stock des residus
   ]
   if current-season = "Dabbuunde" and season-counter >= dabbuunde-duration [
     set current-season "Ceedu"
@@ -3502,7 +3586,7 @@ number-of-camps
 number-of-camps
 0
 200
-137.0
+4.0
 1
 1
 NIL
