@@ -2964,11 +2964,11 @@ end
 GRAPHICS-WINDOW
 100
 10
-568
-479
+601
+512
 -1
 -1
-20.0
+21.435
 1
 1
 1
@@ -3156,9 +3156,9 @@ NIL
 1
 
 MONITOR
-705
+740
 10
-865
+900
 55
 Season
 current-season
@@ -3167,9 +3167,9 @@ current-season
 11
 
 MONITOR
-625
+660
 10
-705
+740
 55
 Type of Year
 current-year-type
@@ -3178,9 +3178,9 @@ current-year-type
 11
 
 SLIDER
-573
+608
 135
-706
+741
 168
 good-shepherd-percentage
 good-shepherd-percentage
@@ -3193,9 +3193,9 @@ NIL
 HORIZONTAL
 
 SLIDER
-570
+605
 60
-706
+741
 93
 proportion-big-herders
 proportion-big-herders
@@ -3208,9 +3208,9 @@ NIL
 HORIZONTAL
 
 SLIDER
-572
+607
 98
-707
+742
 131
 proportion-medium-herders
 proportion-medium-herders
@@ -3337,9 +3337,9 @@ PENS
 "cattle" 1.0 0 -2674135 true "" "plot meanKnownSpace cattles"
 
 PLOT
-706
+741
 61
-866
+901
 206
 HistHerderType
 listValueHerdeType
@@ -3375,9 +3375,9 @@ PENS
 "minWeight" 1.0 0 -13791810 true "" "plot minSheepsLiveWeight"
 
 MONITOR
-570
+605
 10
-627
+662
 55
 Year
 year-index
@@ -3445,10 +3445,10 @@ PENS
 "leaves sheep" 1.0 0 -5509967 true "" "plot meanLeavesConsumedSheep"
 
 SLIDER
-102
-488
-302
-521
+100
+520
+300
+553
 SheepNECSatifactionIndex
 SheepNECSatifactionIndex
 0
@@ -3479,10 +3479,10 @@ PENS
 "cattle" 1.0 0 -16777216 true "" "plot  MSTCattle-NEC"
 
 SLIDER
-102
-526
-302
-559
+100
+558
+300
+591
 CattleNECSatifactionIndex
 CattleNECSatifactionIndex
 0
@@ -3529,10 +3529,10 @@ PENS
 "satis" 1.0 0 -2674135 true "" "plot SheepNECSatifactionIndex"
 
 SLIDER
-370
-490
-570
-523
+395
+520
+595
+553
 TreeDensitySatisfaction-olds
 TreeDensitySatisfaction-olds
 0
@@ -3583,10 +3583,10 @@ PENS
 "Sangre" 1.0 0 -955883 true "" "plot meanTreesInSangre"
 
 SLIDER
-365
-592
-565
-625
+390
+622
+590
+655
 SatisfactionMeanTreesInCaangol
 SatisfactionMeanTreesInCaangol
 50
@@ -3598,10 +3598,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-365
-556
-565
-589
+390
+586
+590
+619
 SatisfactionMeanTreesInSeeno
 SatisfactionMeanTreesInSeeno
 12
@@ -3613,10 +3613,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-365
-626
-565
-659
+390
+656
+590
+689
 SatisfactionMeanTreesInBaldiol
 SatisfactionMeanTreesInBaldiol
 0
@@ -3628,10 +3628,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-365
-662
-565
-695
+390
+692
+590
+725
 SatisfactionMeanTreesInSangre
 SatisfactionMeanTreesInSangre
 0
@@ -3739,10 +3739,10 @@ sum-UBT
 11
 
 SLIDER
-366
-719
-566
-752
+391
+749
+591
+782
 treshold-tree-satisfaction
 treshold-tree-satisfaction
 0.1
@@ -3852,20 +3852,20 @@ TEXTBOX
 1
 
 TEXTBOX
-570
-560
-666
-695
+595
+590
+691
+725
 Per Ha\n------------------------
 10
 0.0
 1
 
 TEXTBOX
-575
-726
-953
-764
+600
+756
+978
+794
 Ratio surface of each landscape filled condition 
 1
 0.0
@@ -3942,7 +3942,7 @@ TEXTBOX
 1
 
 PLOT
-1266
+1281
 491
 1581
 666
