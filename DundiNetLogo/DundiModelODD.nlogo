@@ -1697,9 +1697,9 @@ to update-tree-age
           let max-fruit item 0 age-data
           let max-leaf item 1 age-data
           let max-wood item 2 age-data
-          set max-fruit-stock item 0 max-fruit * population-size
-          set max-leaf-stock item 1 max-leaf * population-size
-          set max-wood-stock item 2 max-wood  * population-size
+          set max-fruit-stock max-fruit * population-size
+          set max-leaf-stock max-leaf * population-size
+          set max-wood-stock max-wood  * population-size
           ; Initialiser les stocks actuels
           set current-fruit-stock adv-fruit-stock
           set current-leaf-stock adv-leaf-stock
