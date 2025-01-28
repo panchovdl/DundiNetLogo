@@ -2203,10 +2203,10 @@ to update-corporal-conditions [heads UBT total-UF-ingested total-MAD-ingested da
   set live-weight (live-weight + (weight-gain * head))
   if live-weight > max-live-weight [ set live-weight max-live-weight]
 
-  ; Calculer la NEC à partir du poids vif en considérant que les vaches sont toutes des N'dama. (AMOUGOU MESSI G., 1998. Méthode d’estimation et variation de la composition corporelle des vaches zébu Gobra et Taurin N’Dama en fonction du niveau d’alimentation. Thèse de Doctorat Vétérinaire EISMV, Dakar, Sénégal, 102 p)
+  ; Calculer la NEC à partir du poids vif en considérant que les vaches sont toutes des Gobras. (AMOUGOU MESSI G., 1998. Méthode d’estimation et variation de la composition corporelle des vaches zébu Gobra et Taurin N’Dama en fonction du niveau d’alimentation. Thèse de Doctorat Vétérinaire EISMV, Dakar, Sénégal, 102 p)
 
   if breed = cattles [
-    set corporal-condition (live-weight - (66.785 * head) ) / (47.1 * head)
+    set corporal-condition (live-weight - (148.99 * head) ) / (48.6 * head)
   ]
 
   ; régression linéaire à partir des valeurs de https://reca-niger.org/IMG/pdf/FT_embouche_ovine_Cirdes.pdf
@@ -3048,11 +3048,11 @@ end
 GRAPHICS-WINDOW
 100
 10
-601
-512
+568
+479
 -1
 -1
-21.435
+20.0
 1
 1
 1
@@ -3240,9 +3240,9 @@ NIL
 1
 
 MONITOR
-740
+705
 10
-900
+865
 55
 Season
 current-season
@@ -3251,9 +3251,9 @@ current-season
 11
 
 MONITOR
-660
+625
 10
-740
+705
 55
 Type of Year
 current-year-type
@@ -3262,45 +3262,45 @@ current-year-type
 11
 
 SLIDER
-608
+573
 135
-741
+706
 168
 good-shepherd-percentage
 good-shepherd-percentage
 0
 100
-0.0
+2.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-605
+570
 60
-741
+706
 93
 proportion-big-herders
 proportion-big-herders
 0
 100
-0.0
+49.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-607
+572
 98
-742
+707
 131
 proportion-medium-herders
 proportion-medium-herders
 0
 100
-7.0
+8.0
 1
 1
 NIL
@@ -3421,9 +3421,9 @@ PENS
 "cattle" 1.0 0 -2674135 true "" "plot meanKnownSpace cattles"
 
 PLOT
-741
+706
 61
-901
+866
 206
 HistHerderType
 listValueHerdeType
@@ -3459,9 +3459,9 @@ PENS
 "minWeight" 1.0 0 -13791810 true "" "plot minSheepsLiveWeight"
 
 MONITOR
-605
+570
 10
-662
+627
 55
 Year
 year-index
@@ -3529,10 +3529,10 @@ PENS
 "leaves sheep" 1.0 0 -5509967 true "" "plot meanLeavesConsumedSheep"
 
 SLIDER
-100
-520
-300
-553
+102
+488
+302
+521
 SheepNECSatifactionIndex
 SheepNECSatifactionIndex
 0
@@ -3563,10 +3563,10 @@ PENS
 "cattle" 1.0 0 -16777216 true "" "plot  MSTCattle-NEC"
 
 SLIDER
-100
-558
-300
-591
+102
+526
+302
+559
 CattleNECSatifactionIndex
 CattleNECSatifactionIndex
 0
@@ -3586,7 +3586,7 @@ number-of-camps
 number-of-camps
 0
 200
-4.0
+106.0
 1
 1
 NIL
@@ -3613,10 +3613,10 @@ PENS
 "satis" 1.0 0 -2674135 true "" "plot SheepNECSatifactionIndex"
 
 SLIDER
-395
-520
-595
-553
+370
+490
+570
+523
 TreeDensitySatisfaction-olds
 TreeDensitySatisfaction-olds
 0
@@ -3667,10 +3667,10 @@ PENS
 "Sangre" 1.0 0 -955883 true "" "plot meanTreesInSangre"
 
 SLIDER
-390
-622
-590
-655
+365
+592
+565
+625
 SatisfactionMeanTreesInCaangol
 SatisfactionMeanTreesInCaangol
 50
@@ -3682,10 +3682,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-390
-586
-590
-619
+365
+556
+565
+589
 SatisfactionMeanTreesInSeeno
 SatisfactionMeanTreesInSeeno
 12
@@ -3697,10 +3697,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-390
-656
-590
-689
+365
+626
+565
+659
 SatisfactionMeanTreesInBaldiol
 SatisfactionMeanTreesInBaldiol
 0
@@ -3712,10 +3712,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-390
-692
-590
-725
+365
+662
+565
+695
 SatisfactionMeanTreesInSangre
 SatisfactionMeanTreesInSangre
 0
@@ -3805,7 +3805,7 @@ avg-UBT-per-camp
 avg-UBT-per-camp
 10
 800
-125.0
+485.0
 5
 1
 NIL
@@ -3823,10 +3823,10 @@ sum-UBT
 11
 
 SLIDER
-391
-749
-591
-782
+366
+719
+566
+752
 treshold-tree-satisfaction
 treshold-tree-satisfaction
 0.1
@@ -3936,20 +3936,20 @@ TEXTBOX
 1
 
 TEXTBOX
-595
-590
-691
-725
+570
+560
+666
+695
 Per Ha\n------------------------
 10
 0.0
 1
 
 TEXTBOX
-600
-756
-978
-794
+575
+726
+953
+764
 Ratio surface of each landscape filled condition 
 1
 0.0
@@ -4026,7 +4026,7 @@ TEXTBOX
 1
 
 PLOT
-1281
+1266
 491
 1581
 666
