@@ -20,7 +20,6 @@ Les **motifs** (patterns) que l’on cherche à observer ou valider incluent :
 - La répartition saisonnière des troupeaux et la pression de pâturage sur les patches.  
 - La dynamique de la biomasse herbagère à travers les saisons et au fil des années.  
 - L’évolution des stocks de fruits, feuilles et bois dans les populations d’arbres, en lien avec la variabilité climatique.  
-- L’influence des points d’eau sur la localisation des campements et des troupeaux.
 
 ### 1.b. **Entities, state variables, and scales**
 
@@ -35,7 +34,7 @@ Les **motifs** (patterns) que l’on cherche à observer ou valider incluent :
    - **tree-cover** : densité d’arbres initiale (nombre d’arbres sur le patch).  
    - **max-tree-cover** : capacité maximale en arbres (valeur “potentielle”).  
    - **num-nutritious**, **num-less-nutritious**, **num-fruity** : décompte (initial) par type d’arbres potentiels.  
-   - **has-pond**, **water-stock** : présence et stock d’eau d’une mare (point d’eau), introduit dans cette version.  
+   - **has-pond**, **water-stock** : présence et stock d’eau d’une mare (point d’eau), introduit dans cette version mais non mobilisé.  
    - **init-camp-pref**, **park-restriction**, etc. : variables secondaires affectant notamment l’installation des campements.
 
 2. **Tortues** :
@@ -107,7 +106,7 @@ Les **motifs** (patterns) que l’on cherche à observer ou valider incluent :
 
 Le modèle s’appuie sur l’idée que :
 
-- La production herbagère est conditionnée par la saison (pluie/saison sèche) et se modélise sous forme de croissance logistique (jusqu’à une capacité maximale K).  
+- La production herbacée est conditionnée par la saison (pluie/saison sèche) et se modélise sous forme de croissance logistique (jusqu’à une capacité maximale K).  
 - Les arbres ont des cohorts par classe d’âge, avec des stocks (fruit, feuilles, bois) qui croissent de manière logistique ; il existe un renouvellement (germination) dépendant du type d’année (bonne, moyenne, mauvaise).  
 - Les troupeaux se déplacent dans un espace connu (`known-space`), sélectionnant le patch offrant la meilleure qualité d’herbe et la quantité la plus élevée, tout en considérant la proximité.  
 - Les ressources en eau (mares) influencent l’installation des campements et peuvent, à terme, influer sur la répartition spatiale du bétail.
