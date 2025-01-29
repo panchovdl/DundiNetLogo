@@ -1,7 +1,3 @@
-Voici une proposition de protocole ODD (en français) décrivant la version courante du code que vous avez fourni. Les principales évolutions par rapport à la version précédente (par exemple l’introduction explicite des points d’eau, la gestion des différentes saisons, le renouvellement des arbres, la prise en compte de l’année « bonne », « moyenne », « mauvaise » depuis un fichier, etc.) sont mises en avant au fil des rubriques.
-
----
-
 ## 1. **Overview**
 
 ### 1.a. **Purpose**
