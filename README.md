@@ -1,4 +1,4 @@
-# ODD du modèle DunDi
+# ODD du modèle DunDiModel V1
 
 ## Purpose
 
@@ -22,7 +22,7 @@ Ce modèle s'appuie sur des concepts clés du pastoralisme et de la gestion des 
        - `patch-sensitivity`, `degradation-level` : Capacité du patch à se régénérer ou à se dégrader.
      - **Catégorisation :**
        - `soil-type` : Type de sol.
-       - `water-point` et `has-pond` : Indiquent la présence d'un point d'eau ou d'une mare.
+       - `water-point` et `has-pond` : Indiquent la présence d'un point d'eau ou d'une mare (non fonctionnel à cette étape du modèle).
 
 2. **Agents (Breeds) :**
    - **Camps (Campements) :** Représentent les regroupements humains, potentiellement fixes ou mobiles, impliqués dans la gestion des ressources.
@@ -70,8 +70,6 @@ Les entités sont caractérisées par un ensemble de variables d'état qui influ
    - Les interactions entre entités (par exemple, déplacements des troupeaux) sont limitées par la proximité spatiale (zones adjacentes ou accessibles).
 
 ---
-
-Si vous souhaitez des précisions supplémentaires sur une entité, un processus ou une variable, je peux approfondir davantage.
 
 # Références 
 
