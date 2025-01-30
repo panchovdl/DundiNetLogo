@@ -258,6 +258,7 @@ Ici, on met en avant en détail **les procédures et sous-modèles ajoutés ou m
 - **Prise en compte** d’un “type de berger” : “bon” privilégie la qualité (ratio UF/MAD plus élevé), “mauvais” privilégie la quantité (risque surexploitation).
 
 Tous ces changements renforcent la représentation des **stratégies pastorales** et la complexité de la ressource herbacée, permettant d’analyser plus précisément l’effet de la variabilité intra- et inter-annuelle, et la diversité des comportements d’éleveurs sur la résilience ou la dégradation du système.
+
 ---
 
 # Références 
