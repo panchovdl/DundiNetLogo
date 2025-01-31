@@ -1,4 +1,4 @@
-#ODD du modèle DunDiModel V1
+# ODD du modèle DunDiModel - 2e itération
 ---
 La gestion collective des ressources dans les systèmes pastoraux, met en évidence les défis liés à la reconnaissance des communs pastoraux dans un contexte de crises multidimensionnelles en Afrique de l'Ouest . Les recherches récentes ont exploré les approches par les communs pour valoriser le pastoralisme dans les politiques publiques, analysant les enjeux de reconnaissance, d'institutionnalisation et de valorisation économique des activités pastorales (Aubert et Dutilly, 2024). Ces travaux fournissent un cadre théorique pertinent pour le développement et l'application de DundiModel.
 
