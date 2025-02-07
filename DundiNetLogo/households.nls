@@ -1,0 +1,285 @@
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Initialisation des foyers ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+to setup-foyers
+  let total-foyers 0
+  let all-camps camps
+  
+  let candidate-foyers 0
+  ask all-camps [
+    set candidate-foyers candidate-foyers + round available-space
+  ]
+
+  ; Calculer le nombre de bons et mauvais bergers en fonction du pourcentage
+  let num-good-shepherd round (candidate-foyers * (good-shepherd-percentage / 100))
+  let num-bad-shepherd candidate-foyers - num-good-shepherd
+
+  ; Créer une liste des types de bergers en fonction des proportions. Un type de berger sera attribué par foyer
+  let shepherd-types []
+  repeat num-good-shepherd [ set shepherd-types lput "bon" shepherd-types ]
+  repeat num-bad-shepherd [ set shepherd-types lput "mauvais" shepherd-types ]
+
+  ; Mélanger la liste pour attribuer les types aléatoirement
+  set shepherd-types shuffle shepherd-types
+
+  ; Compteur pour suivre l'index dans la liste des types
+  let shepherd-type-index 0
+
+  ;; On va créer les foyers camp par camp, foyer par foyer, jusqu'à atteindre sum-UBT
+  let camp-list sort all-camps
+  let camp-index 0
+
+  while [total-UBT-created < sum-UBT and camp-index < length camp-list] [
+
+    let camp-UBT 0
+    let this-camp item camp-index camp-list
+    ; Boucle de création des foyers
+    ask this-camp [
+      if shepherd-type-index >= length shepherd-types [
+        ;; Plus de shepherd dispo ? On arrête
+        stop
+      ]
+      
+      ; Lancement de la boucle de création des foyers par campement
+      let my-camp self
+      let maxFoyers round (available-space * 0.8)
+      repeat maxFoyers [
+        hatch-foyers 1 [
+          ;; Propriétés et attributs du foyer
+          set color brown
+          set size 0.1
+          set shape "person"
+          set pasture-strategy "directed"
+          
+          ; Propriétés initiales associées aux troupeaux
+          set cattle-herd-count 0
+          set sheep-herd-count 0
+          set shepherd-type item shepherd-type-index shepherd-types
+          set shepherd-type-index shepherd-type-index + 1
+          set herder-type determine-herder-type
+          set-herd-sizes
+          
+          ; Seuils d'évaluation de la santé du troupeau
+          set cattle-low-threshold-cc 1
+          set sheep-low-threshold-cc 1
+          set cattle-high-threshold-cc cattleNEC-satisfaction
+          set sheep-high-threshold-cc sheepNec-satisfaction
+          
+          ; Définir les variables d'agriculture
+          set stock-residu 0                 ; pas de residu de culture initialement
+          set surface-agriculture 1 / 100      ; surface en km²  (de base : 1 hectare par surface agricole )
+          
+          ;Définir les variables d'exploration
+          set far-exploration-count 0       ; Compteur d'exploration au loin
+          set close-exploration-count 0     ; Compteur d'exploration proche
+          
+          ; Définir les liens au campement et sa connaissance de l'espace
+          set original-home-camp my-camp  ; Assigne le campement capturé au foyer
+          set current-home-camp original-home-camp
+          set original-home-patch [patch-here] of original-home-camp  ; Stocke la position du campement
+          set current-home-patch original-home-patch
+          set known-space patches in-radius 3
+          set close-known-space known-space with [
+            distance [current-home-patch] of myself <= 6
+          ] ; end set close-known-space
+          set distant-known-space known-space who-are-not close-known-space
+          
+          ; Définir la taille des troupeaux de bovins en fonction de la catégorie
+          if cattle-herd-size = "grand" [set cattle-herd-count random 20 + 30]
+          if cattle-herd-size = "moyen" [set cattle-herd-count random 15 + 10]
+          if cattle-herd-size = "petit" [set cattle-herd-count random 9 + 1]
+          ; Définir la taille des troupeaux de moutons en fonction de la catégorie
+          if sheep-herd-size = "grand" [set sheep-herd-count random 40 + 30]
+          if sheep-herd-size = "moyen" [set sheep-herd-count random 20 + 10]
+          if sheep-herd-size = "petit" [set sheep-herd-count random 9 + 1]
+          
+          
+          ; Calcul de la contribution du foyer en UBT
+          let foyer-UBT ((cattle-herd-count * 1) + (sheep-herd-count * 0.16 ))
+          
+          ;; Vérifions si on dépasse sum-UBT
+          if total-UBT-created + foyer-UBT > sum-UBT [
+            ;; On dépasse => Ajustement
+            let excess (total-UBT-created + foyer-UBT - sum-UBT)
+            ;; On essaie d'enlever quelques moutons d'abord (plus fin)
+            ;; Réduire les bovins jusqu'à ce que le total soit inférieur ou égal
+            while [ (total-UBT-created + foyer-UBT) > sum-UBT and cattle-herd-count > 0 ] [
+              set cattle-herd-count cattle-herd-count - 1
+              set foyer-UBT ((cattle-herd-count * 1) + (sheep-herd-count * 0.16))
+            ]
+            ;; Si nécessaire, réduire ensuite les moutons
+            while [ (total-UBT-created + foyer-UBT) > sum-UBT and sheep-herd-count > 0 ] [
+              set sheep-herd-count sheep-herd-count - 1
+              set foyer-UBT ((cattle-herd-count * 1) + (sheep-herd-count * 0.16))
+            ]
+            if (cattle-herd-count = 0 and sheep-herd-count = 0) [
+              die
+            ]
+          ] ; fin de réajustement du dernier foyer possible
+          
+          ;; Recalcul final de l'UBT du foyer et incrémentation pour le nombre d'UBT total de la simulation et dans chaque campement
+          set foyer-UBT ((cattle-herd-count * 1) + (sheep-herd-count * 0.16))
+          set total-UBT-created total-UBT-created + foyer-UBT
+          set camp-UBT camp-UBT + foyer-UBT
+        ] ; fin d'ajout d'un foyer dans un campement 
+        
+        if camp-UBT >= avg-UBT-per-camp [ stop ]        
+        
+      ]; end repeat maxFoyers
+    ]; end ask this-camp
+    if total-UBT-created >= sum-UBT [
+      ;; sum-UBT atteint, on sort
+      stop
+    ]
+    
+    set camp-index camp-index + 1
+  ]; end boucle création des foyers
+  
+
+end
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Qualification des tailles respectives des bovins et petits ruminants par foyer ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+to set-herd-sizes ; Valeurs à définir à partir des recensements de campements édités par le projet Dundi Ferlo selon l'UP présente
+  if herder-type = "grand" [
+    let r random-float 1
+    if r < 0.008 [
+      set cattle-herd-size "grand"
+      set sheep-herd-size "moyen"
+    ]
+    if r < 0.013 [
+      set cattle-herd-size "grand"
+      set sheep-herd-size "petit"
+    ]
+    if r < 0.1 [
+      set cattle-herd-size "petit"
+      set sheep-herd-size "grand"
+    ]
+    ifelse r < 0.29 [
+      set cattle-herd-size "moyen"
+      set sheep-herd-size "grand"
+    ] [
+      set cattle-herd-size "grand"
+      set sheep-herd-size "grand"
+    ]
+  ]
+  if herder-type = "moyen" [
+    let r random-float 1
+    if r < 0.13 [
+      set cattle-herd-size "moyen"
+      set sheep-herd-size "moyen"
+    ]
+    ifelse r < 0.27 [
+      set cattle-herd-size "moyen"
+      set sheep-herd-size "petit"
+    ] [
+      set cattle-herd-size "petit"
+      set sheep-herd-size "moyen"
+    ]
+  ]
+  if herder-type = "petit" [
+    set cattle-herd-size "petit"
+    set sheep-herd-size "petit"
+  ]
+end
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Choix des stratégies du chef de campement ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+to choose-strategy-for-cattles
+  ;; Récupérer les conditions corporelles des troupeaux de bovins
+  let cattle-cc  [corporal-condition] of cattle-herd
+
+  ;; Si **une des deux** conditions des troupeaux est en dessous du seuil, exécuter `do-first-strategy`
+  if cattle-cc <= cattle-high-threshold-cc [
+    do-first-strategy
+  ]
+  ;; Si **les deux** conditions des deux troupea sont en dessous des seuils, quitter le modèle
+  if cattle-cc <= cattle-low-threshold-cc [
+    ;; Masquer et déplacer le troupeau de bovins
+    if [have-left] of cattle-herd = FALSE [
+      ask cattle-herd  [
+        do-second-strategy
+      ]
+    ]
+  ]
+end
+
+
+to choose-strategy-for-sheeps
+  ;; Récupérer les conditions corporelles des troupeaux de moutons
+  let sheep-cc [corporal-condition] of sheep-herd
+
+  if sheep-cc <= sheep-high-threshold-cc  [
+    do-first-strategy
+  ]
+  if sheep-cc <= sheep-low-threshold-cc [
+    ;; Masquer et déplacer le troupeau de moutons
+    if [have-left] of sheep-herd = FALSE [
+      ask sheep-herd [
+        do-second-strategy
+      ]
+    ]
+  ]
+end
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Déclenchement des stratégies ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; Exploration de nouveaux secteurs
+to do-first-strategy
+
+  ;; Store the foyer's variables in local variables
+  let home-patch current-home-patch
+  let my-known-space known-space
+  ;; Find patches within 12 units of home-patch and not in known-space
+  let close-undiscovered-patches patches with [
+    distance home-patch <= 6 and not member? self my-known-space
+  ]
+
+  ifelse any? close-undiscovered-patches [
+    ;; Se déplacer vers un patch aléatoire parmi ces patches
+    move-to one-of close-undiscovered-patches
+    ;; Obtenir les patches sur la ligne entre la nouvelle position et le campement
+    let line-patches patches-between patch-here home-patch
+    ;; Ajouter ces patches au known-space du foyer
+    set known-space (patch-set my-known-space line-patches)
+    ;; Retourner au campement principal
+    move-to original-home-patch
+  ] [
+    ;    if any? friends [
+    ;      call-one-friend
+    ;    ]
+    ifelse far-exploration-count <= 5 [
+      let further-undiscovered-patches patches with [distance home-patch > 6 and not member? self my-known-space]
+      if any? further-undiscovered-patches [
+        move-to one-of further-undiscovered-patches
+        let line-patches patches-between patch-here home-patch
+        ;; Ajouter ces patches au known-space du foyer
+        set known-space (patch-set my-known-space line-patches)
+        ;; Retourner au campement principal
+        move-to original-home-patch
+        set far-exploration-count far-exploration-count + 1
+      ]
+    ] [
+      stop
+    ]
+  ]
+
+end
+
+
+; Abandonner la zone
+to do-second-strategy
+  move-to original-home-patch          ; Déplacer au campement principal
+  set have-left true
+  set is-in-temporary-camp false
+  hide-turtle
+end

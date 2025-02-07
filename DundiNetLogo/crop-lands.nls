@@ -1,0 +1,38 @@
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;; Initialisation des zones d'agriculture ;;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;; /!\ Pas de contrôle de surface de culture dans les patchs voisins du campement. Il faudrait une variable interne aux patchs pour faire ce suivi /!\
+to setup-crop-lands                                                                                ; initialisation des champs agri
+  ask patches with [any? turtles-here with [breed = foyers]] [                                      ; pour chaque patch avec un foyer
+    let compte-surface-agri 0                                                                       ; surface totale agricole initialisée à 0
+    ask turtles-here with [breed = foyers] [                                                        ; parcours des foyers pour création des champs
+      ; créer les champs, réduire l'herbe disponible sur le patch
+     let surface-agri surface-agriculture
+      ifelse (compte-surface-agri + surface-agriculture) < 80 [                                     ; creation de champ si espace dispo sur le patch
+        set K (K - (surface-agri * K-max))                                                          ; ajustement de l'herbe disponible sur le patch
+        hatch-champs 1 [                                                                            ; creation du champ sur la parcelle
+          set foyer-owner who
+          set surface surface-agri
+        ]
+        set compte-surface-agri (compte-surface-agri + surface-agri)                                ; ajustement du compte de surface agricole de la parcelle
+      ] [                                                                                           ; creation de champ dans le pâtch voisin si pas d'espace dispo sur le patch
+        ask one-of neighbors [                                                                      ; selection d'une parcelle voisine
+        set K (K - K-max * surface-agri)                                                            ; ajustement de l'herbe disponible sur le patch
+        hatch-champs 1 [                                                                            ; creation du champ sur parcelle voisine
+          set foyer-owner who
+          set surface surface-agri
+          ]
+        ]
+      ]
+    ]
+  ]
+end
+
+to stock-residu-cultures                                                                            ; production des stocks de résidu de culture
+  ask patches with [any? turtles-here with [breed = foyers]] [                                       ; trouver tous les foyers de la carte
+    ask turtles-here with [breed = foyers] [
+     set stock-residu (stock-residu +  surface-agriculture * production-residu-hectare-agriculture)
+    ]
+  ]
+end

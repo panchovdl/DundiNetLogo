@@ -1,0 +1,57 @@
+to setup-landscape
+  ask patches [
+    set max-tree-cover tree-cover
+    if soil-type = "Baldiol" [
+      set K K-Baldiol  ; Stock de production de Matière Sèche (MS - DM[en]) sur 1 km² pour "Baldiol"
+      set K-max K-Baldiol ; stock max
+      set current-grass 40
+      set num-nutritious round (tree-cover * 0.5)
+      set num-less-nutritious round (tree-cover * 0.25)
+      set num-fruity round (tree-cover * 0.25)
+      set patch-sensitivity 2
+      set max-tree-number 8000
+    ]
+    if soil-type = "Caangol" [
+      set K K-Caangol  ; Stock de production de Matière Sèche (MS - DM[en]) sur 1 km² pour Caangol
+      set K-max K-Caangol ; stock max
+      set current-grass 40
+      set num-nutritious round (tree-cover * 0.5)
+      set num-less-nutritious round (tree-cover * 0.25)
+      set num-fruity round (tree-cover * 0.25)
+      set patch-sensitivity 2
+      set max-tree-number 20000
+    ]
+    if soil-type = "Sangre" [
+      set K K-Sangre  ; Stock de production de Matière Sèche (MS - DM[en]) sur 1 km² pour Sangre
+      set K-max K-Sangre ; stock max
+      set current-grass 40
+      set num-nutritious round (tree-cover * 0.8)
+      set num-less-nutritious round (tree-cover * 0.25)
+      set num-fruity round (tree-cover * 0.0001)
+      set patch-sensitivity 3
+      set max-tree-number 15000
+    ]
+    if soil-type = "Seeno" [
+      set K K-Seeno  ; Stock de production de Matière Sèche (MS - DM[en]) sur 1 km² pour Seeno
+      set K-max K-Seeno ; stock max
+      set current-grass 40
+      set num-nutritious round (tree-cover * 0.5)
+      set num-less-nutritious round (tree-cover * 0.25)
+      set num-fruity round (tree-cover * 0.25)
+      set patch-sensitivity 1
+      set max-tree-number 5000
+    ]
+    if soil-type = "" [
+      set current-grass 1
+      set K 1  ; Stock de production maximal de Matière Sèche (MS - DM[en]) sur 1 km² pour Seeno
+               ;     if current-season = "Nduungu" [set grass-quality "average"] ;; A garder si jamais on simplifie la règle
+               ;     if current-season = "Dabbuunde" [set grass-quality "poor"] ;; A garder si jamais on simplifie la règle
+               ;     if current-season = "Ceedu" [set grass-quality "good"] ;; A garder si jamais on simplifie la règle
+               ;     if current-season = "Ceetcelde" [set grass-quality "average"] ;; A garder si jamais on simplifie la règle
+    ]
+    set water-point false  ; Initialement, aucun point d'eau
+    set has-pond false  ; Initialement, aucune mare
+    set water-stock 0  ; Initialement, aucun stock d'eau dans les mares
+    assign-grass-proportions
+  ]
+end

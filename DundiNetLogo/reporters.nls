@@ -1,0 +1,511 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; tree-populations reporters ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; Obtenir le taux de germination en fonction du type d'arbre et de la qualité de l'année
+to-report get-germination-rate [tree-types year-type]
+  let rate 0
+  if tree-types
+  = "nutritive" [
+    if year-type = "bonne" [set rate 0.2]
+    if year-type = "moyenne" [set rate 0.05]
+    if year-type = "mauvaise" [set rate 0.01]
+  ]
+  if tree-type = "lessNutritive" [
+    if year-type = "bonne" [set rate 0.15]
+    if year-type = "moyenne" [set rate 0.08]
+    if year-type = "mauvaise" [set rate 0.01]
+  ]
+  if tree-type = "fruity" [
+    if year-type = "bonne" [set rate 0.25]
+    if year-type = "moyenne" [set rate 0.15]
+    if year-type = "mauvaise" [set rate 0.01]
+  ]
+  report rate
+end
+
+; Fonction pour calculer la croissance logistique des fruits
+to-report growth-fruit-logistic [input-tree-type current-fruit max-fruit season landscape]
+  let r 0
+  ifelse  max-fruit <= 0.0001 [
+    report 0  ; Pas de croissance si max-wood est zéro
+  ] [
+    if input-tree-type = "nutritive" [
+      if landscape = "Baldiol" [
+        if season = "Nduungu" [set r 0.05]
+        if season = "Ceedu" [set r -0.03]
+        if season = "Dabbuunde" [set r 0.01]
+        if season = "Ceetcelde" [set r -0.01]
+      ]
+      if landscape = "Caangol" [
+        if season = "Nduungu" [set r 0.05]
+        if season = "Ceedu" [set r -0.03]
+        if season = "Dabbuunde" [set r 0.01]
+        if season = "Ceetcelde" [set r 0.005]
+      ]
+      if landscape = "Seeno" [
+        if season = "Nduungu" [set r 0.1]
+        if season = "Ceedu" [set r -0.3]
+        if season = "Dabbuunde" [set r 0.02]
+        if season = "Ceetcelde" [set r -0.005]
+      ]
+      if landscape = "Sangre" [
+        if season = "Nduungu" [set r 0.05]
+        if season = "Ceedu" [set r -0.03]
+        if season = "Dabbuunde" [set r -0.01]
+        if season = "Ceetcelde" [set r 0.005]
+      ]
+    ]
+    if input-tree-type = "lessNutritive" [
+      if landscape = "Baldiol" [
+        if season = "Nduungu" [set r 0.05]
+        if season = "Ceedu" [set r -0.03]
+        if season = "Dabbuunde" [set r 0.01]
+        if season = "Ceetcelde" [set r 0.005]
+      ]
+      if landscape = "Caangol" [
+        if season = "Nduungu" [set r 0.05]
+        if season = "Ceedu" [set r -0.03]
+        if season = "Dabbuunde" [set r 0.01]
+        if season = "Ceetcelde" [set r 0.005]
+      ]
+      if landscape = "Seeno" [
+        if season = "Nduungu" [set r 0.05]
+        if season = "Ceedu" [set r -0.03]
+        if season = "Dabbuunde" [set r 0.01]
+        if season = "Ceetcelde" [set r 0.005]
+      ]
+      if landscape = "Sangre" [
+        if season = "Nduungu" [set r 0.05]
+        if season = "Ceedu" [set r -0.03]
+        if season = "Dabbuunde" [set r 0.01]
+        if season = "Ceetcelde" [set r 0.005]
+      ]
+    ]
+    if input-tree-type = "fruity" [
+      if landscape = "Baldiol" [
+        if season = "Nduungu" [set r 0.05]
+        if season = "Ceedu" [set r -0.03]
+        if season = "Dabbuunde" [set r 0.01]
+        if season = "Ceetcelde" [set r 0.005]
+      ]
+      if landscape = "Caangol" [
+        if season = "Nduungu" [set r 0.05]
+        if season = "Ceedu" [set r -0.05]
+        if season = "Dabbuunde" [set r 0.03]
+        if season = "Ceetcelde" [set r -0.05]
+      ]
+      if landscape = "Seeno" [
+        if season = "Nduungu" [set r 0.05]
+        if season = "Ceedu" [set r -0.03]
+        if season = "Dabbuunde" [set r 0.01]
+        if season = "Ceetcelde" [set r 0.005]
+      ]
+      if landscape = "Sangre" [
+        if season = "Nduungu" [set r 0.05]
+        if season = "Ceedu" [set r -0.03]
+        if season = "Dabbuunde" [set r 0.01]
+        if season = "Ceetcelde" [set r 0.005]
+      ]
+    ]
+    let growth r * (precision current-fruit 3) * (precision ((max-fruit - current-fruit) / max-fruit) 3)
+  if abs(growth) > 1e10 [
+    report 0
+  ]
+    report growth
+  ]
+end
+
+;Fonction pour calculer la croissance logistique des feuilles
+to-report growth-leaf-logistic [input-tree-type current-leaf max-leaf season landscape]
+  let r 0
+  ifelse  max-leaf <= 0.0001 [
+    report 0  ; Pas de croissance si max-wood est zéro
+  ] [
+    if input-tree-type = "nutritive" [
+      if landscape = "Baldiol" [
+        if season = "Nduungu" [set r 0.05]
+        if season = "Ceedu" [set r -0.03]
+        if season = "Dabbuunde" [set r 0.01]
+        if season = "Ceetcelde" [set r 0.005]
+      ]
+      if landscape = "Caangol" [
+        if season = "Nduungu" [set r 0.05]
+        if season = "Ceedu" [set r -0.03]
+        if season = "Dabbuunde" [set r 0.01]
+        if season = "Ceetcelde" [set r 0.005]
+      ]
+      if landscape = "Seeno" [
+        if season = "Nduungu" [set r 0.05]
+        if season = "Ceedu" [set r -0.03]
+        if season = "Dabbuunde" [set r 0.01]
+        if season = "Ceetcelde" [set r 0.005]
+      ]
+      if landscape = "Sangre" [
+        if season = "Nduungu" [set r 0.05]
+        if season = "Ceedu" [set r -0.03]
+        if season = "Dabbuunde" [set r 0.01]
+        if season = "Ceetcelde" [set r 0.005]
+      ]
+    ]
+    if input-tree-type = "lessNutritive" [
+      if landscape = "Baldiol" [
+        if season = "Nduungu" [set r 0.05]
+        if season = "Ceedu" [set r -0.03]
+        if season = "Dabbuunde" [set r 0.01]
+        if season = "Ceetcelde" [set r 0.005]
+      ]
+      if landscape = "Caangol" [
+        if season = "Nduungu" [set r 0.05]
+        if season = "Ceedu" [set r -0.03]
+        if season = "Dabbuunde" [set r 0.01]
+        if season = "Ceetcelde" [set r 0.005]
+      ]
+      if landscape = "Seeno" [
+        if season = "Nduungu" [set r 0.05]
+        if season = "Ceedu" [set r -0.03]
+        if season = "Dabbuunde" [set r 0.01]
+        if season = "Ceetcelde" [set r 0.005]
+      ]
+      if landscape = "Sangre" [
+        if season = "Nduungu" [set r 0.005]
+        if season = "Ceedu" [set r -0.03]
+        if season = "Dabbuunde" [set r -0.01]
+        if season = "Ceetcelde" [set r 0.05]
+      ]
+    ]
+    if input-tree-type = "fruity" [
+      if landscape = "Baldiol" [
+        if season = "Nduungu" [set r 0.05]
+        if season = "Ceedu" [set r -0.03]
+        if season = "Dabbuunde" [set r 0.01]
+        if season = "Ceetcelde" [set r 0.005]
+      ]
+      if landscape = "Caangol" [
+        if season = "Nduungu" [set r 0.05]
+        if season = "Ceedu" [set r -0.03]
+        if season = "Dabbuunde" [set r 0.01]
+        if season = "Ceetcelde" [set r 0.005]
+      ]
+      if landscape = "Seeno" [
+        if season = "Nduungu" [set r 0.05]
+        if season = "Ceedu" [set r -0.03]
+        if season = "Dabbuunde" [set r 0.01]
+        if season = "Ceetcelde" [set r 0.005]
+      ]
+      if landscape = "Sangre" [
+        if season = "Nduungu" [set r 0.05]
+        if season = "Ceedu" [set r -0.03]
+        if season = "Dabbuunde" [set r 0.01]
+        if season = "Ceetcelde" [set r 0.005]
+      ]
+    ]
+    let growth r * (precision current-leaf 3) * (precision ((max-leaf - current-leaf) / max-leaf) 3)
+    if abs(growth) > 1e10 [
+      report 0
+    ]
+    report growth
+  ]
+end
+
+;Fonction pour calculer la croissance logistique du bois
+to-report growth-wood-logistic [input-tree-type current-wood max-wood season]
+  let r 0
+  ifelse  max-wood = 0 [
+    report 0  ; Pas de croissance si max-wood est zéro
+  ] [
+    if input-tree-type = "nutritive" [
+      if season = "Nduungu" [set r 0.001]
+      if season = "Ceedu" [set r 0.003]
+      if season = "Dabbuunde" [set r 0.00001]
+      if season = "Ceetcelde" [set r 0.00001]
+    ]
+    if input-tree-type = "lessNutritive" [
+      if season = "Nduungu" [set r 0.004]
+      if season = "Ceedu" [set r 0.002]
+      if season = "Dabbuunde" [set r 0.00001]
+      if season = "Ceetcelde" [set r 0.00001]
+    ]
+    if input-tree-type = "fruity" [
+      if season = "Nduungu" [set r 0.006]
+      if season = "Ceedu" [set r 0.004]
+      if season = "Dabbuunde" [set r 000002]
+      if season = "Ceetcelde" [set r 0.00001]
+    ]
+
+    let growth r * (precision current-wood 3) * (precision ((max-wood - current-wood) / max-wood) 3)
+    if abs(growth) > 1e10 [
+      report 0
+    ]
+    report growth
+  ]
+end
+
+
+
+
+; Fonctions pour calculer les populations initiales en fonction du type d'arbre, de l'âge et de la taille de la population
+to-report get-age-data [trees-type ages]
+  ; On vérifie si la clé existe dans la table
+  ifelse table:has-key? tree-age-table (list trees-type ages) [
+    report table:get tree-age-table (list trees-type ages)
+  ] [
+    ; Si aucune donnée trouvée, retourner des valeurs par défaut
+    report (list 0 0 0 0)
+  ]
+end
+
+
+
+
+to-report get-tree-nutritional-values [trees-type soil season]
+  ; Parcourir la structure `tree-nutritional-values` pour trouver les valeurs correspondantes
+  ifelse table:has-key? tree-nutrition-table (list trees-type soil season) [
+    report table:get tree-nutrition-table (list trees-type soil season)
+  ] [
+    report (list 0 0) ; Valeurs par défaut si introuvable
+  ]
+
+end
+
+
+
+to-report split-population [total-population]
+  let age-groups []
+
+  ; Calculer la population pour l'âge 8 (80% du total)
+  let age8-population round (total-population * 0.8)
+
+  ; Calculer la population restante à répartir entre les âges 1 à 7
+  let remaining-population total-population - age8-population
+
+  ; Nombre d'âges pour la répartition restante (1 à 7)
+  let num-younger-ages 7
+
+  ; Répartition uniforme de la population restante
+  let base-population round (remaining-population / num-younger-ages)
+  let leftover remaining-population mod num-younger-ages
+
+  ; Initialiser la liste des groupes d'âge pour les âges 1 à 7
+  repeat num-younger-ages [
+    set age-groups lput base-population age-groups
+  ]
+
+  ; Distribuer le reste sur les premiers âges
+  if leftover > 0 [
+    let i 0
+    while [i < leftover] [
+      set age-groups replace-item i age-groups ((item i age-groups) + 1)
+      set i i + 1
+    ]
+  ]
+  ; Ajouter la population de l'âge 8 à la fin de la liste
+  set age-groups lput age8-population age-groups
+  ; La liste `age-groups` contient maintenant les populations pour les âges 1 à 8
+  ; Index 0 correspond à l'âge 1, index 7 correspond à l'âge 8
+  report age-groups
+end
+
+
+to-report calculate-wood-ratio
+
+  ifelse max-wood-stock <= 0 [
+    report 1  ; Éviter la division par zéro
+  ] [
+    report current-wood-stock / max-wood-stock
+  ]
+end
+
+to-report calculate-tree-icon-size [populations]
+  ;; Définir les valeurs minimales et maximales pour le mapping
+  let minPopulation 0
+  let maxPopulation 8000  ;; Ajustez cette valeur en fonction de vos données réelles
+  let minSize 0.1
+  let maxSize 1.5
+  ;; Assurer que population est dans les limites
+  let adjusted-population max list minPopulation (min list populations maxPopulation)
+  report minSize + ((adjusted-population - minPopulation) / (maxPopulation - minPopulation)) * (maxSize - minSize)
+end
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;
+;;; camps reporters ;;;
+;;;;;;;;;;;;;;;;;;;;;;;
+
+
+to-report generate-available-space
+  set available-space 0
+  while [available-space < space-camp-min or available-space > space-camp-max] [  ; Respecter les fences
+    set available-space random-normal space-camp-mean space-camp-standard-deviation  ; Utiliser la moyenne et l'écart type
+  ]
+  report round available-space  ; Arrondir au nombre entier le plus proche
+end
+
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; households reporters ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+to-report determine-herder-type
+  ;; Ensure the sum of the proportions is 100
+  let proportion-small-herders (100 - (proportion-big-herders + proportion-medium-herders))
+  let total-proportion proportion-big-herders + proportion-medium-herders + proportion-small-herders
+  let r random-float 100
+  ifelse r < proportion-big-herders [
+    report "grand"
+  ] [
+    ifelse r < (proportion-big-herders + proportion-medium-herders) [
+      report "moyen"
+    ] [
+      report "petit"
+    ]
+  ]
+end
+
+
+to-report calculate-herd-size [heads]
+  ;; Assurer que head est dans les limites minHead et maxHead
+  let minHead 5
+  let maxHead 70
+  let minSize 0.1
+  let maxSize 0.9
+  let adjusted-head max list minHead (min list head maxHead)
+  report minSize + ((adjusted-head - minHead) / (maxHead - minHead)) * (maxSize - minSize)
+end
+
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;
+;;; grass reporters ;;;
+;;;;;;;;;;;;;;;;;;;;;;;
+
+
+to-report grass-quality-to-q [quality]
+  if quality = "good" [ report 1 ]
+  if quality = "average" [ report 0.7 ]
+  if quality = "poor" [ report 0.5 ]
+  report 0.0  ; Valeur par défaut si la qualité n'est pas reconnue
+end
+
+
+
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;
+;;; herds reporters ;;;
+;;;;;;;;;;;;;;;;;;;;;;;
+
+
+; Trouver le meilleur patch : d'abord la qualité, ensuite la quantité, enfin la proximité
+to-report find-best-nearest-patch [known-spaces my-shepherd heads max-daily-DM-ingestible-heads seasons]
+  let viable-patches known-spaces with [current-grass >= 40]
+  let max-daily-ingestible (heads * max-daily-DM-ingestible-heads)
+  if seasons = "Nduungu" [ set viable-patches viable-patches with [soil-type != "Caangol" and current-monocot-grass >= (0.5 * max-daily-ingestible)]]
+  ifelse any? viable-patches [
+    ifelse my-shepherd = "bon" [
+      ; Étape 1 : Sélectionner les patches avec la meilleure qualité d'herbe
+      ; Étape 2 : Parmi les patches avec la meilleure qualité, sélectionner ceux avec la plus grande quantité d'herbe
+      let max-grass-patches viable-patches with [(current-grass >= max-daily-ingestible) = true]
+
+      let best-quality-patches max-grass-patches with-max [q]
+
+      ; Étape 3 : Choisir le patch le plus proche parmi ceux avec la meilleure qualité et la plus grande quantité d'herbe
+      report min-one-of best-quality-patches [distance myself]
+    ] [
+
+      ; Étape 2 : Parmi les patches avec la meilleure qualité, sélectionner ceux avec la plus grande quantité d'herbe
+      let max-grass-patches viable-patches with-max [current-grass]
+
+      ; Étape 3 : Choisir le patch le plus proche parmi ceux avec la meilleure qualité et la plus grande quantité d'herbe
+      report min-one-of max-grass-patches [distance myself]
+    ]
+  ] [
+
+    ; Étape 2 : Parmi les patches avec la meilleure qualité, sélectionner ceux avec la plus grande quantité d'herbe
+    let max-grass-patches viable-patches with-max [current-grass]
+
+    ; Étape 3 : Choisir le patch le plus proche parmi ceux avec la meilleure qualité et la plus grande quantité d'herbe
+    report min-one-of max-grass-patches [distance myself]
+    ; Si aucun patch viable n'est trouvé
+  ]
+end
+
+
+
+
+to-report calculate-trampling-effect [monocot-grass dicot-grass heads]
+  ;; Calcul de l'effet de piétinement (MLVstk) en fonction de la biomasse (current-grass)
+  ;; et de la proportion de dicotylédones (dicot)
+
+  let monocot-effect 0.2 * exp(-0.00068 * monocot-grass)  ; Effet sur les monocotylédones
+  let dicot-effect 0.165 * exp(-0.00092 * dicot-grass)  ; Effet sur les dicotylédones
+
+  ;; Combiner les effets des deux types de végétation
+  let MLVstk monocot-effect + dicot-effect
+
+  ;; Le MLVstk est multiplié par la taille du troupeau (head) pour avoir l'effet total sur le patch
+  report MLVstk * heads
+end
+
+
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; known-space reporters ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+to-report patches-between [ p1 p2 ]
+  let x1 [ pxcor ] of p1
+  let y1 [ pycor ] of p1
+  let x2 [ pxcor ] of p2
+  let y2 [ pycor ] of p2
+
+  let distancex x2 - x1
+  let distancey y2 - y1
+
+  let n max (list abs distancex abs distancey)
+  let xinc distancex / n
+  let yinc distancey / n
+  let x x1
+  let y y1
+  let result patch-set patch x1 y1
+  repeat n [
+    set x x + xinc
+    set y y + yinc
+    set result (patch-set result patch round x round y)
+  ]
+  report result
+end
+
+to-report meanKnownSpace [agents]
+  ; Initialiser une variable pour stocker la somme des counts
+  let _total-count 0
+  ; Initialiser une variable pour stocker le nombre de moutons
+  let _number-of-sheep count agents
+  ; Parcourir chaque mouton et compter les patches
+  ask agents [
+    let patches-agentset [distant-known-space] of self  ; Récupérer l'agentset des patches pour ce mouton
+    let count-patches count patches-agentset /  count patches          ; Compter le nombre de patches
+    set _total-count _total-count + count-patches         ; Ajouter à la somme totale
+  ]
+
+  ;; Calculer la moyenne
+  ifelse _number-of-sheep = 0 [report 0]
+  [report _total-count / _number-of-sheep * 100]
+end

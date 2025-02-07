@@ -1,0 +1,205 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Initialisation des patches ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+to setup-landscape
+  ask patches [
+    set max-tree-cover tree-cover
+    if soil-type = "Baldiol" [
+      set K K-Baldiol  ; Stock de production de Matière Sèche (MS - DM[en]) sur 1 km² pour "Baldiol"
+      set K-max K-Baldiol ; stock max
+      set current-grass 40
+      set num-nutritious round (tree-cover * 0.5)
+      set num-less-nutritious round (tree-cover * 0.25)
+      set num-fruity round (tree-cover * 0.25)
+      set patch-sensitivity 2
+      set max-tree-number 8000
+    ]
+    if soil-type = "Caangol" [
+      set K K-Caangol  ; Stock de production de Matière Sèche (MS - DM[en]) sur 1 km² pour Caangol
+      set K-max K-Caangol ; stock max
+      set current-grass 40
+      set num-nutritious round (tree-cover * 0.5)
+      set num-less-nutritious round (tree-cover * 0.25)
+      set num-fruity round (tree-cover * 0.25)
+      set patch-sensitivity 2
+      set max-tree-number 20000
+    ]
+    if soil-type = "Sangre" [
+      set K K-Sangre  ; Stock de production de Matière Sèche (MS - DM[en]) sur 1 km² pour Sangre
+      set K-max K-Sangre ; stock max
+      set current-grass 40
+      set num-nutritious round (tree-cover * 0.8)
+      set num-less-nutritious round (tree-cover * 0.25)
+      set num-fruity round (tree-cover * 0.0001)
+      set patch-sensitivity 3
+      set max-tree-number 15000
+    ]
+    if soil-type = "Seeno" [
+      set K K-Seeno  ; Stock de production de Matière Sèche (MS - DM[en]) sur 1 km² pour Seeno
+      set K-max K-Seeno ; stock max
+      set current-grass 40
+      set num-nutritious round (tree-cover * 0.5)
+      set num-less-nutritious round (tree-cover * 0.25)
+      set num-fruity round (tree-cover * 0.25)
+      set patch-sensitivity 1
+      set max-tree-number 5000
+    ]
+    if soil-type = "" [
+      set current-grass 1
+      set K 1  ; Stock de production maximal de Matière Sèche (MS - DM[en]) sur 1 km² pour Seeno
+               ;     if current-season = "Nduungu" [set grass-quality "average"] ;; A garder si jamais on simplifie la règle
+               ;     if current-season = "Dabbuunde" [set grass-quality "poor"] ;; A garder si jamais on simplifie la règle
+               ;     if current-season = "Ceedu" [set grass-quality "good"] ;; A garder si jamais on simplifie la règle
+               ;     if current-season = "Ceetcelde" [set grass-quality "average"] ;; A garder si jamais on simplifie la règle
+    ]
+    set water-point false  ; Initialement, aucun point d'eau
+    set has-pond false  ; Initialement, aucune mare
+    set water-stock 0  ; Initialement, aucun stock d'eau dans les mares
+  ]
+  assign-grass-proportions
+end
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Mise à jour du stock de l'herbe selon les proportions des deux espèces herbacées. Mise à jour quotidienne ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+to grow-grass  ; - Version 2.2.
+
+  let multiplier decreasing-factor
+  ask patches [
+    let r_grass 0 ; Taux de croissance de l'herbe, uniforme pour tous les types d'herbe
+                  ; Croissance logistique pendant Nduungu
+    let new-mono-grass 0
+    let new-dicot-grass 0
+    if current-season = "Nduungu" [
+      set r_grass 0.2
+      set multiplier 1
+    ]
+    if current-season = "Dabbuunde" [
+      set r_grass -0.05
+      if current-grass >= (0.9 * K) [ set r_grass -0.4]
+    ]
+    if current-season = "Ceedu" [
+      set r_grass -0.01
+    ]
+    if current-season = "Ceetcelde" [
+      set r_grass -0.02
+    ]
+
+    ; Croissance logistique pour les dicotylédones
+    set new-mono-grass current-monocot-grass + r_grass * current-monocot-grass * multiplier * (K * p - current-monocot-grass) / (K * p)
+    ; Croissance logistique pour les dicotylédones
+    set new-dicot-grass current-dicot-grass + r_grass * current-dicot-grass * multiplier * (K * (1 - p) - current-dicot-grass) / (K * (1 - p))
+
+
+    set current-monocot-grass min (list new-mono-grass (K * p))
+    set current-dicot-grass min (list new-dicot-grass (K * (1 - p)))
+    ; Mettre à jour le stock total d'herbe
+    set current-grass current-monocot-grass + current-dicot-grass
+
+    ;  let new-current-grass current-grass + r * current-grass * (K - current-grass) / K
+    ;  set current-grass min (list new-current-grass K)
+
+
+    ; Assurer que les valeurs restent positives
+    if current-monocot-grass <= 0 [ set current-monocot-grass 1 ]
+    if current-dicot-grass <= 0 [ set current-dicot-grass 1]
+    if current-grass <= 0 [ set current-grass 1 ]
+  ]
+end
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Mise à jour des proportions d'herbe. Mise à jour par an ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+to assign-grass-proportions ; Réassigner la proportion de monocotylédones (p) en fonction du type de sol
+  ask patches [
+    if soil-type = "Baldiol" [
+      set p random-float (0.0 - 0.2) + 0.3  ; Intervalle [0.3, 0.5]
+    ]
+    if soil-type = "Caangol" [
+      set p random-float (0.0 - 0.3) + 0.1  ; Intervalle [0.1, 0.4]
+    ]
+    if soil-type = "Sangre" [
+      set p random-float (0.0 - 0.3) + 0.3  ; Intervalle [0.3, 0.6]
+    ]
+    if soil-type = "Seeno" [
+      set p random-float (0.0 - 0.2) + 0.8  ; Intervalle [0.6, 0.8]
+    ]
+    
+    ; Assurer que p est entre 0 et 1
+    set p max list 0.2 (min list p 1)
+    ; Réinitialiser les stocks d'herbe en fonction des nouvelles proportions
+    set current-monocot-grass current-grass * p
+    set current-dicot-grass current-grass * (1 - p)
+  ]
+end
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Mise à jour des valeurs nutritives de l'herbe. Mise à jour par saison ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+to update-UF-and-MAD
+  ask patches [
+    ; Définit pour les deux espèces les valeurs en UF et MAD par kg de MS (valeurs de Boudet, 1975, "Manuel sur les pâturages tropicaux et cultures fourragères" en prenant comme référence une valeur proche des graminées les plus présents (monocotylédones) et zornia comme légumineuse (dicotylédone))
+    if current-season = "Nduungu" [
+      set monocot-UF-per-kg-MS 0.5
+      set monocot-MAD-per-kg-MS 60
+      set dicot-UF-per-kg-MS 0.6
+      set dicot-MAD-per-kg-MS 100
+    ]
+    if current-season = "Dabbuunde" [
+      set monocot-UF-per-kg-MS 0.6
+      set monocot-MAD-per-kg-MS 20
+      set dicot-UF-per-kg-MS 0.8
+      set dicot-MAD-per-kg-MS 110
+    ]
+    if current-season = "Ceedu" [
+      set monocot-UF-per-kg-MS 0.45
+      set monocot-MAD-per-kg-MS 1
+      set dicot-UF-per-kg-MS 0.6
+      set dicot-MAD-per-kg-MS 30
+    ]
+    if current-season = "Ceetcelde" [
+      set monocot-UF-per-kg-MS 0.4
+      set monocot-MAD-per-kg-MS 0.01
+      set dicot-UF-per-kg-MS 0.4
+      set dicot-MAD-per-kg-MS 30
+    ]
+  ]
+end
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Mise à jour de la qualité de l'herbe selon les proportions des deux espèces herbacées. Mise à jour quotidienne ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+to update-grass-quality ; - Version 2
+  ask patches [
+    ; Calculer le rapport MAD/UF pour les monocotylédones
+    let mean-UF-per-kg-DM  ((monocot-UF-per-kg-MS * current-monocot-grass) + (dicot-UF-per-kg-MS * current-dicot-grass)) / (current-monocot-grass + current-dicot-grass)
+    let mean-MAD-per-kg-DM  ((monocot-MAD-per-kg-MS * current-monocot-grass) + (dicot-MAD-per-kg-MS * current-dicot-grass)) / (current-monocot-grass + current-dicot-grass)
+    ; Déterminer la qualité de l'herbe en fonction du rapport moyen MAD/UF
+    ifelse ((mean-UF-per-kg-DM >= seuil-bon-UF) AND (mean-MAD-per-kg-DM >= seuil-bon-MAD)) [
+      set grass-quality "good"
+      ] [ ifelse ((mean-UF-per-kg-DM >= seuil-moyen-UF) AND (mean-UF-per-kg-DM <= seuil-bon-UF) AND (mean-MAD-per-kg-DM >= seuil-moyen-MAD) AND (mean-MAD-per-kg-DM <= seuil-bon-MAD))  [
+        set grass-quality "average"
+      ] [
+        set grass-quality "poor"
+      ]
+      ; Assigner q basé sur la qualité actuelle de l'herbe
+    ]
+    set q grass-quality-to-q grass-quality
+  ]
+end
+
+
+

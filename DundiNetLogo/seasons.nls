@@ -1,0 +1,60 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Mise à jour des saisons ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+to update-season
+  ; Incrémentation des saisons et années
+  set season-counter season-counter + 1
+  set year-counter year-counter + 1
+
+  if current-season = "Nduungu" and season-counter >= nduungu-duration [
+    set current-season "Dabbuunde"
+    set season-counter 0
+    stock-residu-cultures         ; Début du dabbuunde : recolte des cultures et stock des residus
+  ]
+  if current-season = "Dabbuunde" and season-counter >= dabbuunde-duration [
+    set current-season "Ceedu"
+    set season-counter 0
+  ]
+  if current-season = "Ceedu" and season-counter >= ceedu-duration [
+    set current-season "Ceetcelde"
+    set season-counter 0
+  ]
+  if current-season = "Ceetcelde" and season-counter >= ceetcelde-duration [
+    set current-season "Nduungu"
+    set season-counter 0
+    ; Mise à jour de l'année
+  ]
+end
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Mise à jour des durées de saison en fonction du type d'année ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+to set-season-durations
+  if current-year-type = "bonne" [
+    ;; Par exemple : les bonnes années peuvent avoir une plus longue saison de croissance
+    set nduungu-duration 120
+    set dabbuunde-duration 60
+    set ceedu-duration 175
+    set ceetcelde-duration 10
+  ]
+  if current-year-type = "moyenne" [
+    set nduungu-duration 90
+    set dabbuunde-duration 60
+    set ceedu-duration 175
+    set ceetcelde-duration 40
+  ]
+  if current-year-type = "mauvaise" [
+    set nduungu-duration 60
+    set dabbuunde-duration 60
+    set ceedu-duration 175
+    set ceetcelde-duration 70
+  ]
+
+  ; calculer le nombre de ticks dans l'année
+  set total-ticks-per-year nduungu-duration + dabbuunde-duration + ceedu-duration + ceetcelde-duration
+end
+
+
