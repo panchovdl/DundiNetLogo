@@ -808,7 +808,6 @@ to update-plot
 
 end
 
-
 @#$#@#$#@
 GRAPHICS-WINDOW
 100
@@ -1319,7 +1318,7 @@ CattleNECSatifactionIndex
 CattleNECSatifactionIndex
 0
 5
-3.0
+5.0
 1
 1
 NIL
@@ -1363,10 +1362,10 @@ PENS
 SLIDER
 370
 490
-570
+637
 523
-TreeDensitySatisfaction-olds
-TreeDensitySatisfaction-olds
+TreeDensitySatisfactionOlds
+TreeDensitySatisfactionOlds
 0
 8000
 5231.0
