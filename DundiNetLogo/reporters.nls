@@ -412,7 +412,7 @@ end
 to-report find-best-nearest-patch [known-spaces my-shepherd heads max-daily-DM-ingestible-heads seasons]
   let viable-patches known-spaces with [current-grass >= 40]
   let max-daily-ingestible (heads * max-daily-DM-ingestible-heads)
-  if seasons = "Nduungu" [ set viable-patches viable-patches with [soil-type != "Caangol" and current-monocot-grass >= (0.5 * max-daily-ingestible)]]
+  if seasons = "Nduungu" [ set viable-patches viable-patches with [soil-type != "Caangol"]]
   ifelse any? viable-patches [
     ifelse my-shepherd = "bon" [
       ; Étape 1 : Sélectionner les patches avec la meilleure qualité d'herbe

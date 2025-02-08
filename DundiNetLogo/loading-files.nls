@@ -1,0 +1,97 @@
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;; Procédures d'ouverture des fichiers ;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ouverture des fichiers pour l'environnement spatial du modèle ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+to load-environment [filename]
+  file-open filename
+  while [not file-at-end?] [
+    let data read-from-string file-read-line
+    let value item 0 data
+    let px item 1 data
+    let py item 2 data
+    let tree-count item 3 data
+    let nom_puular item 7 data
+    let low-topo-zone item 6 data
+    ask patch px py [
+      set soil-type nom_puular
+      set tree-cover tree-count
+      set init-camp-pref low-topo-zone]
+  ]
+  file-close
+end
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ouverture des fichiers pour les caractéristiques temporelles du monde ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+to load-climate-variables [filename]
+  set year-types []
+  file-open filename
+  while [not file-at-end?] [
+    let line file-read-line
+    ; Ajouter le type d'année à la liste
+    set year-types lput line year-types
+  ]
+  file-close
+end
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ouverture des fichiers pour les stocks et la sensibilité des arbres selon leur type et l'age ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+to load-tree-age-data [filename]
+  set tree-age-table table:make
+  file-open filename
+  ; Lire les données ligne par ligne
+  while [not file-at-end?] [
+    let line csv:from-row file-read-line
+    ; Convertir les éléments en types appropriés
+    let trees-type item 0 line        ; "nutritive", "lessNutritive", "fruity"
+    let ages item 1 line ; Âge (1 à 8)
+    let max-fruits item 2 line
+    let max-leaves item 3 line
+    let max-woods item 4 line
+    let sensitivities item 5 line
+    ; Ajouter les données à la table `tree-age-table`
+    table:put tree-age-table (list trees-type ages) (list max-fruits max-leaves max-woods sensitivities)
+  ]
+  file-close
+end
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ouverture des fichiers pour les valeurs nutritionnelles selon leur type, le type de sol et la saison ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+to load-tree-nutrition-data [filename]
+  set tree-nutrition-table table:make
+  file-open filename
+  ; Lire les données ligne par ligne
+  while [not file-at-end?] [
+    let line csv:from-row file-read-line
+    ; Convertir les éléments en types appropriés
+    let trees-type item 0 line        ; "nutritive", "lessNutritive", "fruity"
+    let landscapes item 1 line ; "Baldiol", "Sangre", "Seeno", "Caangol"
+    let seasons item 2 line
+    let tree-UF-data item 3 line
+    let tree-MAD-data item 4 line
+    ; Ajouter les données à la liste `tree-nutrition-data`
+    table:put tree-nutrition-table (list trees-type landscapes seasons) (list tree-UF-data tree-MAD-data)
+  ]
+  file-close
+end

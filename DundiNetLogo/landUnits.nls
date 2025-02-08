@@ -79,14 +79,14 @@ to grow-grass  ; - Version 2.2.
       set multiplier 1
     ]
     if current-season = "Dabbuunde" [
-      set r_grass -0.05
-      if current-grass >= (0.9 * K) [ set r_grass -0.4]
+      set r_grass -0.001
+      if current-grass >= (0.95 * K) [ set r_grass -0.5]
     ]
     if current-season = "Ceedu" [
-      set r_grass -0.01
+      set r_grass -0.001
     ]
     if current-season = "Ceetcelde" [
-      set r_grass -0.02
+      set r_grass -0.001
     ]
 
     ; Croissance logistique pour les dicotylédones

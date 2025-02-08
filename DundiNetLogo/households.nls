@@ -64,8 +64,8 @@ to setup-foyers
           ; Seuils d'évaluation de la santé du troupeau
           set cattle-low-threshold-cc 1
           set sheep-low-threshold-cc 1
-          set cattle-high-threshold-cc cattleNEC-satisfaction
-          set sheep-high-threshold-cc sheepNec-satisfaction
+          set cattle-high-threshold-cc CattleNECSatifactionIndex
+          set sheep-high-threshold-cc SheepNECSatifactionIndex
           
           ; Définir les variables d'agriculture
           set stock-residu 0                 ; pas de residu de culture initialement
