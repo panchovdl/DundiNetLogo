@@ -4,6 +4,9 @@ This is skeleton to plug your model into OpenMOLE. To go further you should comp
 Define some hook, some exploration methods, and optionally some execution environment.
 To do all that please refer to the OpenMOLE documentation.
 */
+val avgUBTpercamp = Val[Double]
+val numberofCamps = Val[Double]
+val decreasingFactor = Val[Double]
 
 val maxPonds4Months = Val[Double]
 val maxPonds5Months = Val[Double]
@@ -14,8 +17,7 @@ val proportionBigHerders = Val[Double]
 val proportionMediumHerders = Val[Double]
 val SheepNECSatifactionIndex = Val[Double]
 val CattleNECSatifactionIndex = Val[Double]
-val interfaceNumberOfCampI = Val[Double]
-val TreeDensitySatisfactionOldes = Val[Double]
+
 val totalFoyers = Val[Double]
 val totalCattles = Val[Double]
 val totalSheeps = Val[Double]
@@ -51,14 +53,14 @@ val meanCattlesNEC = Val[Double]
 val MSTSheepNEC = Val[Double]
 val MSTCattleNEC = Val[Double]
 
-val totalTrees8years = Val[Double]
-val totalTrees7years = Val[Double]
-val totalTrees6years = Val[Double]
-val totalTrees5years = Val[Double]
-val totalTrees4years = Val[Double]
-val totalTrees3years = Val[Double]
-val totalTrees2years = Val[Double]
-val totalTrees1years = Val[Double]
+val meanTrees8years = Val[Double]
+val meanTrees7years = Val[Double]
+val meanTrees6years = Val[Double]
+val meanTrees5years = Val[Double]
+val meanTrees4years = Val[Double]
+val meanTrees3years = Val[Double]
+val meanTrees2years = Val[Double]
+val meanTrees1years = Val[Double]
 val totalTreesOldes = Val[Double]
 val totalTreesYoung = Val[Double]
 val trajTrees = Val[Double]
@@ -75,13 +77,23 @@ val meanLeavesConsumedCattle = Val[Double]
 val meanFruitsConsumedSheep = Val[Double]
 val meanLeavesConsumedSheep = Val[Double]
 
+
+val totalGPCaangol = Val[Double]
+val totalGPSeeno = Val[Double]
+val totalGPBaldiol = Val[Double]
+val totalGPSangre = Val[Double]
+val trajSatisfactionSeeno = Val[Double]
+val trajSatisfactionBaldiol = Val[Double]
+val trajSatisfactionSangre = Val[Double]
+val trajSatisfactionCaangol = Val[Double]
+val treesKilled = Val[Double]
+
 val sumSmallHerder = Val[Double]
 val sumMediumHerder = Val[Double]
 val sumLargeHerder = Val[Double]
 
 
-
-val dundiModelODDTask = NetLogo6Task(
+val model = NetLogo6Task(
   workDirectory / "DundiModelODD.nlogo",
     Seq("setup","while [ticks <= 3650] [go] ; condition d'arret 10 ans"),
     seed = mySeed, 
@@ -91,12 +103,13 @@ val dundiModelODDTask = NetLogo6Task(
     inputs += proportionMediumHerders mapped "proportion-medium-herders",
     inputs += SheepNECSatifactionIndex mapped "SheepNECSatifactionIndex",
     inputs += CattleNECSatifactionIndex mapped "CattleNECSatifactionIndex",
-    inputs += interfaceNumberOfCampI mapped "interface-number-of-camp-i",
+    inputs += avgUBTpercamp mapped "avg-UBT-per-camp",
+    inputs += numberofCamps mapped "number-of-camps",
     inputs += SatisfactionMeanTreesInSeeno mapped "SatisfactionMeanTreesInSeeno",
     inputs += SatisfactionMeanTreesInCaangol mapped "SatisfactionMeanTreesInCaangol",
     inputs += SatisfactionMeanTreesInBaldiol mapped "SatisfactionMeanTreesInBaldiol",
     inputs += SatisfactionMeanTreesInSangre mapped "SatisfactionMeanTreesInSangre",
-    inputs += TreeDensitySatisfactionOldes mapped "TreeDensitySatisfaction-oldes",
+    inputs += decreasingFactor mapped "decreasing-factor",
     
     // pour avoir les input en output
     outputs += goodShepherdPercentage,
@@ -104,12 +117,13 @@ val dundiModelODDTask = NetLogo6Task(
     outputs += proportionMediumHerders,
     outputs += SheepNECSatifactionIndex,
     outputs += CattleNECSatifactionIndex,
-    outputs += interfaceNumberOfCampI,
+    outputs += avgUBTpercamp,
+    outputs += numberofCamps,
     outputs += SatisfactionMeanTreesInSeeno,
     outputs += SatisfactionMeanTreesInCaangol,
     outputs += SatisfactionMeanTreesInBaldiol,
     outputs += SatisfactionMeanTreesInSangre,
-    outputs += TreeDensitySatisfactionOldes,
+    outputs += decreasingFactor,
     
     outputs += totalFoyers mapped "totalFoyers",
     outputs += totalCattles mapped "totalCattles",
@@ -125,10 +139,6 @@ val dundiModelODDTask = NetLogo6Task(
     outputs += totalTreesOldes mapped "totalTreesOldes",
     outputs += totalTreesYoung mapped "totalTreesYoung",
     outputs += MSTTrees mapped "MST-trees",
-    outputs += MSTSeeno mapped "MST-Seeno",
-    outputs += MSTBaldiol mapped "MST-Baldiol",
-    outputs += MSTSangre mapped "MST-Sangre",
-    outputs += MSTCaangol mapped "MST-Caangol",
     outputs += totalGrass mapped "totalGrass",
     outputs += totalTrees mapped "totalTrees",
     outputs += meanGrass mapped "meanGrass",
@@ -141,14 +151,30 @@ val dundiModelODDTask = NetLogo6Task(
     outputs += sumLargeHerder mapped "sumLargeHerder",
     
 
+    outputs += totalGPCaangol mapped "totalGPCaangol",
+    outputs += totalGPSeeno mapped "totalGPSeeno",
+    outputs += totalGPBaldiol mapped "totalGPBaldiol",
+    outputs += totalGPSangre mapped "totalGPSangre",
+    outputs += trajSatisfactionSeeno mapped "traj-satisfaction-Seeno",
+    outputs += trajSatisfactionBaldiol mapped "traj-satisfaction-Baldiol",
+    outputs += trajSatisfactionSangre mapped "traj-satisfaction-Sangre",
+    outputs += trajSatisfactionCaangol mapped "traj-satisfaction-Caangol",
+    outputs += MSTSeeno mapped "MST-Seeno",
+    outputs += MSTBaldiol mapped "MST-Baldiol",
+    outputs += MSTSangre mapped "MST-Sangre",
+    outputs += MSTCaangol mapped "MST-Caangol",
+    outputs += treesKilled mapped "trees-killed",
+    outputs += cattlesTempCamp mapped "cattlesTempCamp",
+    outputs += sheepsTempCamp mapped "sheepsTempCamp",
 
-    //goodShepherdPercentage := 0.0,
-    //proportionBigHerders := 100.0,
-    //proportionMediumHerders := 0.0,
-    //interfaceNumberOfCampI := 91.0,
+    /*goodShepherdPercentage := 0.0,
+    numberofCamps := 10,
+    proportionBigHerders := 100.0,
+    proportionMediumHerders := 0.0,
+    avgUBTpercamp := 91.0,
+    decreasingFactor := 5,*/
     SheepNECSatifactionIndex := 3.0,
     CattleNECSatifactionIndex := 3.0,
-    TreeDensitySatisfactionOldes := 6000,
     SatisfactionMeanTreesInSeeno := 20,
     SatisfactionMeanTreesInCaangol := 100,
     SatisfactionMeanTreesInBaldiol := 40, 
@@ -156,4 +182,4 @@ val dundiModelODDTask = NetLogo6Task(
     mySeed := 42
   )
 
-dundiModelODDTask hook display
+model hook display

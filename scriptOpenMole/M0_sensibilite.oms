@@ -1,0 +1,41 @@
+import _file_.DundiModel._
+import _file_.environement_explo._
+
+val replications = Replication(
+    evaluation = model, // the model to run
+    seed = mySeed,         // the seed variable
+    sample = 20,           // the number of model executions
+    aggregation = Seq(meanCattlesNEC aggregate median, MSTCattleNEC aggregate median,
+                      totalTreesOldes aggregate median, meanGrass aggregate median, 
+                      treesKilled aggregate average, cattlesTempCamp aggregate average)
+)
+
+// it's replication how is evaluated in the model
+val sensitivAnalyse = SensitivitySaltelli(
+      evaluation = model,
+      inputs = Seq(
+          numberofCamps in (1.0, 400.0),
+          goodShepherdPercentage in (0.0, 100.0),
+          proportionBigHerders in (0.0, 100.0),
+          proportionMediumHerders in (0.0,100.0),
+          avgUBTpercamp in (10.0, 1000.0),
+          decreasingFactor in (0.5, 8.0)
+        ),
+      outputs = Seq(treesKilled, cattlesTempCamp,meanGrass,meanCattlesNEC, MSTCattleNEC, totalTreesOldes),
+      sample = 100 // 7 parametres x 10 chemins le nombre de trajectoir est r de k+1  campolongo et al. 2007, An effective screening design for sensitivity analysis of large models
+      //level = 10
+    ) hook (workDirectory / "results_saltelli")
+
+
+val dispatch =
+  DispatchEnvironment(
+    slot = Seq(
+      300 on muse
+    )
+  )
+
+
+//val local = LocalEnvironment(1)
+
+
+sensitivAnalyse on dispatch by 10
