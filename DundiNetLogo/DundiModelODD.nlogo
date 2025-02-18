@@ -807,7 +807,6 @@ to update-plot
         [0]]]] _listString)
 
 end
-
 @#$#@#$#@
 GRAPHICS-WINDOW
 100
@@ -1017,7 +1016,7 @@ good-shepherd-percentage
 good-shepherd-percentage
 0
 100
-100.0
+87.0
 1
 1
 NIL
@@ -1032,7 +1031,7 @@ proportion-big-herders
 proportion-big-herders
 0
 100
-0.0
+20.0
 1
 1
 NIL
@@ -1235,26 +1234,6 @@ PENS
 "default" 1.0 0 -13840069 true "" "plot meanGrass / 100"
 
 PLOT
-1011
-342
-1283
-488
-trees-evolve
-NIL
-NIL
-0.0
-10.0
-0.0
-10.0
-true
-true
-"" ""
-PENS
-"olds" 1.0 0 -16777216 true "" "plot totalTreesOldes"
-"youngs" 1.0 0 -7500403 true "" "plot totalTreesYoung"
-"satis" 1.0 0 -2674135 true "" "plot TreeDensitySatisfaction-olds"
-
-PLOT
 1282
 196
 1585
@@ -1332,8 +1311,8 @@ SLIDER
 number-of-camps
 number-of-camps
 0
-200
-1.0
+150
+150.0
 1
 1
 NIL
@@ -1360,10 +1339,10 @@ PENS
 "satis" 1.0 0 -2674135 true "" "plot SheepNECSatifactionIndex"
 
 SLIDER
-370
-490
-637
-523
+635
+650
+902
+683
 TreeDensitySatisfactionOlds
 TreeDensitySatisfactionOlds
 0
@@ -1375,10 +1354,10 @@ NIL
 HORIZONTAL
 
 PLOT
-1021
-488
-1234
-636
+1025
+485
+1215
+633
 MST of olders trees
 NIL
 NIL
@@ -1474,10 +1453,10 @@ NIL
 HORIZONTAL
 
 PLOT
-1021
-635
-1234
-780
+1020
+340
+1280
+485
 MST-tree by soil
 NIL
 NIL
@@ -1486,13 +1465,13 @@ NIL
 0.0
 1.0
 true
-false
+true
 "" ""
 PENS
 "Seeno" 1.0 0 -2674135 true "" "plot MST-Seeno"
 "Baldiol" 1.0 0 -7500403 true "" "plot MST-Baldiol"
-"pen-2" 1.0 0 -955883 true "" "plot MST-Sangre"
-"pen-3" 1.0 0 -16777216 true "" "plot MST-Caangol"
+"Sangre" 1.0 0 -955883 true "" "plot MST-Sangre"
+"Caangol" 1.0 0 -16777216 true "" "plot MST-Caangol"
 
 BUTTON
 20
@@ -1537,7 +1516,7 @@ decreasing-factor
 decreasing-factor
 1
 20
-0.0
+3.0
 0.1
 1
 NIL
@@ -1551,8 +1530,8 @@ SLIDER
 avg-UBT-per-camp
 avg-UBT-per-camp
 10
-800
-10.0
+100
+100.0
 5
 1
 NIL
@@ -1585,10 +1564,10 @@ NIL
 HORIZONTAL
 
 PLOT
-1282
-342
-1507
-488
+1285
+340
+1485
+486
 trees-killed
 NIL
 NIL
@@ -1603,32 +1582,32 @@ PENS
 "default" 1.0 0 -16777216 true "" "plot trees-killed"
 
 TEXTBOX
-996
-22
+986
+28
 1011
-1134
+1508
 ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+20
+0.0
+1
+
+TEXTBOX
+1585
 10
+1655
+40
+Outputs
+15
 0.0
 1
 
 TEXTBOX
-1343
-6
-2603
-86
------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ Outputs ------------------------------------------------------------------------ --------------------------------------------------------------------------------------------------------------------------------------------------
-6
-0.0
-1
-
-TEXTBOX
-1533
-113
-1893
-272
+1075
+135
+1435
+291
 Trees Satisfaction
-5
+15
 0.0
 1
 
@@ -1636,9 +1615,9 @@ TEXTBOX
 1590
 100
 1613
-820
+1131
 |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-5
+20
 0.0
 1
 
@@ -1646,9 +1625,9 @@ TEXTBOX
 2272
 19
 2312
-1134
+1130
 ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-10
+20
 0.0
 1
 
@@ -1658,7 +1637,7 @@ TEXTBOX
 2176
 192
 Herds Satisfaction
-5
+15
 0.0
 1
 
@@ -1703,12 +1682,12 @@ Ratio surface of each landscape filled condition
 1
 
 TEXTBOX
-1452
-1028
-1884
-1080
+1655
+1030
+2087
+1081
 Global Behaviors Informations\n
-5
+15
 0.0
 1
 
@@ -1728,7 +1707,7 @@ TEXTBOX
 1278
 1065
 For sensitivity analysis
-1
+15
 0.0
 1
 
@@ -1773,10 +1752,10 @@ TEXTBOX
 1
 
 PLOT
-1266
-491
-1581
-666
+1270
+485
+1585
+660
 Mean tree resources
 NIL
 NIL
@@ -1800,7 +1779,7 @@ decreasing-factor
 decreasing-factor
 0
 100
-0.0
+3.0
 1
 1
 NIL
