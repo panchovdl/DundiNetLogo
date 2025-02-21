@@ -1,15 +1,30 @@
-// 22h de calcul le 10 decembre 2024
-
-import _file_.DundiModelODD._
+// 18 000 25h
+import _file_.DundiModel._
 import _file_.environement_explo._
 
-DirectSampling(
-  evaluation = dundiModelODDTask hook (workDirectory / "M0_directSampling_muse"),
+val myDirectSampling = DirectSampling(
+  evaluation = model hook (workDirectory / "M0_directSampling_muse_20250220"),
   sampling = 
-    (mySeed in (1 to 5 by 1))x
-    (goodShepherdPercentage in (0.0 to 100.0 by 20.0)) x
-    (proportionBigHerders in (0.0 to 50.0 by 10.0))x
-    (proportionMediumHerders in (0.0 to 50.0 by 10.0))x
-    (interfaceNumberOfCampI in (30.0 to 100.0 by 10.0))
-) on muse by 11
-   
+    (goodShepherdPercentage in (0.0 to 90.0 by 30.0)) x // 4
+    (proportionBigHerders in (0.0 to 50.0 by 10.0))x    // 5
+    (proportionMediumHerders in (0.0 to 50.0 by 10.0))x // 5
+    (numberofCamps in (10.0 to 140.0 by 30.0))x         // 5
+    (avgUBTpercamp in (10.0 to 90.0 by 20.0))x          // 5
+    (decreasingFactor in (0.1 to 8.1 by 2.0))           // 5
+)
+
+val replications = Replication(
+    evaluation = myDirectSampling, // the model to run
+    seed = mySeed,         // the seed variable
+    sample = 10
+)
+
+
+val dispatch =
+  DispatchEnvironment(
+    slot = Seq(
+      300 on muse
+    )
+  )
+
+myDirectSampling on dispatch

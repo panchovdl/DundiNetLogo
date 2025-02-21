@@ -166,8 +166,9 @@ val model = NetLogo6Task(
     outputs += treesKilled mapped "trees-killed",
     outputs += cattlesTempCamp mapped "cattlesTempCamp",
     outputs += sheepsTempCamp mapped "sheepsTempCamp",
-
-    /*goodShepherdPercentage := 0.0,
+    
+    /*
+    goodShepherdPercentage := 0.0,
     numberofCamps := 10,
     proportionBigHerders := 100.0,
     proportionMediumHerders := 0.0,
