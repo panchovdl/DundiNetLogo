@@ -150,7 +150,7 @@ to set-herd-sizes ; Valeurs à définir à partir des recensements de campements
     if r < 0.008 [
       set cattle-herd-size "grand"
       set sheep-herd-size "moyen"
-    ]
+    ]    
     if r < 0.013 [
       set cattle-herd-size "grand"
       set sheep-herd-size "petit"
