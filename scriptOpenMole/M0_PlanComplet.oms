@@ -1,9 +1,18 @@
-// 18 000 25h
+// 18 000 31hreal 42000CPU
+// 180 000 310h real
 import _file_.DundiModel._
 import _file_.environement_explo._
 
+
+
+val replications = Replication(
+    evaluation = model, // the model to run
+    seed = mySeed,         // the seed variable
+    sample = 10
+)
+
 val myDirectSampling = DirectSampling(
-  evaluation = model hook (workDirectory / "M0_directSampling_muse_20250220"),
+  evaluation = replications hook (workDirectory / "M0_directSampling_muse_20250222"),
   sampling = 
     (goodShepherdPercentage in (0.0 to 90.0 by 30.0)) x // 4
     (proportionBigHerders in (0.0 to 50.0 by 10.0))x    // 5
@@ -11,12 +20,6 @@ val myDirectSampling = DirectSampling(
     (numberofCamps in (10.0 to 140.0 by 30.0))x         // 5
     (avgUBTpercamp in (10.0 to 90.0 by 20.0))x          // 5
     (decreasingFactor in (0.1 to 8.1 by 2.0))           // 5
-)
-
-val replications = Replication(
-    evaluation = myDirectSampling, // the model to run
-    seed = mySeed,         // the seed variable
-    sample = 10
 )
 
 
