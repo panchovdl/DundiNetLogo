@@ -14,17 +14,17 @@ val replications = Replication(
 val sensitivAnalyse = SensitivitySaltelli(
       evaluation = model,
       inputs = Seq(
-          numberofCamps in (1.0, 400.0),
+          numberofCamps in (1.0, 80.0),
           goodShepherdPercentage in (0.0, 100.0),
-          proportionBigHerders in (0.0, 100.0),
-          proportionMediumHerders in (0.0,100.0),
-          avgUBTpercamp in (10.0, 1000.0),
+          proportionBigHerders in (30.0, 70.0), // ATTENTION CA NE PEUT PAS ALLER AU DELA DE 50%
+          proportionMediumHerders in (0.0,30.0), // ATTENTION CA NE PEUT PAS ALLER AU DELA DE 50%
+          avgUBTpercamp in (10.0, 70.0),
           decreasingFactor in (0.5, 8.0)
         ),
-      outputs = Seq(treesKilled, cattlesTempCamp,meanGrass,meanCattlesNEC, MSTCattleNEC, totalTreesOldes),
-      sample = 100 // 7 parametres x 10 chemins le nombre de trajectoir est r de k+1  campolongo et al. 2007, An effective screening design for sensitivity analysis of large models
+      outputs = Seq(treesKilled, cattlesTempCamp, sheepsTempCamp, meanGrass, meanCattlesNEC, MSTCattleNEC, meanSheepsNEC, MSTSheepNEC, totalTreesOldes),
+      sample = 30 // 7 parametres x 10 chemins le nombre de trajectoir est r de k+1  campolongo et al. 2007, An effective screening design for sensitivity analysis of large models
       //level = 10
-    ) hook (workDirectory / "results_saltelli")
+    ) hook (workDirectory / "MO_results_saltelli")
 
 
 val dispatch =
@@ -38,4 +38,4 @@ val dispatch =
 //val local = LocalEnvironment(1)
 
 
-sensitivAnalyse on dispatch by 10
+sensitivAnalyse on dispatch
