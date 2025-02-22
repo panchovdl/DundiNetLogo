@@ -409,20 +409,18 @@ end
 
 
 ; Trouver le meilleur patch : d'abord la qualité, ensuite la quantité, enfin la proximité
-to-report find-best-nearest-patch [known-spaces my-shepherd heads max-daily-DM-ingestible-heads seasons]
-  let viable-patches known-spaces with [current-grass >= 40]
-  let max-daily-ingestible (heads * max-daily-DM-ingestible-heads)
+to-report find-best-nearest-patch [known-spaces my-shepherd seasons UtilityFactor]
+  let viable-patches known-spaces with [current-grass >= 100]
   if seasons = "Nduungu" [ set viable-patches viable-patches with [soil-type != "Caangol"]]
   ifelse any? viable-patches [
     ifelse my-shepherd = "bon" [
-      ; Étape 1 : Sélectionner les patches avec la meilleure qualité d'herbe
-      ; Étape 2 : Parmi les patches avec la meilleure qualité, sélectionner ceux avec la plus grande quantité d'herbe
-      let max-grass-patches viable-patches with [(current-grass >= max-daily-ingestible) = true]
-
-      let best-quality-patches max-grass-patches with-max [q]
+      
+      ; Sélectionner le(s) patch(es) ayant la plus haute valeur d'utilité.
+      let best-patches (viable-patches with-max [ (UtilityFactor * q) + ((1 - UtilityFactor) * current-grass) ])
+      report min-one-of best-patches [distance myself]
 
       ; Étape 3 : Choisir le patch le plus proche parmi ceux avec la meilleure qualité et la plus grande quantité d'herbe
-      report min-one-of best-quality-patches [distance myself]
+      report min-one-of best-patches [distance myself]
     ] [
 
       ; Étape 2 : Parmi les patches avec la meilleure qualité, sélectionner ceux avec la plus grande quantité d'herbe

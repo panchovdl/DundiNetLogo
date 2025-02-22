@@ -8,7 +8,7 @@ to setup-landscape
     if soil-type = "Baldiol" [
       set K K-Baldiol  ; Stock de production de Matière Sèche (MS - DM[en]) sur 1 km² pour "Baldiol"
       set K-max K-Baldiol ; stock max
-      set current-grass 40
+      set current-grass 100
       set num-nutritious round (tree-cover * 0.5)
       set num-less-nutritious round (tree-cover * 0.25)
       set num-fruity round (tree-cover * 0.25)
@@ -18,7 +18,7 @@ to setup-landscape
     if soil-type = "Caangol" [
       set K K-Caangol  ; Stock de production de Matière Sèche (MS - DM[en]) sur 1 km² pour Caangol
       set K-max K-Caangol ; stock max
-      set current-grass 40
+      set current-grass 100
       set num-nutritious round (tree-cover * 0.5)
       set num-less-nutritious round (tree-cover * 0.25)
       set num-fruity round (tree-cover * 0.25)
@@ -28,7 +28,7 @@ to setup-landscape
     if soil-type = "Sangre" [
       set K K-Sangre  ; Stock de production de Matière Sèche (MS - DM[en]) sur 1 km² pour Sangre
       set K-max K-Sangre ; stock max
-      set current-grass 40
+      set current-grass 100
       set num-nutritious round (tree-cover * 0.8)
       set num-less-nutritious round (tree-cover * 0.25)
       set num-fruity round (tree-cover * 0.0001)
@@ -38,7 +38,7 @@ to setup-landscape
     if soil-type = "Seeno" [
       set K K-Seeno  ; Stock de production de Matière Sèche (MS - DM[en]) sur 1 km² pour Seeno
       set K-max K-Seeno ; stock max
-      set current-grass 40
+      set current-grass 100
       set num-nutritious round (tree-cover * 0.5)
       set num-less-nutritious round (tree-cover * 0.25)
       set num-fruity round (tree-cover * 0.25)

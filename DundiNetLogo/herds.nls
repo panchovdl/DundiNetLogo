@@ -152,7 +152,7 @@ end
 to move ; Mouvement des troupeaux - bovins puis ovins
 
   ;; Find the best patch within known space
-  let best-patch find-best-nearest-patch known-space shepherd-type head max-daily-DM-ingestible-per-head current-season
+  let best-patch find-best-nearest-patch known-space shepherd-type current-season FUtility
   let my-known-space known-space
   move-to current-home-patch
   ifelse best-patch != nobody [
@@ -244,7 +244,7 @@ to eat
     ifelse monocot-MAD-UF-ratio >= dicot-MAD-UF-ratio [
       set preference-mono 0.8
     ] [
-      set preference-mono 0.3
+      set preference-mono 0.5
     ]
   ]
 

@@ -452,7 +452,7 @@ to set-initial-values
   ; Ici, on calcule sum-UBT à partir du avg-UBT-per-camp (slider dans la
   set sum-UBT (initial-number-of-camps * avg-UBT-per-camp)
 
-  ; Définir les seuil max d'herbe par type de sol
+  ; Définir les seuil max d'herbe par type de sol kg MS / km²
   set K-Baldiol 120000
   set K-Caangol 300000
   set K-Sangre 80000
@@ -567,9 +567,9 @@ to go
 
   ; Mise à jour annuelle
   if year-counter >= total-ticks-per-year [
-    ask patches with [current-grass < 200] [
-      set current-monocot-grass 100
-      set current-dicot-grass 100
+    ask patches with [current-grass < 100] [
+      set current-monocot-grass 50
+      set current-dicot-grass 50
       set current-grass current-monocot-grass + current-dicot-grass
     ]
     set year-counter 0                            ; Au premier jour de chaque nouvelle année, remet le compteur d'année à 0
@@ -966,7 +966,7 @@ CHOOSER
 visualization-mode
 visualization-mode
 "soil-type" "tree-cover" "grass-cover" "grass-quality" "known-space"
-2
+4
 
 BUTTON
 720
@@ -1312,7 +1312,7 @@ number-of-camps
 number-of-camps
 0
 150
-150.0
+112.0
 1
 1
 NIL
@@ -1516,7 +1516,7 @@ decreasing-factor
 decreasing-factor
 1
 20
-3.0
+0.0
 0.1
 1
 NIL
@@ -1531,7 +1531,7 @@ avg-UBT-per-camp
 avg-UBT-per-camp
 10
 100
-100.0
+55.0
 5
 1
 NIL
@@ -1662,22 +1662,22 @@ TEXTBOX
 1
 
 TEXTBOX
-570
-560
-666
-695
-Per Ha\n------------------------
-10
+365
+530
+470
+555
+Per Ha\n
+20
 0.0
 1
 
 TEXTBOX
-575
-726
-953
-764
+570
+730
+805
+750
 Ratio surface of each landscape filled condition 
-1
+10
 0.0
 1
 
@@ -1779,7 +1779,7 @@ decreasing-factor
 decreasing-factor
 0
 100
-3.0
+0.0
 1
 1
 NIL
@@ -1812,6 +1812,21 @@ total-UBT-created
 17
 1
 11
+
+SLIDER
+680
+520
+852
+553
+FUtility
+FUtility
+0
+1
+1.0
+0.1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
