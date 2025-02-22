@@ -5,12 +5,19 @@ library(tidyverse)
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
+myPath <- '../results/'
+files.l <- list.files(path = myPath, pattern = "M0_directSampling_muse",)
+
 ###############################################################################
 # Lecture du fichier CSV
 ###############################################################################
-# Le fichier "~/Téléchargements/M0_directSampling_muse_20250212.csv" est lu 
+# Les fichiers "M0_directSampling_muse_*" sont lu dans une boucle qui itère les noms 
 # avec la première ligne considérée comme en-têtes de colonnes (header = TRUE).
-data <- read.csv('../results/M0_directSampling_muse_20250219.csv', header = TRUE)
+data <- data.frame()
+for(i in 1:length(files.l)){
+  tmp <- read.csv(paste0(myPath,files.l[i]), header = TRUE)
+  data <- rbind(data, tmp)
+}
 
 ###############################################################################
 # Sélection d'un sous-ensemble de colonnes
