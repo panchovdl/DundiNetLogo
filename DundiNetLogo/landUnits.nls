@@ -56,9 +56,135 @@ to setup-landscape
     set water-point false  ; Initialement, aucun point d'eau
     set has-pond false  ; Initialement, aucune mare
     set water-stock 0  ; Initialement, aucun stock d'eau dans les mares
+    set has-camps false
+    set is-fenced false
   ]
   assign-grass-proportions
 end
+
+
+to setup-reforestation-plots
+  let count-plots 0
+  set current-plot-id 0
+  
+  ; On récupère des patches libres, par ex. has-camps = false, pas déjà protégé
+  let free-patches patches with [ (has-camps = false) and (not is-fenced)]
+  let free-patch-list shuffle sort free-patches
+  
+  foreach free-patch-list [ potential-plot ->
+    if count-plots >= reforestation-plots-number [ stop ]
+    
+    ; Vérifier qu’il existe au moins 2 campements à distance ≤ 2
+    let close-camps camps with [ distance potential-plot <= 2 ]
+    if (count close-camps >= 2) [
+      ; (A) On crée un "nouvel ID" pour cette parcelle
+      set current-plot-id current-plot-id + 1
+      
+      ; (B) On protège potential-plot
+      ask potential-plot [
+        if not any? neighbors with [is-fenced = true] [
+          set is-fenced true
+          set plot-id current-plot-id
+          set pcolor orange
+          
+          ; (C) Tirage au sort pour un patch voisin contigu
+          if (random-float 1 < 0.9) [
+            let neighbor-p neighbors4
+            let good-neighbors-p neighbor-p with [
+              (not is-fenced) and (has-camps = false) and (not any? neighbors with [
+                is-fenced = true and plot-id != current-plot-id 
+              ])
+            ]
+            if any? good-neighbors-p [
+              let one-neighbor one-of good-neighbors-p
+              ask one-neighbor [
+                set is-fenced true
+                set plot-id current-plot-id
+                set pcolor orange
+              ]
+            ]
+          ]
+          
+          ; (D) Incrément du compteur (on considère qu’on a créé 1 parcelle)
+          set count-plots count-plots + 1
+        ]
+      ]
+    ]
+  ]
+  show (word "Nombre de parcelles créées: " count-plots)
+end
+
+
+;
+;to setup-reforestation-plots
+;  ;; On mélange la liste de tous les patches afin de les traiter dans un ordre aléatoire
+;  let count-plots 0
+;  let free-patches (patches with [has-camps = false])
+;  show free-patches
+;  while [count-plots < reforestation-plots-number] [
+;    let plots []
+;    let COGES no-turtles
+;    ;; 1) Si ce patch n'est pas encore protégé, on regarde les campements dans un rayon de 2 et qui n'ont pas déjà de parcelles
+;    let potential-plot one-of free-patches with [is-fenced = false]
+;    if potential-plot = nobody [stop]
+;    let close-camps camps with [(distance potential-plot <= 2) and (reforestation-plot = [])]
+;    ;; On exige plusieurs campements (≥ 2) à proximité
+;    ifelse count close-camps >= 2 [
+;      
+;      ;; a) Protéger le patch p
+;      ask potential-plot [
+;        set is-fenced true
+;        set owner-camps min-one-of close-camps [distance myself]
+;        set pcolor orange
+;      ] ; 
+;      set free-patches free-patches - potential-plot
+;      set plots lput potential-plot plots
+;      set count-plots count-plots + 1
+;      ;; b) Chercher un patch voisin immédiat (neighbors) également libre
+;      if random-float 1 < 0.7 [
+;        let neighboring-patch one-of [neighbors4] of potential-plot with [(is-fenced = false) and (has-camps = false)]
+;        if neighboring-patch != nobody [
+;          
+;          ;; On protège aussi ce patch voisin pour le même campement principal
+;          ask neighboring-patch [
+;            set is-fenced true
+;            set pcolor orange
+;            set owner-camps [owner-camps] of potential-plot
+;          ]
+;          set plots lput neighboring-patch plots
+;          set free-patches free-patches - neighboring-patch
+;        ] ; end if neighboring-patch =! nobody
+;      ] ; end random-float
+;      set COGES [owner-camps] of plots
+;      
+;      ;; On collecte les campements présents dans ces patches partagés
+;      ;;   (autrement dit, tout camp qui se trouve sur un patch de patches-partages)
+;      let COGES-potentiel camps with [(distance potential-plot <= 4) and (reforestation-plot = [])]
+;      
+;      ;; On retire camp-principal si on veut éviter les doublons 
+;      ;; (ou bien on peut le laisser, selon la logique souhaitée)
+;      ;; set camps-partages remove camp-principal camps-partages
+;      
+;      ;; S'il y a au moins un campement, on en choisit entre 1 et 5
+;      if any? COGES-potentiel [
+;        ;; Combien de campements additionnels prend-on ? => entre 1 et 5
+;        let COGES-supp n-of (min list (count COGES-potentiel) COGES-camps) COGES-potentiel
+;        set COGES (turtle-set COGES COGES-supp)
+;        ;; Réciproque côté camp
+;        ask COGES [
+;          set reforestation-plot lput plots reforestation-plot
+;        ]
+;        ;; Et on les enregistre également comme propriétaires
+;        ask plots [
+;          set owner-camps lput COGES owner-camps
+;        ]
+;      ] ; end if any? COGES-potentiels
+;    ] [
+;      set free-patches free-patches - potential-plot  ; end if count camps-proches >= 2
+;    ]
+;  ] ; end while
+;
+;end
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
