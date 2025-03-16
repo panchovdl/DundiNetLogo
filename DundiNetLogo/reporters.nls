@@ -410,34 +410,33 @@ end
 
 ; Trouver le meilleur patch : d'abord la qualité, ensuite la quantité, enfin la proximité
 to-report find-best-nearest-patch [known-spaces my-shepherd seasons UtilityFactor]
-  let viable-patches known-spaces with [current-grass >= 100]
+  let viable-patches known-spaces with [current-grass >= 100 and is-fenced = false]
   if seasons = "Nduungu" [ set viable-patches viable-patches with [soil-type != "Caangol"]]
-  ifelse any? viable-patches [
-    ifelse my-shepherd = "bon" [
-      
-      ; Sélectionner le(s) patch(es) ayant la plus haute valeur d'utilité.
-      let best-patches (viable-patches with-max [ (UtilityFactor * q) + ((1 - UtilityFactor) * current-grass) ])
-      report min-one-of best-patches [distance myself]
-
-      ; Étape 3 : Choisir le patch le plus proche parmi ceux avec la meilleure qualité et la plus grande quantité d'herbe
-      report min-one-of best-patches [distance myself]
-    ] [
-
-      ; Étape 2 : Parmi les patches avec la meilleure qualité, sélectionner ceux avec la plus grande quantité d'herbe
-      let max-grass-patches viable-patches with-max [current-grass]
-
-      ; Étape 3 : Choisir le patch le plus proche parmi ceux avec la meilleure qualité et la plus grande quantité d'herbe
-      report min-one-of max-grass-patches [distance myself]
-    ]
+  ifelse my-shepherd = "bon" [
+    
+    ; Sélectionner le(s) patch(es) ayant la plus haute valeur d'utilité.
+    let best-patches (viable-patches with-max [ (UtilityFactor * q) + ((1 - UtilityFactor) * current-grass) ])
+    report min-one-of best-patches [distance myself]
+    ifelse any? best-patches [
+    ; Étape 3 : Choisir le patch le plus proche parmi ceux avec la meilleure qualité et la plus grande quantité d'herbe
+    report min-one-of best-patches [distance myself]
   ] [
-
+    
     ; Étape 2 : Parmi les patches avec la meilleure qualité, sélectionner ceux avec la plus grande quantité d'herbe
     let max-grass-patches viable-patches with-max [current-grass]
-
+    
     ; Étape 3 : Choisir le patch le plus proche parmi ceux avec la meilleure qualité et la plus grande quantité d'herbe
     report min-one-of max-grass-patches [distance myself]
-    ; Si aucun patch viable n'est trouvé
   ]
+] [
+  
+  ; Étape 2 : Parmi les patches avec la meilleure qualité, sélectionner ceux avec la plus grande quantité d'herbe
+  let max-grass-patches viable-patches with-max [current-grass]
+  
+  ; Étape 3 : Choisir le patch le plus proche parmi ceux avec la meilleure qualité et la plus grande quantité d'herbe
+  report min-one-of max-grass-patches [distance myself]
+  ; Si aucun patch viable n'est trouvé
+]
 end
 
 

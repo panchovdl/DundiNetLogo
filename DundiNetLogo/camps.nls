@@ -4,25 +4,29 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 to setup-camps
+  ; Assigner la préférence des patchs à l'installation des campements
   ask patches [
+    set init-camp-pref 0
     if soil-type != "Caangol" [
-      if any? neighbors with [soil-type = "Caangol"] [
+      if any? neighbors with [soil-type = "Caangol" or has-pond = true] [
         set init-camp-pref 1
       ]
-      if any? neighbors with [any? neighbors with [soil-type = "Caangol"]] and init-camp-pref = 0 [
+      if any? neighbors with [any? neighbors with [soil-type = "Caangol" or has-pond = true]] and init-camp-pref = 0 [
         set init-camp-pref 2
-    ]    ]
-  ]
-  let eligible-patches patches with [soil-type != "Caangol" and has-pond = false]
+      ]   
+    ] ; end if soil-type = caangol
+  ] ; end assignation préférence
+  
+  let eligible-patches patches with [init-camp-pref > 0]
   let camp-counter 0
   ; Boucle de création des campements
   while [camp-counter < initial-number-of-camps] [
     ; Sélectionner un patch éligible avec préférence 1
-    let selected-patch one-of eligible-patches with [init-camp-pref = 2]
+    let selected-patch one-of eligible-patches with [init-camp-pref = 1]
 
     ; Si aucun patch avec préférence 1 n'est disponible, sélectionner un patch avec préférence 2
     if selected-patch = nobody [
-      set selected-patch one-of eligible-patches with [init-camp-pref = 1]
+      set selected-patch one-of eligible-patches with [init-camp-pref = 2]
     ]
 
     ifelse selected-patch != nobody [
@@ -41,10 +45,11 @@ to setup-camps
             setxy pxcor pycor
           ]
           set camp-counter camp-counter + 1
+          set has-camps true
         ]
       ]
     ] [
-      ask selected-patch [
+      ask patches [
         ; Vérifier qu'il y a moins de 2 campements sur ce patch
         if count camps-here < 2 [
           ; Créer un nouveau campement
@@ -59,9 +64,47 @@ to setup-camps
             setxy pxcor pycor
           ]
           set camp-counter camp-counter + 1
+          set has-camps true
         ]
       ]
     ]
   ]
 end
 
+to assign-camps-to-reforestation-plots
+  ;; 1) Récupérer la liste des identifiants de parcelles créées
+  let all-plot-ids remove-duplicates [ plot-id ] of patches with [is-fenced = true and plot-id > 0]
+
+  foreach all-plot-ids [ pid ->
+    ;; Ensemble de patches appartenant à la parcelle pid
+    let parcel-patches patches with [plot-id = pid]
+
+    ;; 2) Construire l’union des patches à ≤ 4 patches de distance (pour trouver les camps autour)
+    let radius-patches no-patches
+    ask parcel-patches [
+      set radius-patches patches in-radius 4
+    ]
+
+    ;; 3) Récupérer tous les camps présents dans ces patches
+    let potential-camps no-turtles
+    ask radius-patches [
+      set potential-camps (turtle-set potential-camps camps-here)
+    ]
+
+    ;; Filtrer : seuls ceux qui n'ont pas encore de reforestation-plot
+    ;; i.e. "pas déjà assignés"
+    let free-camps potential-camps with [reforestation-plot = 0]
+
+    if any? free-camps [
+      ;; 4) On choisit jusqu'à COGES-camps
+      let nb-camps-assign min (list (count free-camps) COGES-camps)
+      let chosen-camps n-of nb-camps-assign free-camps
+
+      ;; 5) Assigner la parcelle
+      ask chosen-camps [
+        set reforestation-plot parcel-patches   ;; On stocke tous les patches de la parcelle
+        set color red
+      ]
+    ]
+  ]
+end

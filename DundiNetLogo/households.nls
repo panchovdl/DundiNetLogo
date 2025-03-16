@@ -80,6 +80,7 @@ to setup-foyers
           set current-home-camp original-home-camp
           set original-home-patch [patch-here] of original-home-camp  ; Stocke la position du campement
           set current-home-patch original-home-patch
+          set reforestation-plot [reforestation-plot] of original-home-camp
           set known-space patches in-radius 3
           set close-known-space known-space with [
             distance [current-home-patch] of myself <= 6

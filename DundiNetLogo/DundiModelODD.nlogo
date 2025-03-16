@@ -52,19 +52,20 @@ globals [
   initial-number-of-camps          ; Nombre de campements permanents installés à l'initialisation du modèle
   space-camp-min                   ; Espace minimum disponible pour les foyers dans les campements permanents
   space-camp-max                   ; Espace maximum disponible pour les foyers dans les campements permanents
-  space-camp-standard-deviation    ; écart-type de l'espace des campements
+  space-camp-standard-deviation    ; Écart-type de l'espace des campements
   space-camp-mean                  ; Moyenne de l'espace des campements
+  reforestation-plots-nb           ; Nombre de parcelles de reforestation
 
   caangol-surface                  ; Nombre de km² de Caangol
   seeno-surface                    ; Nombre de km² de Seeno
   sangre-surface                   ; Nombre de km² de Sangre
   baldiol-surface                  ; Nombre de km² de Baldiol
 
-  listValueHerdeType               ; (Pour
-  sum-UBT                          ;
+  listValueHerdeType               ; Pour visualiser dans l'interface
+  sum-UBT                          ; Total d'UBT dan la simulation
 
 
-  total-UBT-created                ;
+  total-UBT-created                ; Vé
 
 ]
 
@@ -92,15 +93,15 @@ patches-own [
 
   soil-type                        ; Type de sol et de paysage
   init-camp-pref                   ; Préférence pour l'installation des campements (1 ou 2)
+  has-camps
 
   ; Variables pour le tapis herbacée
 
   current-grass                    ; Couverture d'herbe en kg
-  grass-end-nduungu                ; Couverture d'herbe le dernier jour du Nduungu
   K                                ; Montant maximum d'herbe
   K-max                            ; Montant maximum d'herbe
   patch-sensitivity                ; Sensibilité à la dégradation
-                                   ;  degradation-level                ; Niveau de dégradation
+ ;degradation-level                ; Niveau de dégradation
 
   grass-quality                    ; Qualité actuelle de l'herbe
   q                                ; Ratio de qualité
@@ -138,7 +139,10 @@ patches-own [
   ;; Variables non initialisées (en cours) ;;
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-  park-restriction                 ; Cellule protégée (parcelle de reforestation)
+  is-fenced                        ; Cellule protégée (parcelle de reforestation)
+  owner-camps                      ; Campements propriétaires de la parcelle
+
+
   water-point                      ; Point d'eau (booléen)
   has-pond                         ; Booléen, détermine s'il y a une mare
   water-stock                      ; Stock d'eau dans la mare
@@ -165,6 +169,7 @@ turtles-own [
   head                             ; Nombre d'individus
   max-daily-DM-ingestible-per-head ; Quantité maximale de MS qu'un individu peut consommer par jour
   daily-needs-DM
+  desired-DM-intake
   daily-min-UF-needed-head         ; Quantité minimum d'Unité Fourragère à l'entretien d'un UBT
   daily-needs-UF                   ; Quantité minimum d'Unité Fourragère à l'entretien du troupeau
   daily-min-MAD-needed-head        ; Quantité minimum de Matière Azotée Digestible à l'entretien d'un UBT;
@@ -203,6 +208,7 @@ camps-own [
   is-temporary                     ; Booléen indiquant si le camp est temporaire
   wood-needs                       ; Besoins en bois
   wood-quantity                    ; Quantité de bois dans le campement
+  reforestation-plot               ; Parcelle de reforestation
 ]
 
 
@@ -267,6 +273,7 @@ sheeps-own [
   leaves-eaten
   fruits-eaten
   original-camp-known-space        ; Espace connu à moins d'une journée de déplacement du campement principal pour un troupeau
+  mean-DM-ingested
 ]
 
 
@@ -283,6 +290,7 @@ cattles-own [
   leaves-eaten
   fruits-eaten
   original-camp-known-space        ; Espace connu à moins d'une journée de déplacement du campement principal pour un troupeau
+  mean-DM-ingested
 ]
 
 
@@ -369,7 +377,7 @@ end
 to setup
   clear-all
   resize-world -11 11 -11 11  ; Fixer les limites du monde à -11 à 11 en x et y
-  set-patch-size 20  ; Ajuster la taille des patches
+  set-patch-size 22  ; Ajuster la taille des patches
   set listValueHerdeType []
 
 
@@ -401,6 +409,7 @@ to setup
   setup-landscape  ; Créer les unités de paysage
   setup-water-patches ; Créer les mares
   setup-camps  ; Créer les campements
+  setup-reforestation-plots
   setup-foyers ; Créer les foyers
   setup-herds  ; Créer les troupeaux
   setup-trees  ; Créer les arbres
@@ -408,11 +417,6 @@ to setup
 
   update-UF-and-MAD
   update-grass-quality
-
-  set caangol-surface count patches with [soil-type = "Caangol"]
-  set sangre-surface count patches with [soil-type = "Sangre"]
-  set baldiol-surface count patches with [soil-type = "Baldiol"]
-  set seeno-surface count patches with [soil-type = "Seeno"]
 
   set max-grass max [K] of patches ; pour visualisation
   set max-trees max [tree-cover] of patches
@@ -422,7 +426,7 @@ to setup
   reset-ticks
   calculStat
   update-visualization
-  display-labels
+  ;display-labels
 
 end
 
@@ -436,6 +440,7 @@ to set-initial-values
   set space-camp-max 100
   set space-camp-standard-deviation 20
   set space-camp-mean (space-camp-min + space-camp-max) / 2
+  set reforestation-plots-nb reforestation-plots-number
 
   ; Définir les proportions des types d'éleveurs
   set pB proportion-big-herders / 100
@@ -534,6 +539,8 @@ to update-visualization
   if visualization-mode = "known-space" [
     display-knownSpace
   ]
+  ask patches [
+    if is-fenced = true [set pcolor orange]]
 
 end
 
@@ -791,11 +798,11 @@ to color-grass  ;; patch procedure
   set pcolor scale-color yellow current-grass max-grass 0
 end
 
-to display-labels
-  ask turtles [set label ""]
-  ask turtles [set label head]
+;to display-labels
+ ; ask turtles [set label ""]
+  ;ask turtles [set label head]
 
-end
+;end
 
 to update-plot
   let _typeF (list "petit" "moyen" "grand")
@@ -809,13 +816,13 @@ to update-plot
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-100
-10
-568
-479
+210
+40
+724
+555
 -1
 -1
-20.0
+22.0
 1
 1
 1
@@ -836,10 +843,10 @@ ticks
 30.0
 
 BUTTON
-2
-15
-97
-48
+60
+65
+155
+98
 NIL
 setup
 NIL
@@ -853,10 +860,10 @@ NIL
 1
 
 BUTTON
-20
-121
-75
-154
+80
+180
+135
+213
 GO 10
 while [ticks < 3650] [go]\n
 NIL
@@ -870,10 +877,10 @@ NIL
 0
 
 MONITOR
-3
-286
-92
-331
+750
+60
+845
+105
 Total Foyers
 totalFoyers
 17
@@ -881,22 +888,22 @@ totalFoyers
 11
 
 MONITOR
-3
-386
-92
-431
-Total cattles
+750
+160
+845
+205
+Total Vaches
 totalCattles
 17
 1
 11
 
 MONITOR
-3
-336
-93
-381
-Total Sheeps
+750
+110
+845
+155
+Total Moutons
 totalSheeps
 17
 1
@@ -926,7 +933,7 @@ max-ponds-5-months
 max-ponds-5-months
 0
 10
-0.0
+7.0
 1
 1
 NIL
@@ -941,7 +948,7 @@ max-ponds-6-months
 max-ponds-6-months
 0
 10
-0.0
+6.0
 1
 1
 NIL
@@ -959,21 +966,21 @@ waterStock
 11
 
 CHOOSER
-720
-380
-815
-425
+40
+420
+170
+465
 visualization-mode
 visualization-mode
 "soil-type" "tree-cover" "grass-cover" "grass-quality" "known-space"
-4
+2
 
 BUTTON
-720
-340
-815
-373
-visualize
+40
+380
+170
+415
+Changer Visu
   update-visualization
 NIL
 1
@@ -986,62 +993,62 @@ NIL
 1
 
 MONITOR
-705
-10
-865
-55
-Season
+995
+60
+1065
+105
+Saison
 current-season
 17
 1
 11
 
 MONITOR
-625
-10
-705
-55
-Type of Year
+920
+60
+997
+105
+Type
 current-year-type
 17
 1
 11
 
 SLIDER
-573
-135
-706
-168
+750
+490
+885
+523
 good-shepherd-percentage
 good-shepherd-percentage
 0
 100
-87.0
+100.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-570
-60
-706
-93
+750
+415
+885
+448
 proportion-big-herders
 proportion-big-herders
 0
 100
-20.0
+100.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-572
-98
-707
-131
+750
+450
+885
+483
 proportion-medium-herders
 proportion-medium-herders
 0
@@ -1053,11 +1060,11 @@ NIL
 HORIZONTAL
 
 PLOT
-1951
-496
-2261
-646
-Weight-gain
+1620
+660
+1955
+810
+Gain poids vif
 NIL
 NIL
 0.0
@@ -1068,15 +1075,15 @@ true
 true
 "" ""
 PENS
-"cattles" 1.0 0 -16777216 true "" "plot cattlesWeightGain"
-"sheeps" 1.0 0 -5516827 true "" "plot sheepsWeightGain"
+"Vaches" 1.0 0 -16777216 true "" "plot cattlesWeightGain"
+"Moutons" 1.0 0 -5516827 true "" "plot sheepsWeightGain"
 "0" 1.0 0 -5298144 true "" "plot 0"
 
 PLOT
-1951
-198
-2261
-348
+1955
+365
+2260
+510
 Parti en demi transhumance
 NIL
 NIL
@@ -1092,10 +1099,10 @@ PENS
 "cattles" 1.0 0 -16449023 true "" "plot cattlesTempCamp"
 
 PLOT
-1951
-348
-2261
-498
+1955
+510
+2260
+660
 partis hors de la zone
 NIL
 NIL
@@ -1111,11 +1118,11 @@ PENS
 "pen-1" 1.0 0 -16777216 true "" "plot cattlesHaveLeft"
 
 PLOT
-1615
-198
-1950
-348
-CATTLE weight per head
+1620
+365
+1955
+510
+Poids vif par tête - Vaches
 NIL
 NIL
 0.0
@@ -1126,33 +1133,16 @@ true
 true
 "" ""
 PENS
-"meanWeight" 1.0 0 -16777216 true "" "plot meanCattlesLiveWeight"
-"maxWeight" 1.0 0 -2674135 true "" "plot maxCattlesLiveWeight"
-"minWeight" 1.0 0 -13791810 true "" "plot minCattlesLiveWeight"
-
-BUTTON
-6
-488
-91
-521
-removeGrass
-ask patches [set current-grass  0.1\nset current-monocot-grass 0.1\nset current-dicot-grass 0.1]
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
+"Moyenne" 1.0 0 -16777216 true "" "plot meanCattlesLiveWeight"
+"Max" 1.0 0 -2674135 true "" "plot maxCattlesLiveWeight"
+"Min" 1.0 0 -13791810 true "" "plot minCattlesLiveWeight"
 
 PLOT
-1660
-863
-1840
-1008
-distant-kown-space
+1955
+660
+2335
+810
+Espace connu + de 5 km
 NIL
 NIL
 0.0
@@ -1163,16 +1153,16 @@ true
 true
 "" ""
 PENS
-"sheep" 1.0 0 -16777216 true "" "plot meanDistantKnownSpace"
-"cattle" 1.0 0 -2674135 true "" "plot meanKnownSpace cattles"
+"Moutons" 1.0 0 -11221820 true "" "plot meanDistantKnownSpace"
+"Vaches" 1.0 0 -16777216 true "" "plot meanKnownSpace cattles"
 
 PLOT
-706
-61
-866
-206
-HistHerderType
-listValueHerdeType
+870
+110
+1065
+280
+Types d'éleveurs
+   petit moyen grand
 NIL
 0.0
 10.0
@@ -1182,14 +1172,14 @@ true
 false
 "set-plot-x-range 0 5\nset-plot-y-range 0 100\nset-histogram-num-bars 5" ""
 PENS
-"pen-0" 1.0 1 -16777216 true "" "histogram listValueHerdeType"
+"" 1.0 1 -16777216 true "" "histogram listValueHerdeType"
 
 PLOT
-1615
-348
-1950
-498
-SHEEP weight per head
+1620
+510
+1955
+660
+Poids Vif par tête - Moutons
 NIL
 NIL
 0.0
@@ -1200,27 +1190,27 @@ true
 true
 "" ""
 PENS
-"meanWeight" 1.0 0 -16777216 true "" "plot meanSheepsLiveWeight"
-"maxWeight" 1.0 0 -2674135 true "" "plot maxSheepsLiveWeight"
-"minWeight" 1.0 0 -13791810 true "" "plot minSheepsLiveWeight"
+"Moyenne" 1.0 0 -16777216 true "" "plot meanSheepsLiveWeight"
+"Max" 1.0 0 -2674135 true "" "plot maxSheepsLiveWeight"
+"Min" 1.0 0 -13791810 true "" "plot minSheepsLiveWeight"
 
 MONITOR
-570
-10
-627
-55
-Year
+870
+60
+920
+105
+Année
 year-index
 17
 1
 11
 
 PLOT
-1300
-50
-1505
-196
-mean grass per Ha
+1470
+105
+1900
+255
+Biomasse (MS) par hectare
 NIL
 NIL
 0.0
@@ -1234,11 +1224,11 @@ PENS
 "default" 1.0 0 -13840069 true "" "plot meanGrass / 100"
 
 PLOT
-1282
-196
-1585
-342
-Tree  Consumption
+1120
+365
+1570
+511
+Consommation ressources arbres
 NIL
 NIL
 0.0
@@ -1249,16 +1239,16 @@ true
 true
 "" ""
 PENS
-"fruits cattle" 1.0 0 -2674135 true "" "plot meanFruitsConsumedCattle"
-"leaves cattle" 1.0 0 -12087248 true "" "plot meanLeavesConsumedCattle"
-"fruits sheep" 1.0 0 -612749 true "" "plot meanFruitsConsumedSheep"
-"leaves sheep" 1.0 0 -5509967 true "" "plot meanLeavesConsumedSheep"
+"fruits par les vaches" 1.0 0 -2674135 true "" "plot meanFruitsConsumedCattle"
+"feuilles par les vaches" 1.0 0 -12087248 true "" "plot meanLeavesConsumedCattle"
+"fruits par les moutons" 1.0 0 -612749 true "" "plot meanFruitsConsumedSheep"
+"feuilles par les moutons" 1.0 0 -5509967 true "" "plot meanLeavesConsumedSheep"
 
 SLIDER
-102
-488
-302
-521
+240
+655
+350
+688
 SheepNECSatifactionIndex
 SheepNECSatifactionIndex
 0
@@ -1270,10 +1260,10 @@ NIL
 HORIZONTAL
 
 PLOT
-1615
-648
-1874
-798
+1620
+960
+1955
+1110
 MST NEC
 NIL
 NIL
@@ -1282,48 +1272,48 @@ NIL
 0.0
 1.0
 true
-false
+true
 "" ""
 PENS
-"sheep" 1.0 0 -13791810 true "" "plot  MSTSheep-NEC"
-"cattle" 1.0 0 -16777216 true "" "plot  MSTCattle-NEC"
+"Moutons" 1.0 0 -13791810 true "" "plot  MSTSheep-NEC"
+"Vaches" 1.0 0 -16777216 true "" "plot  MSTCattle-NEC"
 
 SLIDER
-102
-526
-302
-559
+240
+615
+350
+648
 CattleNECSatifactionIndex
 CattleNECSatifactionIndex
 0
 5
-5.0
+3.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-55
-155
-88
-281
+750
+340
+885
+373
 number-of-camps
 number-of-camps
 0
 150
-112.0
+150.0
 1
 1
 NIL
-VERTICAL
+HORIZONTAL
 
 PLOT
-1615
-498
-1925
-648
-NEC mean
+1620
+810
+1955
+960
+NEC moyenne
 NIL
 NIL
 0.0
@@ -1334,49 +1324,16 @@ true
 true
 "" ""
 PENS
-"Cattles" 1.0 0 -16777216 true "" "plot meanCattlesNEC"
-"Sheeps" 1.0 0 -8275240 true "" "plot meanSheepsNEC"
+"Vaches" 1.0 0 -16777216 true "" "plot meanCattlesNEC"
+"Moutons" 1.0 0 -8275240 true "" "plot meanSheepsNEC"
 "satis" 1.0 0 -2674135 true "" "plot SheepNECSatifactionIndex"
 
-SLIDER
-635
-650
-902
-683
-TreeDensitySatisfactionOlds
-TreeDensitySatisfactionOlds
-0
-8000
-5231.0
-1
-1
-NIL
-HORIZONTAL
-
 PLOT
-1025
-485
-1215
-633
-MST of olders trees
-NIL
-NIL
-0.0
-10.0
-0.0
-1.0
-true
-false
-"" ""
-PENS
-"default" 1.0 0 -16777216 true "" "plot MST-trees"
-
-PLOT
-1011
-196
-1283
-342
-Mean trees by soil-type
+1120
+685
+1470
+831
+Nombre moyen d'arbres par Hectare
 NIL
 NIL
 0.0
@@ -1393,71 +1350,71 @@ PENS
 "Sangre" 1.0 0 -955883 true "" "plot meanTreesInSangre"
 
 SLIDER
-365
-592
-565
-625
+240
+805
+350
+838
 SatisfactionMeanTreesInCaangol
 SatisfactionMeanTreesInCaangol
 50
 150
-78.0
+150.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-365
-556
-565
-589
+240
+765
+350
+798
 SatisfactionMeanTreesInSeeno
 SatisfactionMeanTreesInSeeno
 12
 50
-21.0
+50.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-365
-626
-565
-659
+240
+845
+350
+878
 SatisfactionMeanTreesInBaldiol
 SatisfactionMeanTreesInBaldiol
 0
 100
-59.0
+100.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-365
-662
-565
-695
+240
+885
+350
+918
 SatisfactionMeanTreesInSangre
 SatisfactionMeanTreesInSangre
 0
 100
-53.0
+100.0
 1
 1
 NIL
 HORIZONTAL
 
 PLOT
-1020
-340
-1280
-485
-MST-tree by soil
+1120
+830
+1470
+975
+MST-tree par type de sol
 NIL
 NIL
 0.0
@@ -1474,10 +1431,10 @@ PENS
 "Caangol" 1.0 0 -16777216 true "" "plot MST-Caangol"
 
 BUTTON
-20
-85
-75
-118
+80
+140
+135
+173
 NIL
 go
 T
@@ -1491,11 +1448,11 @@ NIL
 1
 
 BUTTON
-6
-526
-91
-559
-hide trees
+40
+470
+170
+503
+Cacher arbres
 ask tree-populations-here [hide-turtle]
 NIL
 1
@@ -1508,67 +1465,52 @@ NIL
 1
 
 SLIDER
-1063
-925
-1218
-958
-decreasing-factor
-decreasing-factor
-1
-20
-0.0
-0.1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-3
-156
-36
-281
+750
+375
+885
+408
 avg-UBT-per-camp
 avg-UBT-per-camp
 10
 100
-55.0
+10.0
 5
 1
 NIL
-VERTICAL
+HORIZONTAL
 
 MONITOR
-5
-435
-93
-480
-NIL
+750
+210
+845
+255
+Total UBT
 sum-UBT
 17
 1
 11
 
 SLIDER
-366
-719
-566
-752
+240
+950
+350
+983
 treshold-tree-satisfaction
 treshold-tree-satisfaction
 0.1
 1
-0.6
+1.0
 0.1
 1
 NIL
 HORIZONTAL
 
 PLOT
-1285
-340
-1485
-486
-trees-killed
+1120
+975
+1405
+1121
+Arbres tués (piétinement et coupe)
 NIL
 NIL
 0.0
@@ -1582,181 +1524,131 @@ PENS
 "default" 1.0 0 -16777216 true "" "plot trees-killed"
 
 TEXTBOX
-986
-28
-1011
-1508
-||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+1085
+55
+1110
+1161
+||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 20
-0.0
+64.0
+1
+
+TEXTBOX
+1690
+55
+1780
+85
+Sorties
+25
+55.0
+1
+
+TEXTBOX
+1215
+270
+1415
+296
+Indicateurs Arbres
+22
+64.0
 1
 
 TEXTBOX
 1585
-10
-1655
-40
-Outputs
-15
-0.0
-1
-
-TEXTBOX
-1075
-135
-1435
-291
-Trees Satisfaction
-15
-0.0
-1
-
-TEXTBOX
-1590
-100
-1613
-1131
+270
+1600
+1160
 |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 20
-0.0
+64.0
 1
 
 TEXTBOX
-2272
-19
-2312
-1130
+2350
+55
+2375
+1160
 ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 20
-0.0
+64.0
 1
 
 TEXTBOX
-1856
-126
-2176
-192
-Herds Satisfaction
-15
-0.0
+1860
+270
+2095
+295
+Indicateurs Elevage
+22
+64.0
 1
 
 TEXTBOX
-1030
-803
-2306
-855
---------------------------------------------------------------------------------------------------------------------------------------------------
-5
-0.0
-1
-
-TEXTBOX
-1013
-1058
-2269
-1154
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-5
-0.0
-1
-
-TEXTBOX
-365
-530
-470
-555
-Per Ha\n
+1085
+1125
+2375
+1165
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 20
-0.0
+64.0
 1
 
 TEXTBOX
-570
-730
-805
-750
-Ratio surface of each landscape filled condition 
-10
-0.0
-1
-
-TEXTBOX
-1655
-1030
-2087
-1081
-Global Behaviors Informations\n
-15
-0.0
-1
-
-TEXTBOX
-1126
-969
-1161
-1114
+1226
+974
+1261
+1119
 i^\n |\n |\n 
 1
 0.0
 1
 
 TEXTBOX
-1063
-1039
-1278
-1065
-For sensitivity analysis
-15
-0.0
-1
-
-TEXTBOX
-680
-295
-698
-476
-||||||||||||||||||||||||||||||||||||||||||||||||||||
+0
+335
+18
+545
+||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 11
 0.0
 1
 
 TEXTBOX
-702
-290
-828
-342
----------------------------------------------VISU------------------------------------------
+20
+330
+185
+381
+-----------------------------------------------------------VISU---------------------------------------------------------
 11
 0.0
 1
 
 TEXTBOX
-700
-438
-826
-561
----------------------------------------------------------------------------------------------
+20
+510
+185
+550
+---------------------------------------------------------------------------------------------------------------------------
 11
 0.0
 1
 
 TEXTBOX
-833
-295
-851
-477
-||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+190
+335
+208
+550
+||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 11
 0.0
 1
 
 PLOT
-1270
-485
-1585
-660
-Mean tree resources
+1120
+510
+1525
+685
+Moyennes ressources arbres
 NIL
 NIL
 0.0
@@ -1767,14 +1659,14 @@ true
 true
 "" ""
 PENS
-"mean leaves" 1.0 0 -13840069 true "" "plot mean [current-leaf-stock] of tree-populations"
-"mean fruits" 1.0 0 -4699768 true "" "plot mean [current-fruit-stock] of tree-populations"
+"moyenne feuilles" 1.0 0 -13840069 true "" "plot mean [current-leaf-stock] of tree-populations"
+"moyenne fruits" 1.0 0 -4699768 true "" "plot mean [current-fruit-stock] of tree-populations"
 
 SLIDER
-680
-485
-850
-518
+750
+615
+920
+648
 decreasing-factor
 decreasing-factor
 0
@@ -1786,10 +1678,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-20
-50
-75
-83
+80
+105
+135
+138
 NIL
 go
 NIL
@@ -1802,28 +1694,474 @@ NIL
 NIL
 1
 
-MONITOR
-150
-630
-277
-675
-NIL
-total-UBT-created
-17
-1
-11
-
 SLIDER
-680
-520
-852
-553
+750
+650
+920
+683
 FUtility
 FUtility
 0
 1
 1.0
 0.1
+1
+NIL
+HORIZONTAL
+
+TEXTBOX
+1085
+45
+2375
+91
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+20
+64.0
+1
+
+TEXTBOX
+1085
+260
+2375
+305
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+20
+64.0
+1
+
+TEXTBOX
+165
+40
+180
+235
+|||||||||||||||||||||||||||||||||||||||
+12
+14.0
+1
+
+TEXTBOX
+35
+40
+50
+235
+||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||--\n
+12
+14.0
+1
+
+TEXTBOX
+35
+210
+180
+246
+------------------------------------------------------------------------
+12
+14.0
+1
+
+TEXTBOX
+35
+35
+180
+61
+------------------------------------------------------------------------
+12
+14.0
+1
+
+TEXTBOX
+70
+43
+145
+61
+Lancement
+12
+14.0
+1
+
+TEXTBOX
+730
+40
+745
+280
+||||||||||||||||||||||||||||||||||||||||||||||||
+12
+0.0
+1
+
+TEXTBOX
+730
+260
+865
+286
+------------------------------------------------------------------
+10
+0.0
+1
+
+TEXTBOX
+850
+40
+865
+280
+|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||-
+12
+0.0
+1
+
+TEXTBOX
+730
+35
+865
+60
+------------------------------------------------------------------
+10
+0.0
+1
+
+TEXTBOX
+775
+40
+825
+58
+Entrées
+12
+0.0
+1
+
+TEXTBOX
+890
+350
+975
+368
+Campements
+12
+0.0
+1
+
+TEXTBOX
+890
+385
+980
+403
+UBT par camp
+12
+0.0
+1
+
+TEXTBOX
+890
+435
+1005
+470
+Proportions taille d'éleveurs
+12
+0.0
+1
+
+TEXTBOX
+890
+500
+1050
+530
+Proportion bons bergers
+12
+0.0
+1
+
+TEXTBOX
+760
+320
+910
+338
+Variables d'entrées
+12
+0.0
+1
+
+TEXTBOX
+730
+315
+1070
+345
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+10
+0.0
+1
+
+TEXTBOX
+730
+320
+745
+545
+|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+12
+0.0
+1
+
+TEXTBOX
+730
+405
+1070
+423
+------------------------------------------------------------------------------------
+10
+0.0
+1
+
+TEXTBOX
+730
+480
+1080
+498
+------------------------------------------------------------------------------------
+10
+0.0
+1
+
+TEXTBOX
+730
+525
+1070
+550
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+10
+0.0
+1
+
+TEXTBOX
+1055
+320
+1070
+545
+|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+12
+0.0
+1
+
+TEXTBOX
+210
+555
+235
+1015
+|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+20
+0.0
+1
+
+TEXTBOX
+210
+545
+725
+616
+-------------------------------------------------------------------------. -------------------------------------------------------------------------
+20
+0.0
+1
+
+TEXTBOX
+295
+565
+680
+601
+Critères de satisfaction sur l'état de santé du bétail sur la base de la Note d'Etat Corporel (NEC)
+15
+0.0
+1
+
+TEXTBOX
+360
+670
+420
+688
+Moutons
+12
+0.0
+1
+
+TEXTBOX
+360
+625
+415
+643
+Vaches\n
+12
+0.0
+1
+
+TEXTBOX
+425
+610
+700
+761
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+5
+0.0
+1
+
+TEXTBOX
+700
+555
+725
+1015
+|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||-
+20
+0.0
+1
+
+TEXTBOX
+255
+710
+765
+760
+Critères de satistaction du nombre d'arbres (+ de 4 ans)\npar hectare et par type de sol
+15
+0.0
+1
+
+TEXTBOX
+360
+810
+650
+836
+Savane arborée sur sol limoneux (Caangol)
+12
+0.0
+1
+
+TEXTBOX
+360
+890
+710
+946
+Savane arbustive à arborée sur sol argileux, cuirassé (Sangre)
+12
+0.0
+1
+
+TEXTBOX
+360
+850
+700
+891
+Savane arbustive à arborée sur sol sablonneux (Baldiol)
+12
+0.0
+1
+
+TEXTBOX
+360
+770
+650
+796
+Steppe arbustive sur sol sablonneux (Seeno)
+12
+0.0
+1
+
+TEXTBOX
+210
+690
+725
+760
+-------------------------------------------------------------------------. -------------------------------------------------------------------------
+20
+0.0
+1
+
+TEXTBOX
+360
+955
+690
+990
+Proportion de surface par type de sol pour laquelle le critère de satisfaction des arbres doit être atteint
+12
+0.0
+1
+
+TEXTBOX
+210
+930
+895
+948
+-------------------------------------------------------------------------
+20
+0.0
+1
+
+TEXTBOX
+210
+975
+725
+1025
+--------------------------------------------------------------------------------------------------------------------------------------------------
+20
+0.0
+1
+
+PLOT
+870
+735
+1070
+885
+plot 1
+mean grass-eaten
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot meanSheepsGrassEaten"
+"pen-1" 1.0 0 -7500403 true "" "plot meanCattlesGrassEaten"
+
+PLOT
+870
+905
+1070
+1055
+plot 2
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot sum [population-size] of tree-populations  with [tree-pop-age = 1]"
+
+SLIDER
+750
+560
+880
+593
+reforestation-plots-number
+reforestation-plots-number
+0
+20
+9.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+25
+595
+197
+628
+COGES-camps
+COGES-camps
+2
+10
+4.0
+1
 1
 NIL
 HORIZONTAL

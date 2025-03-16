@@ -18,9 +18,12 @@ globals [
   minCattlesLiveWeight
   meanSheepsNEC
   meanCattlesNEC
+  meanSheepsGrassEaten
+  meanCattlesGrassEaten
   MSTSheep-NEC
   MSTCattle-NEC
   trees-killed
+  
   
   meanTrees1yearsByPatch
   meanTrees2yearsByPatch
@@ -151,6 +154,13 @@ to calculStat
     set MSTCattle-NEC (mean[cattleNEC-satisfaction] of foyers) / ticks
   ]
   
+    if count sheeps with [have-left = false] > 0 [ ;; Est-ce qu'il y a quelque chose a faire dans le else ?
+    set meanSheepsGrassEaten mean [mean-DM-ingested] of sheeps with [have-left = false]
+  ]
+   if count cattles with [have-left = false] > 0[ ;; Est-ce qu'il y a quelque chose a faire dans le else ?
+    set meanCattlesGrassEaten mean [mean-DM-ingested] of cattles with [have-left = false]
+  ]
+  
   
   set totalGrass sum [current-grass] of patches
   set meanGrass mean [current-grass] of patches
@@ -180,6 +190,14 @@ to calculStat
 ;    set MST-trees traj-trees / ticks
 ;  ]
   
+  
+  
+  
+  set caangol-surface count patches with [soil-type = "Caangol"]
+  set sangre-surface count patches with [soil-type = "Sangre"]
+  set baldiol-surface count patches with [soil-type = "Baldiol"]
+  set seeno-surface count patches with [soil-type = "Seeno"]
+
 
   set patches-caangol patches with [ soil-type = "Caangol"]
   set good-patches-caangol patches-caangol with [ (sum [population-size] of tree-populations-here with [tree-pop-age > 4]) > (SatisfactionMeanTreesInCaangol * 100)]
