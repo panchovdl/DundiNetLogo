@@ -33,7 +33,7 @@ to-report growth-fruit-logistic [current-fruit max-fruit status season]
       set r 0
     ]
     if status = "sol" [
-      set r -0.05
+      set r -0.1
     ]
     if status = "croissance" or status = "dispo" [
       set r 0.05
@@ -56,7 +56,7 @@ to-report growth-leaf-logistic [current-leaves max-leaves status season]
       set r 0
     ]
     if status = "sol" [
-      set r -0.05
+      set r -0.1
     ]
     if status = "croissance" or status = "dispo" [
       set r 0.05
