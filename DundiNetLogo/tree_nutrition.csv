@@ -1,49 +1,62 @@
-type,zone,saison,UF par kg MS,MAD par kg MS
-nutritive,Sangre,Ceedu,0.88,103
-nutritive,Sangre,Ceetcelde,0.855,124
-nutritive,Sangre,Nduungu,0.855,124
-nutritive,Sangre,Dabbuunde,0.83,145
-nutritive,Seeno,Ceedu,0.95,53
-nutritive,Seeno,Ceetcelde,0.9,150
-nutritive,Seeno,Nduungu,0.95,100
-nutritive,Seeno,Dabbuunde,0.95,70
-nutritive,Baldiol,Ceedu,0.9,34
-nutritive,Baldiol,Ceetcelde,0.9,34
-nutritive,Baldiol,Nduungu,0.9,34
-nutritive,Baldiol,Dabbuunde,0.9,120
-nutritive,Caangol,Ceedu,0.9,53
-nutritive,Caangol,Ceetcelde,0.9,150
-nutritive,Caangol,Nduungu,0.9,100
-nutritive,Caangol,Dabbuunde,0.9,70
-lessNutritive ,Sangre,Ceedu,0.88,34
-lessNutritive ,Sangre,Ceetcelde,0.855,34
-lessNutritive ,Sangre,Nduungu,0.855,34
-lessNutritive ,Sangre,Dabbuunde,0.83,120
-lessNutritive ,Seeno,Ceedu,0.88,34
-lessNutritive ,Seeno,Ceetcelde,0.855,34
-lessNutritive ,Seeno,Nduungu,0.855,34
-lessNutritive ,Seeno,Dabbuunde,0.83,120
-lessNutritive ,Baldiol,Ceedu,0.88,34
-lessNutritive ,Baldiol,Ceetcelde,0.855,34
-lessNutritive ,Baldiol,Nduungu,0.855,34
-lessNutritive ,Baldiol,Dabbuunde,0.83,120
-lessNutritive ,Caangol,Ceedu,0.88,34
-lessNutritive ,Caangol,Ceetcelde,0.855,34
-lessNutritive ,Caangol,Nduungu,0.855,34
-lessNutritive ,Caangol,Dabbuunde,0.83,120
-fruity,Sangre,Ceedu,0.88,34
-fruity,Sangre,Ceetcelde,0.855,34
-fruity,Sangre,Nduungu,0.855,34
-fruity,Sangre,Dabbuunde,0.83,120
-fruity,Seeno,Ceedu,0.88,34
-fruity,Seeno,Ceetcelde,0.855,34
-fruity,Seeno,Nduungu,0.855,34
-fruity,Seeno,Dabbuunde,0.83,120
-fruity,Baldiol,Ceedu,0.88,34
-fruity,Baldiol,Ceetcelde,0.855,34
-fruity,Baldiol,Nduungu,0.855,34
-fruity,Baldiol,Dabbuunde,0.83,120
-fruity,Caangol,Ceedu,0.88,34
-fruity,Caangol,Ceetcelde,0.855,34
-fruity,Caangol,Nduungu,0.855,34
-fruity,Caangol,Dabbuunde,0.83,120
+nutritive,Sangre,Ceedu,sol,0.88,94,dispo,0.75,39.75,
+nutritive,Sangre,Ceetcelde,sol,0.88,94,chute,0.75,39.75,
+nutritive,Sangre,Nduungu,dispo,0.82,75.5,sol,0.75,39.75,
+nutritive,Sangre,Dabbuunde,chute,0.88,94,sol,0.75,39.75,
+nutritive,Seeno,Ceedu,chute,0.65,176,chute,0.88,106,
+nutritive,Seeno,Ceetcelde,sol,0.65,176,sol,0.71,163,
+nutritive,Seeno,Nduungu,dispo,0.64,168,croissance,0.55,125,
+nutritive,Seeno,Dabbuunde,dispo,0.65,176,dispo,0.55,125,
+nutritive,Baldiol,Ceedu,chute,0.9,34,chute,0.9,37,
+nutritive,Baldiol,Ceetcelde,sol,0.9,37,sol,0.76,31,
+nutritive,Baldiol,Nduungu,dispo,0.75,69.8,croissance,0,0,
+nutritive,Baldiol,Dabbuunde,dispo,0.9,120,dispo,0.9,37,
+nutritive,Caangol,Ceedu,chute,0.9,34,chute,0.9,37,
+nutritive,Caangol,Ceetcelde,sol,0.9,37,sol,0.76,31,
+nutritive,Caangol,Nduungu,dispo,0.75,69.8,croissance,0,0,
+nutritive,Caangol,Dabbuunde,dispo,0.9,120,dispo,0.9,37,
+lessNutritive ,Sangre,Ceedu,chute,0.83,45,chute,0.69,34.7,
+lessNutritive ,Sangre,Ceetcelde,sol,0.83,45,sol,0.69,34.7,
+lessNutritive ,Sangre,Nduungu,croissance,0.79,70,croissance,0,0,
+lessNutritive ,Sangre,Dabbuunde,dispo,0.83,45,dispo,0.69,34.7,
+lessNutritive ,Seeno,Ceedu,chute,0.61,64.3,chute,0,0,
+lessNutritive ,Seeno,Ceetcelde,sol,0.61,64.3,sol,0,0,
+lessNutritive ,Seeno,Nduungu,croissance,0.69,46,croissance,0,0,
+lessNutritive ,Seeno,Dabbuunde,dispo,0.61,64.3,dispo,0,0,
+lessNutritive ,Baldiol,Ceedu,dispo,0.71,178,chute,0.81,214,
+lessNutritive ,Baldiol,Ceetcelde,dispo,1.05,290,croissance,0.71,162,
+lessNutritive ,Baldiol,Nduungu,dispo,1.05,290,dispo,0.81,214,
+lessNutritive ,Baldiol,Dabbuunde,dispo,0.81,214,dispo,0.68,45,
+lessNutritive ,Caangol,Ceedu,chute,0.57,38.2,sol,0.73,28.5,
+lessNutritive ,Caangol,Ceetcelde,sol,0.57,38.2,croissance,0.73,28.5,
+lessNutritive ,Caangol,Nduungu,dispo,0.9,72,sol,0.73,28.5,
+lessNutritive ,Caangol,Dabbuunde,dispo,0.9,72,sol,0.73,28.5,
+fruity,Sangre,Ceedu,sol,0.35,60,sol,0.34,64,
+fruity,Sangre,Ceetcelde,dispo,0.88,103,croissance,0.83,145,
+fruity,Sangre,Nduungu,dispo,0.83,145,dispo,0.34,64,
+fruity,Sangre,Dabbuunde,chute,0.64,86,chute,0.34,64,
+fruity,Seeno,Ceedu,dispo,0.95,53,chute,1.13,72,
+fruity,Seeno,Ceetcelde,chute,0.9,37,croissance,0.9,150,
+fruity,Seeno,Nduungu,dispo,0.81,80.9,croissance,0.58,63.6,
+fruity,Seeno,Dabbuunde,dispo,0.77,49.3,dispo,1.13,72,
+fruity,Baldiol,Ceedu,croissance,0.84,88.6,croissance,1,124,
+fruity,Baldiol,Ceetcelde,chute,0.75,148,dispo,0.86,155,
+fruity,Baldiol,Nduungu,sol,0.75,148,chute,1.1,117,
+fruity,Baldiol,Dabbuunde,croissance,0.88,96,croissance,0.86,155,
+fruity,Caangol,Ceedu,dispo,0.72,72,chute,0.83,30.8,
+fruity,Caangol,Ceetcelde,chute,0.7,28.9,sol,0.83,30.8,
+fruity,Caangol,Nduungu,dispo,0.86,117,croissance,0.69,83.9,
+fruity,Caangol,Dabbuunde,dispo,0.8,72.8,dispo,0.83,30.8,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,Indicateur,D�finition & unit�,Valeur de satisfaction,Seuil critique / alerte,Finalit� dans le mod�le
+,,,,,Note d��tat Corporel (NEC),Score visuel de 0 � 5 �valuant la condition physique du b�tail (bovins & ovins).,NEC = 3 ? troupeau jug� en bon �tat.,NEC = 1 ? situation d�ins�curit� alimentaire.,Suivre la sant� animale et mesurer l�effet des strat�gies de p�turage / stockage de fourrage.
+,,,,,Densit� d�arbres adultes,Nombre d�arbres matures/ha. diff�renci� par type de sol (Baldiol. Sangre. Seeno. Caangol).,Valeur-seuil d�finie collectivement* : densit� minimale garantissant une � for�t en bonne sant� �.,En-dessous du seuil ? alerte sur la d�gradation ligneuse.,�valuer l�impact des pratiques (pr�l�vements. reboisement. emprise agricole) sur la ressource foresti�re.

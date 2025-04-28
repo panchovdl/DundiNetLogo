@@ -251,7 +251,7 @@ to do-first-strategy
     ;; Obtenir les patches sur la ligne entre la nouvelle position et le campement
     let line-patches patches-between patch-here home-patch
     ;; Ajouter ces patches au known-space du foyer
-    set known-space (patch-set my-known-space line-patches)
+    set known-space (patch-set known-space line-patches)
     ;; Retourner au campement principal
     move-to original-home-patch
   ] [
@@ -264,7 +264,7 @@ to do-first-strategy
         move-to one-of further-undiscovered-patches
         let line-patches patches-between patch-here home-patch
         ;; Ajouter ces patches au known-space du foyer
-        set known-space (patch-set my-known-space line-patches)
+        set known-space (patch-set known-space line-patches)
         ;; Retourner au campement principal
         move-to original-home-patch
         set far-exploration-count far-exploration-count + 1

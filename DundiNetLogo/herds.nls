@@ -35,8 +35,6 @@ to setup-herds ; Valeurs à définir
 
       ; consommation et gain/perte de poids
       set max-daily-DM-ingestible-per-head 7.2 * UBT-size
-      set daily-min-UF-needed-head 0.45 * max-daily-DM-ingestible-per-head          ; Quantité minimum d'Unité Fourragère à l'entretien d'un UBT
-      set daily-min-MAD-needed-head 25  * max-daily-DM-ingestible-per-head        ; Quentité minimum de Matière Azotée Digestible à l'entretien d'un UBT
       set weight-gain 0
       set daily-water-consumption 22 * head * UBT-size; 22 l/UBT/J de consommation d'eau
 
@@ -94,8 +92,6 @@ to setup-herds ; Valeurs à définir
 
       ; consommation et gain/perte de poids
       set max-daily-DM-ingestible-per-head 7.2 * UBT-size
-      set daily-min-UF-needed-head 0.45 * max-daily-DM-ingestible-per-head          ; Quantité minimum d'Unité Fourragère à l'entretien d'un UBT
-      set daily-min-MAD-needed-head 25  * max-daily-DM-ingestible-per-head        ; Quentité minimum de Matière Azotée Digestible à l'entretien d'un UBT
       set weight-gain 0
       set daily-water-consumption 22 * head * UBT-size; 22 l/UBT/J de consommation d'eau
 
@@ -155,16 +151,17 @@ end
 to move ; Mouvement des troupeaux - bovins puis ovins
 
   move-to current-home-patch
+  set daily-trip 0
   
   ;; Find the best patch within known space
   let best-patch find-best-nearest-patch known-space shepherd-type current-season FUtility
   let my-known-space known-space
   ifelse best-patch != nobody [
     ;; Calculate the distance between the best patch and the current home patch
-    let distance-to-home distance best-patch
-
+    set daily-trip distance best-patch
+    
     ;; If the best patch is more than 6 units away from the current home patch
-    ifelse distance-to-home >= 6 [
+    ifelse daily-trip >= 6 [
 
       ;; Check if the herd is not already in a temporary camp
       ifelse not is-in-temporary-camp [
@@ -178,7 +175,7 @@ to move ; Mouvement des troupeaux - bovins puis ovins
 
         ;; Add patches within a radius of 3 cells around the camp to known-space
         let nearby-patches [patches in-radius 2] of current-home-patch
-        set known-space (patch-set my-known-space nearby-patches)
+        set known-space (patch-set known-space nearby-patches)
 
       ] [ ;; The herd is already in a temporary camp
 
@@ -200,9 +197,9 @@ to move ; Mouvement des troupeaux - bovins puis ovins
           set xcor xcor + (random-float 0.9 - 0.45)
           set ycor ycor + (random-float 0.9 - 0.45)
 
-          ;; Add patches within a radius of 3 cells around the camp to known-space
+          ;; Add patches within a radius of 2 cells around the camp to known-space
           let nearby-patches [patches in-radius 2] of current-home-patch
-          set known-space (patch-set my-known-space nearby-patches)
+          set known-space (patch-set known-space nearby-patches)
         ]
       ]
     ] [ ;; The best patch is within 6 units of the current home patch
@@ -213,12 +210,14 @@ to move ; Mouvement des troupeaux - bovins puis ovins
       set ycor ycor + (random-float 0.9 - 0.45)
     ]
   ] [
+    ; stratégie 1
+    let home-known-space original-camp-known-space with [is-fenced = false] 
+    move-to one-of home-known-space
     if is-in-temporary-camp = true [
-      move-to original-home-patch
       set current-home-patch original-home-patch
-      set is-in-temporary-camp false]
-    stop
-  ]
+      set is-in-temporary-camp false
+    ]
+  ] 
 
 end
 
@@ -227,8 +226,12 @@ end
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 to eat
-
+; ICI POUR FAIRE LES VARIATIONS DE BESOIN EN FONCTION DE LA DISTANCE PARCOURUE
   ; Calculer les besoins énergétiques (UF) et protéiques (MAD) qui peut évoluer à chaque step en fonction du nombre de tête dans le troupeau
+  let base movement-needs daily-trip      ;; UF et MAD pour 1 UBT
+  set daily-min-UF-needed-head  (item 0 base) * max-daily-DM-ingestible-per-head ; Quantité minimum d'Unité Fourragère à l'entretien d'un UBT (avec ou sans grand déplacement)
+  set daily-min-MAD-needed-head (item 1 base) * max-daily-DM-ingestible-per-head ; Quantité minimum de Matière Azotée Digestible à l'entretien d'un UBT (avec ou sans grand déplacement)
+  
   set daily-needs-UF daily-min-UF-needed-head * head
   set daily-needs-MAD daily-min-MAD-needed-head * head
   set daily-needs-DM max-daily-DM-ingestible-per-head * head
@@ -249,28 +252,36 @@ to eat
       set preference-mono 0.3
     ]
   ]
-
+  ; Stratégie alimentaire 1 - Evaluation fourrage herbacé disponible
   ; Calculer l'UF/kg MS moyen du fourrage disponible
   let monocot-prop ([current-monocot-grass] of patch-here / [current-grass] of patch-here)
   let average-UF-per-kg-MS ([monocot-UF-per-kg-MS] of patch-here * monocot-prop) + ([dicot-UF-per-kg-MS] of patch-here * (1 - monocot-prop))
-
+  let max-UF-per-kg-MS 0.8
+  let ratio-average-UF-grass average-UF-per-kg-MS / max-UF-per-kg-MS 
+  
   ; Calculer la MAD/kg MS moyenne du fourrage disponible
   let average-MAD-per-kg-MS ([monocot-MAD-per-kg-MS] of patch-here * monocot-prop) + ([dicot-MAD-per-kg-MS] of patch-here * (1 - monocot-prop))
 
+
   ; Calculer la quantité de MS à consommer en fonction de la valeur moyenne du fourrage disponible en UF. Plus la valeur est forte, plus il en mangera
     ifelse breed = cattles [ 
-    set desired-DM-intake (daily-needs-DM * 0.5  + ((daily-needs-DM * 0.5)  * average-UF-per-kg-MS))
+    set desired-DM-intake (daily-needs-DM * 0.5  + ((daily-needs-DM * 0.5)  * ratio-average-UF-grass))
   ] [
-    set desired-DM-intake (daily-needs-DM * 0.2  + ((daily-needs-DM * 0.8)  * average-UF-per-kg-MS))
+    set desired-DM-intake (daily-needs-DM * 0.2  + ((daily-needs-DM * 0.8)  * ratio-average-UF-grass))
   ; Assurer que la consommation ne dépasse pas max-daily-DM-ingestible-per-head
   set desired-DM-intake min list desired-DM-intake daily-needs-DM
   ]
+  
+  ; Stratégie alimentaire 2 - Evaluation fourrage total disponible (herbacée et ligneux
+  ; 
+  
+  
   ; Consommer l'herbe
   consume-grass patch-here desired-DM-intake p preference-mono
 
-  let max-tree-ratio 0.5  ;; Valeur par défaut pour bovins
+  let max-tree-ratio 0.3  ;; Valeur par défaut pour bovins
   if breed = sheeps [
-    set max-tree-ratio 0.8
+    set max-tree-ratio 0.5
   ]
 
   ; Calculer le reste de MS à consommer en fonction de la consommation journalière maximale et la quantité voulue à consommer par le troupeau
@@ -362,19 +373,36 @@ to consume-tree-resources [patch-of-grass-eaten remaining-needs] ;; contexte tro
     set good-trees all-trees
   ]
   if any? good-trees [
-    ;; Créer une liste des populations consommables et leurs `max-consumable`
-    ;  ;; Filtrer les arbres en fonction de la disponibilité des ressources
-    ;  set good-trees good-trees with [
-    ;    (current-leaf-stock >= (consumption-treshold * max-leaf-stock)) or (current-fruit-stock >= (consumption-treshold * max-fruit-stock))
-    ;
-    ;  ]
-    let tree-max-consumable []
+    ; Créer une liste des populations consommables et leurs `max-consumable`
+      ;; Filtrer les arbres en fonction de la disponibilité des ressources
+      set good-trees good-trees with [
+        (current-leaf-stock >= (consumption-treshold * max-leaf-stock)) or (current-fruit-stock >= (consumption-treshold * max-fruit-stock))
+    ]  
+      let tree-max-consumable []
+    ; C'EST ICI QU'IL FAUT FAIRE LE PARTAGE DU MAXCONSOMMABLE
     let total-available 0
     ask good-trees [
       if current-leaf-stock >= 0.1 and current-fruit-stock >= 0.1 [
-        let max_consumable (current-leaf-stock + current-fruit-stock)
+        let max-leaves-consumable 0
+        let max-fruits-consumable 0
+        if leaves-status = "dispo" or leaves-status = "croissance" [
+          set max-leaves-consumable min (list current-leaf-stock (max-leaf-stock * max (list leaves-percent-accessible consumption-treshold)))
+        ]
+        if leaves-status = "chute" or leaves-status = "au sol" [
+          set max-leaves-consumable min (list current-leaf-stock max-leaf-stock)
+        ]
+        if fruits-status = "dispo" or fruits-status = "croissance" [
+          set max-fruits-consumable min (list current-fruit-stock (max-fruit-stock * max (list fruits-percent-accessible consumption-treshold)))
+        ]
+        if fruits-status = "chute" or fruits-status = "au sol" [
+          set max-fruits-consumable min (list current-fruit-stock max-fruit-stock)
+        ]
+        if fruits-UF-per-kg-MS = 0 [
+          set max-fruits-consumable 0]
+           
+        let max_consumable (max-fruits-consumable + max-leaves-consumable)
         set total-available total-available + max_consumable
-        set tree-max-consumable lput (list who max_consumable) tree-max-consumable
+        set tree-max-consumable lput (list who max-fruits-consumable max-leaves-consumable) tree-max-consumable
       ]
     ]
     ; Déterminer la quantité à consommer
@@ -385,27 +413,34 @@ to consume-tree-resources [patch-of-grass-eaten remaining-needs] ;; contexte tro
     foreach tree-max-consumable [ [i] ->
       let who-one-tree-population item 0 i
       let one-tree-population turtle who-one-tree-population
-      let max-consumable item 1 i
+      let max-fruits-consumable item 1 i
+      let max-leaves-consumable item 2 i
 
-      let share precision (max-consumable / total-available) 5
+      let share precision ((max-fruits-consumable + max-leaves-consumable) / total-available) 5
 
       let amount-consumed (amount-to-consume * share)
 
-      let total_resources ([current-leaf-stock] of one-tree-population + [current-fruit-stock] of one-tree-population)
+      let total_resources ([max-fruits-consumable] of one-tree-population + [max-leaves-consumable] of one-tree-population)
 
       if total_resources > 1 [
-        let leaves_share ([current-leaf-stock] of one-tree-population / total_resources)
-        let fruits_share ([current-fruit-stock] of one-tree-population / total_resources)
+        let leaves_share ([max-leaves-consumable] of one-tree-population / total_resources)
+        let fruits_share ([max-fruits-consumable] of one-tree-population / total_resources)
         let leaves-consumed amount-consumed * leaves_share
         set leaves-eaten leaves-consumed
-        let fruits-consumed amount-consumed * fruits_share
+        let fruits-consumed amount-consumed * fruits_share * ([ratio-consumable] of one-tree-population)
         set fruits-eaten fruits-consumed
 
-        ;; Mettre à jour les stocks dans la population d'arbres
+        ;; Mettre à jour les stocks dans la population d'arbres + INTEGRER LES GRAINES GERMEES
         ask one-tree-population [
           set current-leaf-stock max list (current-leaf-stock - leaves-consumed) 0
+            if leaves-consumed > (max-leaf-stock * leaves-percent-accessible) [
+              set current-wood-stock current-wood-stock - (wood-reduction-per-kg-MS * leaves-consumed)
+            ]
           set current-fruit-stock  max list (current-fruit-stock - fruits-consumed) 0
-          if current-leaf-stock <= 0 [ set current-leaf-stock 1 ]
+          set fruit-nb current-fruit-stock / one-fruit-weight
+          set seed-nb fruit-nb * seed-nb-per-fruit
+          set germinated-seed-nb germinated-seed-nb + (fruits-consumed * seed-nb-per-fruit / one-fruit-weight)
+              if current-leaf-stock <= 0 [ set current-leaf-stock 1 ]
           if current-fruit-stock <= 0 [ set current-fruit-stock 1 ]
           if current-wood-stock <= 0 [
             die
@@ -415,8 +450,8 @@ to consume-tree-resources [patch-of-grass-eaten remaining-needs] ;; contexte tro
 
         ;; Calculer les UF et MAD ingérées depuis cette population
         ;; Hypothèse : les feuilles et les fruits ont les mêmes valeurs nutritives
-        let UF-ingested-pop amount-consumed * [tree-UF-per-kg-MS] of one-tree-population
-        let MAD-ingested-pop amount-consumed * [tree-MAD-per-kg-MS] of one-tree-population
+        let UF-ingested-pop ((fruits-consumed * [fruits-UF-per-kg-MS] of one-tree-population) + (leaves-consumed * [leaves-UF-per-kg-MS] of one-tree-population))
+        let MAD-ingested-pop ((fruits-consumed * [fruits-MAD-per-kg-MS] of one-tree-population) + (leaves-consumed * [leaves-MAD-per-kg-MS] of one-tree-population))
 
         ;; Accumuler les valeurs
         set total-UF-ingested-from-trees total-UF-ingested-from-trees + UF-ingested-pop
@@ -454,7 +489,7 @@ to consume-tree-resources [patch-of-grass-eaten remaining-needs] ;; contexte tro
         ]
       ]
     ]
-  ]
+    ]
 end
 
 
@@ -489,7 +524,7 @@ to update-corporal-conditions [heads UBT total-UF-ingested total-MAD-ingested da
   set live-weight (live-weight + (weight-gain * head))
   if live-weight > max-live-weight [ set live-weight max-live-weight]
 
-  ; Calculer la NEC à partir du poids vif en considérant que les vaches sont toutes des Gobras. (AMOUGOU MESSI G., 1998. Méthode d’estimation et variation de la composition corporelle des vaches zébu Gobra et Taurin N’Dama en fonction du niveau d’alimentation. Thèse de Doctorat Vétérinaire EISMV, Dakar, Sénégal, 102 p)
+  ; Calculer la NEC à partir du poids vif en considérant que les vaches sont toutes des Zébus. (AMOUGOU MESSI G., 1998. Méthode d’estimation et variation de la composition corporelle des vaches zébu Gobra et Taurin N’Dama en fonction du niveau d’alimentation. Thèse de Doctorat Vétérinaire EISMV, Dakar, Sénégal, 102 p)
 
   if breed = cattles [
     set corporal-condition (live-weight - (148.99 * head) ) / (48.6 * head)

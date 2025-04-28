@@ -3,236 +3,178 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; Obtenir le taux de germination en fonction du type d'arbre et de la qualité de l'année
-to-report get-germination-rate [tree-types year-type]
-  let rate 0
-  if tree-types
-  = "nutritive" [
-    if year-type = "bonne" [set rate 0.2]
-    if year-type = "moyenne" [set rate 0.05]
-    if year-type = "mauvaise" [set rate 0.01]
-  ]
-  if tree-type = "lessNutritive" [
-    if year-type = "bonne" [set rate 0.15]
-    if year-type = "moyenne" [set rate 0.08]
-    if year-type = "mauvaise" [set rate 0.01]
-  ]
-  if tree-type = "fruity" [
-    if year-type = "bonne" [set rate 0.25]
-    if year-type = "moyenne" [set rate 0.15]
-    if year-type = "mauvaise" [set rate 0.01]
-  ]
-  report rate
-end
+;to-report get-germination-rate [tree-types year-type]
+;  let rate 0
+;  if tree-types
+;  = "nutritive" [
+;    if year-type = "bonne" [set rate 0.2]
+;    if year-type = "moyenne" [set rate 0.05]
+;    if year-type = "mauvaise" [set rate 0.01]
+;  ]
+;  if tree-type = "lessNutritive" [
+;    if year-type = "bonne" [set rate 0.15]
+;    if year-type = "moyenne" [set rate 0.08]
+;    if year-type = "mauvaise" [set rate 0.01]
+;  ]
+;  if tree-type = "fruity" [
+;    if year-type = "bonne" [set rate 0.25]
+;    if year-type = "moyenne" [set rate 0.15]
+;    if year-type = "mauvaise" [set rate 0.01]
+;  ]
+;  report rate
+;end
 
-; Fonction pour calculer la croissance logistique des fruits
-to-report growth-fruit-logistic [input-tree-type current-fruit max-fruit season landscape]
+to-report growth-fruit-logistic [current-fruit max-fruit status season]
   let r 0
   ifelse  max-fruit <= 0.0001 [
     report 0  ; Pas de croissance si max-wood est zéro
   ] [
-    if input-tree-type = "nutritive" [
-      if landscape = "Baldiol" [
-        if season = "Nduungu" [set r 0.05]
-        if season = "Ceedu" [set r -0.03]
-        if season = "Dabbuunde" [set r 0.01]
-        if season = "Ceetcelde" [set r -0.01]
-      ]
-      if landscape = "Caangol" [
-        if season = "Nduungu" [set r 0.05]
-        if season = "Ceedu" [set r -0.03]
-        if season = "Dabbuunde" [set r 0.01]
-        if season = "Ceetcelde" [set r 0.005]
-      ]
-      if landscape = "Seeno" [
-        if season = "Nduungu" [set r 0.1]
-        if season = "Ceedu" [set r -0.3]
-        if season = "Dabbuunde" [set r 0.02]
-        if season = "Ceetcelde" [set r -0.005]
-      ]
-      if landscape = "Sangre" [
-        if season = "Nduungu" [set r 0.05]
-        if season = "Ceedu" [set r -0.03]
-        if season = "Dabbuunde" [set r -0.01]
-        if season = "Ceetcelde" [set r 0.005]
-      ]
+    if status = "chute" [
+      set r 0
     ]
-    if input-tree-type = "lessNutritive" [
-      if landscape = "Baldiol" [
-        if season = "Nduungu" [set r 0.05]
-        if season = "Ceedu" [set r -0.03]
-        if season = "Dabbuunde" [set r 0.01]
-        if season = "Ceetcelde" [set r 0.005]
-      ]
-      if landscape = "Caangol" [
-        if season = "Nduungu" [set r 0.05]
-        if season = "Ceedu" [set r -0.03]
-        if season = "Dabbuunde" [set r 0.01]
-        if season = "Ceetcelde" [set r 0.005]
-      ]
-      if landscape = "Seeno" [
-        if season = "Nduungu" [set r 0.05]
-        if season = "Ceedu" [set r -0.03]
-        if season = "Dabbuunde" [set r 0.01]
-        if season = "Ceetcelde" [set r 0.005]
-      ]
-      if landscape = "Sangre" [
-        if season = "Nduungu" [set r 0.05]
-        if season = "Ceedu" [set r -0.03]
-        if season = "Dabbuunde" [set r 0.01]
-        if season = "Ceetcelde" [set r 0.005]
-      ]
+    if status = "sol" [
+      set r -0.05
     ]
-    if input-tree-type = "fruity" [
-      if landscape = "Baldiol" [
-        if season = "Nduungu" [set r 0.05]
-        if season = "Ceedu" [set r -0.03]
-        if season = "Dabbuunde" [set r 0.01]
-        if season = "Ceetcelde" [set r 0.005]
-      ]
-      if landscape = "Caangol" [
-        if season = "Nduungu" [set r 0.05]
-        if season = "Ceedu" [set r -0.05]
-        if season = "Dabbuunde" [set r 0.03]
-        if season = "Ceetcelde" [set r -0.05]
-      ]
-      if landscape = "Seeno" [
-        if season = "Nduungu" [set r 0.05]
-        if season = "Ceedu" [set r -0.03]
-        if season = "Dabbuunde" [set r 0.01]
-        if season = "Ceetcelde" [set r 0.005]
-      ]
-      if landscape = "Sangre" [
-        if season = "Nduungu" [set r 0.05]
-        if season = "Ceedu" [set r -0.03]
-        if season = "Dabbuunde" [set r 0.01]
-        if season = "Ceetcelde" [set r 0.005]
-      ]
+    if status = "croissance" or status = "dispo" [
+      set r 0.05
     ]
     let growth r * (precision current-fruit 3) * (precision ((max-fruit - current-fruit) / max-fruit) 3)
-  if abs(growth) > 1e10 [
-    report 0
-  ]
-    report growth
-  ]
-end
-
-;Fonction pour calculer la croissance logistique des feuilles
-to-report growth-leaf-logistic [input-tree-type current-leaf max-leaf season landscape]
-  let r 0
-  ifelse  max-leaf <= 0.0001 [
-    report 0  ; Pas de croissance si max-wood est zéro
-  ] [
-    if input-tree-type = "nutritive" [
-      if landscape = "Baldiol" [
-        if season = "Nduungu" [set r 0.05]
-        if season = "Ceedu" [set r -0.03]
-        if season = "Dabbuunde" [set r 0.01]
-        if season = "Ceetcelde" [set r 0.005]
-      ]
-      if landscape = "Caangol" [
-        if season = "Nduungu" [set r 0.05]
-        if season = "Ceedu" [set r -0.03]
-        if season = "Dabbuunde" [set r 0.01]
-        if season = "Ceetcelde" [set r 0.005]
-      ]
-      if landscape = "Seeno" [
-        if season = "Nduungu" [set r 0.05]
-        if season = "Ceedu" [set r -0.03]
-        if season = "Dabbuunde" [set r 0.01]
-        if season = "Ceetcelde" [set r 0.005]
-      ]
-      if landscape = "Sangre" [
-        if season = "Nduungu" [set r 0.05]
-        if season = "Ceedu" [set r -0.03]
-        if season = "Dabbuunde" [set r 0.01]
-        if season = "Ceetcelde" [set r 0.005]
-      ]
-    ]
-    if input-tree-type = "lessNutritive" [
-      if landscape = "Baldiol" [
-        if season = "Nduungu" [set r 0.05]
-        if season = "Ceedu" [set r -0.03]
-        if season = "Dabbuunde" [set r 0.01]
-        if season = "Ceetcelde" [set r 0.005]
-      ]
-      if landscape = "Caangol" [
-        if season = "Nduungu" [set r 0.05]
-        if season = "Ceedu" [set r -0.03]
-        if season = "Dabbuunde" [set r 0.01]
-        if season = "Ceetcelde" [set r 0.005]
-      ]
-      if landscape = "Seeno" [
-        if season = "Nduungu" [set r 0.05]
-        if season = "Ceedu" [set r -0.03]
-        if season = "Dabbuunde" [set r 0.01]
-        if season = "Ceetcelde" [set r 0.005]
-      ]
-      if landscape = "Sangre" [
-        if season = "Nduungu" [set r 0.005]
-        if season = "Ceedu" [set r -0.03]
-        if season = "Dabbuunde" [set r -0.01]
-        if season = "Ceetcelde" [set r 0.05]
-      ]
-    ]
-    if input-tree-type = "fruity" [
-      if landscape = "Baldiol" [
-        if season = "Nduungu" [set r 0.05]
-        if season = "Ceedu" [set r -0.03]
-        if season = "Dabbuunde" [set r 0.01]
-        if season = "Ceetcelde" [set r 0.005]
-      ]
-      if landscape = "Caangol" [
-        if season = "Nduungu" [set r 0.05]
-        if season = "Ceedu" [set r -0.03]
-        if season = "Dabbuunde" [set r 0.01]
-        if season = "Ceetcelde" [set r 0.005]
-      ]
-      if landscape = "Seeno" [
-        if season = "Nduungu" [set r 0.05]
-        if season = "Ceedu" [set r -0.03]
-        if season = "Dabbuunde" [set r 0.01]
-        if season = "Ceetcelde" [set r 0.005]
-      ]
-      if landscape = "Sangre" [
-        if season = "Nduungu" [set r 0.05]
-        if season = "Ceedu" [set r -0.03]
-        if season = "Dabbuunde" [set r 0.01]
-        if season = "Ceetcelde" [set r 0.005]
-      ]
-    ]
-    let growth r * (precision current-leaf 3) * (precision ((max-leaf - current-leaf) / max-leaf) 3)
-    if abs(growth) > 1e10 [
+    if abs(growth) > 1e15 [
       report 0
     ]
     report growth
   ]
 end
 
+
+to-report growth-leaf-logistic [current-leaves max-leaves status season]
+  let r 0
+  ifelse  max-leaves <= 0.0001 [
+    report 0  ; Pas de croissance si max-wood est zéro
+  ] [
+    if status = "chute"  [
+      set r 0
+    ]
+    if status = "sol" [
+      set r -0.05
+    ]
+    if status = "croissance" or status = "dispo" [
+      set r 0.05
+    ]
+    let growth r * (precision current-leaves 3) * (precision ((max-leaves - current-leaves) / max-leaves) 3)
+    if abs(growth) > 1e15 [
+      report 0
+    ]
+    report growth
+  ]
+end
+
+
+; Fonction pour calculer la croissance logistique des fruits
+;to-report growth-fruit-logistic [input-tree-type current-fruit max-fruit season landscape]
+;  let r 0
+;  ifelse  max-fruit <= 0.0001 [
+ ;   report 0  ; Pas de croissance si max-wood est zéro
+;  ] [
+;    if input-tree-type = "nutritive" [
+;      if landscape = "Baldiol" [
+ ;       if season = "Nduungu" [set r 0.05]
+  ;      if season = "Ceedu" [set r -0.03]
+   ;     if season = "Dabbuunde" [set r 0.01]
+    ;    if season = "Ceetcelde" [set r -0.01]
+     ; ]
+ ;     if landscape = "Caangol" [
+ ;       if season = "Nduungu" [set r 0.05]
+ ;       if season = "Ceedu" [set r -0.03]
+ ;       if season = "Dabbuunde" [set r 0.01]
+ ;       if season = "Ceetcelde" [set r 0.005]
+ ;     ]
+ ;     if landscape = "Seeno" [
+ ;       if season = "Nduungu" [set r 0.1]
+ ;       if season = "Ceedu" [set r -0.3]
+ ;       if season = "Dabbuunde" [set r 0.02]
+ ;       if season = "Ceetcelde" [set r -0.005]
+ ;     ]
+ ;     if landscape = "Sangre" [
+ ;       if season = "Nduungu" [set r 0.05]
+ ;       if season = "Ceedu" [set r -0.03]
+ ;       if season = "Dabbuunde" [set r -0.01]
+ ;       if season = "Ceetcelde" [set r 0.005]
+ ;     ]
+ ;   ]
+ ;   if input-tree-type = "lessNutritive" [
+ ;     if landscape = "Baldiol" [
+ ;       if season = "Nduungu" [set r 0.05]
+ ;       if season = "Ceedu" [set r -0.03]
+ ;       if season = "Dabbuunde" [set r 0.01]
+ ;       if season = "Ceetcelde" [set r 0.005]
+ ;     ]
+ ;     if landscape = "Caangol" [
+ ;       if season = "Nduungu" [set r 0.05]
+  ;      if season = "Ceedu" [set r -0.03]
+  ;      if season = "Dabbuunde" [set r 0.01]
+  ;      if season = "Ceetcelde" [set r 0.005]
+ ;     ]
+ ;     if landscape = "Seeno" [
+ ;       if season = "Nduungu" [set r 0.05]
+ ;       if season = "Ceedu" [set r -0.03]
+ ;       if season = "Dabbuunde" [set r 0.01]
+ ;       if season = "Ceetcelde" [set r 0.005]
+ ;     ]
+  ;    if landscape = "Sangre" [
+  ;      if season = "Nduungu" [set r 0.05]
+  ;      if season = "Ceedu" [set r -0.03]
+  ;      if season = "Dabbuunde" [set r 0.01]
+   ;     if season = "Ceetcelde" [set r 0.005]
+    ;  ]
+  ;  ]
+ ;   if input-tree-type = "fruity" [
+ ;     if landscape = "Baldiol" [
+ ;       if season = "Nduungu" [set r 0.05]
+ ;       if season = "Ceedu" [set r -0.03]
+ ;       if season = "Dabbuunde" [set r 0.01]
+ ;       if season = "Ceetcelde" [set r 0.005]
+ ;     ]
+ ;     if landscape = "Caangol" [
+ ;       if season = "Nduungu" [set r 0.05]
+ ;       if season = "Ceedu" [set r -0.05]
+ ;       if season = "Dabbuunde" [set r 0.03]
+ ;       if season = "Ceetcelde" [set r -0.05]
+ ;     ]
+ ;     if landscape = "Seeno" [
+ ;       if season = "Nduungu" [set r 0.05]
+ ;       if season = "Ceedu" [set r -0.03]
+ ;       if season = "Dabbuunde" [set r 0.01]
+ ;       if season = "Ceetcelde" [set r 0.005]
+ ;     ]
+ ;     if landscape = "Sangre" [
+ ;       if season = "Nduungu" [set r 0.05]
+ ;       if season = "Ceedu" [set r -0.03]
+ ;       if season = "Dabbuunde" [set r 0.01]
+ ;       if season = "Ceetcelde" [set r 0.005]
+ ;     ]
+ ;   ]
+ ;   let growth r * (precision current-fruit 3) * (precision ((max-fruit - current-fruit) / max-fruit) 3)
+ ; if abs(growth) > 1e10 [
+ ;   report 0
+ ; ]
+ ;   report growth
+ ; ]
+;end
+
+
 ;Fonction pour calculer la croissance logistique du bois
-to-report growth-wood-logistic [input-tree-type current-wood max-wood season]
+to-report growth-wood-logistic [current-wood max-wood status season]
   let r 0
   ifelse  max-wood = 0 [
     report 0  ; Pas de croissance si max-wood est zéro
   ] [
-    if input-tree-type = "nutritive" [
-      if season = "Nduungu" [set r 0.001]
-      if season = "Ceedu" [set r 0.003]
-      if season = "Dabbuunde" [set r 0.00001]
-      if season = "Ceetcelde" [set r 0.00001]
+     if status = "chute" or status = "sol" [
+      set r 0.0005
     ]
-    if input-tree-type = "lessNutritive" [
-      if season = "Nduungu" [set r 0.004]
-      if season = "Ceedu" [set r 0.002]
-      if season = "Dabbuunde" [set r 0.00001]
-      if season = "Ceetcelde" [set r 0.00001]
+    if status = "croissance" or status = "dispo" [
+      set r 0.01
     ]
-    if input-tree-type = "fruity" [
-      if season = "Nduungu" [set r 0.006]
-      if season = "Ceedu" [set r 0.004]
-      if season = "Dabbuunde" [set r 000002]
-      if season = "Ceetcelde" [set r 0.00001]
-    ]
-
     let growth r * (precision current-wood 3) * (precision ((max-wood - current-wood) / max-wood) 3)
     if abs(growth) > 1e10 [
       report 0
@@ -245,29 +187,39 @@ end
 
 
 ; Fonctions pour calculer les populations initiales en fonction du type d'arbre, de l'âge et de la taille de la population
-to-report get-age-data [trees-type ages]
+to-report get-age-data [soil-types trees-type ages]
   ; On vérifie si la clé existe dans la table
-  ifelse table:has-key? tree-age-table (list trees-type ages) [
-    report table:get tree-age-table (list trees-type ages)
+  ifelse table:has-key? tree-age-table (list soil-types trees-type ages) [
+    report table:get tree-age-table (list soil-types trees-type ages)
   ] [
     ; Si aucune donnée trouvée, retourner des valeurs par défaut
-    report (list 0 0 0 0)
+    report (list 0 0 0 0 0 0 0 0)
   ]
 end
 
 
 
 
-to-report get-tree-nutritional-values [trees-type soil season]
+to-report get-tree-nutritional-data [trees-type soil season]
   ; Parcourir la structure `tree-nutritional-values` pour trouver les valeurs correspondantes
   ifelse table:has-key? tree-nutrition-table (list trees-type soil season) [
     report table:get tree-nutrition-table (list trees-type soil season)
   ] [
-    report (list 0 0) ; Valeurs par défaut si introuvable
+    report (list 0 0 0 0 0 0) ; Valeurs par défaut si introuvable
   ]
 
 end
 
+; Fonctions pour calculer les populations initiales en fonction du type d'arbre, de l'âge et de la taille de la population
+to-report get-germination-data [soil-types trees-type]
+  ; On vérifie si la clé existe dans la table
+  ifelse table:has-key? tree-germination-table (list soil-types trees-type) [
+    report table:get tree-germination-table (list soil-types trees-type)
+  ] [
+    ; Si aucune donnée trouvée, retourner des valeurs par défaut
+    report (list 0 0 0 0 0 0 0)
+  ]
+end
 
 
 to-report split-population [total-population]
@@ -440,6 +392,14 @@ to-report find-best-nearest-patch [known-spaces my-shepherd seasons UtilityFacto
 end
 
 
+to-report movement-needs [ dist ]
+  ifelse dist > 6 [ report list 0.5 28 ;; Grande distance     
+    ] [ ifelse dist <= 1 [ report list 0.37 20 ;; Entretien seul
+    ] [ report list 0.43 24 ; Petite distance
+    ]
+  ]
+
+end
 
 
 to-report calculate-trampling-effect [monocot-grass dicot-grass heads]
@@ -455,10 +415,6 @@ to-report calculate-trampling-effect [monocot-grass dicot-grass heads]
   ;; Le MLVstk est multiplié par la taille du troupeau (head) pour avoir l'effet total sur le patch
   report MLVstk * heads
 end
-
-
-
-
 
 
 
@@ -497,7 +453,7 @@ to-report meanKnownSpace [agents]
   let _number-of-sheep count agents
   ; Parcourir chaque mouton et compter les patches
   ask agents [
-    let patches-agentset [distant-known-space] of self  ; Récupérer l'agentset des patches pour ce mouton
+    let patches-agentset [known-space] of self  ; Récupérer l'agentset des patches pour ce mouton
     let count-patches count patches-agentset /  count patches          ; Compter le nombre de patches
     set _total-count _total-count + count-patches         ; Ajouter à la somme totale
   ]

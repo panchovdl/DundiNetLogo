@@ -5,6 +5,7 @@ extensions [csv table] ;profiler]
 globals [
   size-x                 ; Taille horizontale du monde
   size-y                 ; Taille verticale du monde
+  current-plot-id
 
   current-season         ; Saison actuelle
   last-season            ; Saison précédente
@@ -26,6 +27,7 @@ globals [
   ; Tables qui enregistrent les valeurs des arbres en fonction de différents paramètres (type, age, sol et saison)
   tree-age-table ; table: (tree-type, age) -> [max-fruits max-leaves max-woods sensitivities]
   tree-nutrition-table ; table associative: (tree-type, soil, season) -> [UF MAD]
+  tree-germination-table
 
   pB                     ; Proportion de grands éleveurs (troupeaux de grande taille) dans la population
   pM                     ; Proportion d'éleveurs moyens (troupeaux de taille moyenne) dans la population
@@ -93,7 +95,7 @@ patches-own [
 
   soil-type                        ; Type de sol et de paysage
   init-camp-pref                   ; Préférence pour l'installation des campements (1 ou 2)
-  has-camps
+  has-camps                        ; Identifie si le patch a un campement
 
   ; Variables pour le tapis herbacée
 
@@ -124,6 +126,7 @@ patches-own [
   num-less-nutritious              ; Nombre d'arbres peu / pas apprécié par le bétail en fonction du tree-cover
   num-fruity                       ; Nombre d'arbres fruitiers (jujubier, baobab, balanites) par le bétail en fonction du tree-cover
 
+
   ; passage intermédiaire des données du fichier tree_infos pour les transférer à chaque population
   intermediate-patch-pop-size
   intermediate-patch-tree-age
@@ -132,16 +135,23 @@ patches-own [
   init-patch-max-fruit-stock
   init-patch-max-leaf-stock
   init-patch-max-wood-stock
-  init-patch-sensitivity
+  init-patch-accessible
+  init-patch-fruits-nb
+  init-patch-seeds-nb
+
+
+
+
+  ; Variables des parcelles de reforestation
+
+  is-fenced                        ; Cellule protégée (parcelle de reforestation)
+  plot-id                          ; Assignation d'un ID si c'est une parcelle de reforestation
+
 
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Variables non initialisées (en cours) ;;
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-  is-fenced                        ; Cellule protégée (parcelle de reforestation)
-  owner-camps                      ; Campements propriétaires de la parcelle
-
 
   water-point                      ; Point d'eau (booléen)
   has-pond                         ; Booléen, détermine s'il y a une mare
@@ -187,6 +197,7 @@ turtles-own [
   known-space                      ; Tout l'espace connu par les individus
   close-known-space                ; Espace connu à moins d'une journée de déplacement d'un troupeau (6km)
   distant-known-space              ; Espace connu à plus d'une journée de déplacement d'un troupeau (6km)
+  daily-trip
 
   ; Déplacement du campement
   current-home-camp                ; Campement actuel
@@ -194,7 +205,7 @@ turtles-own [
   original-home-camp               ; Campement permanent
   original-home-patch              ; Patch du campement permanent
   is-in-temporary-camp             ; Booléen indiquant à l'agent s'il est dans son campement permanent ou sur un temporaire
-
+  reforestation-plot               ; Parcelle de reforestation
 ]
 
 
@@ -208,7 +219,6 @@ camps-own [
   is-temporary                     ; Booléen indiquant si le camp est temporaire
   wood-needs                       ; Besoins en bois
   wood-quantity                    ; Quantité de bois dans le campement
-  reforestation-plot               ; Parcelle de reforestation
 ]
 
 
@@ -314,11 +324,30 @@ tree-populations-own [
   max-leaf-stock                   ; Stock maximal de fruit pour la population
   max-wood-stock                   ; Stock maximal de fruit pour la population
   wood-ratio                       ; Ratio entre le stock actuel et le stock maximal de bois
-  tree-sensitivity                 ; Sensibilité de l'arbre à la coupe et la pluviométrie
+  max-fruit-nb
+  max-seed-nb
+  fruit-nb                         ; Nombre de fruits
+  seed-nb                          ; Nombre de graines
+  leaves-percent-accessible               ; pourcentage de ressources accessible (déterminé selon la taille et la phénologie spécifique à l'arbre)
+  fruits-percent-accessible
+  germinated-seed-nb               ; Nombre de graines passées par le tractus digestif des chèvres
 
-  ; Relatif à l'énergie et la valeur de matière azotée dans les feuilles et furilles
-  tree-UF-per-kg-MS                ; UF/kg MS pour les arbres
-  tree-MAD-per-kg-MS               ; MAD/kg MS pour les arbres
+  germination-rate                 ; Taux de germination
+  young-regen-rate                 ; Taux de régénération des jeunes plants (jusqu'à 4 ans)
+  dormance-needed                  ; Besoin des graines de passer par le tractus digestif des chèvres (simulé en laboratoire par le passage à l'acide)
+  one-fruit-weight                 ; Poids d'un fruit
+  one-seed-weight                  ; Poids d'une graine
+  seed-nb-per-fruit                ; Nomrbe de graines par fruit
+  ratio-consumable                 ; Part consommable dans un fruit
+
+
+  ; Relatif à l'énergie et la valeur de matière azotée dans les feuilles et feuilles
+  leaves-status                    ; Statut phénologique des feuilles (Chute, au sol, disponible)
+  leaves-UF-per-kg-MS              ; Valeur fourragère (UF) par kg de MS des feuilles
+  leaves-MAD-per-kg-MS             ; Matière Azotée Digestible (MAD) par kg de MS des feuilles
+  fruits-status                    ; Statut phénologique des fruits (Chute, au sol, croissance, disponible)
+  fruits-UF-per-kg-MS              ; Valeur fourragère (UF) par kg de MS des fruits
+  fruits-MAD-per-kg-MS             ; Matière Azotée Digestible (MAD) par kg de MS des fruits
 ]
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -332,8 +361,8 @@ champs-own [
 
 
 
-to show-tree-populations-info ; Procédure pour afficher les populations d'arbres
-                              ; Compter le nombre total de populations d'arbres
+to show-tree-populations-info      ; Procédure pour afficher les populations d'arbres
+                                   ; Compter le nombre total de populations d'arbres
   let total-populations count tree-populations
   show (word "Nombre total de populations d'arbres : " total-populations)
 
@@ -398,7 +427,7 @@ to setup
   ; Chargement des valeurs spécifiques aux ressouces pastorales
   load-tree-age-data "tree_info.csv" ; valeurs pour les ages
   load-tree-nutrition-data "tree_nutrition.csv" ; valeurs pour les qualités nutritives selon type d'arbre, saison, type de sol
-
+  load-tree-germination-data "germination_rate.csv" ; valeurs pour les valeurs de régénération selon type d'arbre et type de sol
 
   ; Initialiser les durées des saisons
   update-year-type
@@ -410,6 +439,8 @@ to setup
   setup-water-patches ; Créer les mares
   setup-camps  ; Créer les campements
   setup-reforestation-plots
+  assign-camps-to-reforestation-plots
+
   setup-foyers ; Créer les foyers
   setup-herds  ; Créer les troupeaux
   setup-trees  ; Créer les arbres
@@ -459,9 +490,9 @@ to set-initial-values
 
   ; Définir les seuil max d'herbe par type de sol kg MS / km²
   set K-Baldiol 120000
-  set K-Caangol 300000
-  set K-Sangre 80000
-  set K-Seeno 200000
+  set K-Caangol 300000 * 0.9
+  set K-Sangre 80000 * 0.7
+  set K-Seeno 200000 * 0.9
 
   ; Définir les seuils
   set seuil-bon-UF 0.6    ; Qualité de l'herbe - à ajuster selon les données du manuel de Boudet (1975)
@@ -632,14 +663,12 @@ to go
   ]
   ask cattles with [have-left = false] [
     move
-    update-known-space
     eat
     update-corporal-conditions head UBT-size UF-ingested MAD-ingested daily-needs-UF daily-needs-MAD max-daily-DM-ingestible-per-head preference-mono
     trample-trees
   ]
   ask sheeps with [have-left = false] [
     move
-    update-known-space
     eat
     update-corporal-conditions head UBT-size UF-ingested MAD-ingested daily-needs-UF daily-needs-MAD max-daily-DM-ingestible-per-head preference-mono
     trample-trees
@@ -647,13 +676,13 @@ to go
 
   ; Activités des Foyers
   ask foyers [
-    if cattle-herd != nobody [
+    if cattle-herd != nobody and [have-left] of cattle-herd = false [
       choose-strategy-for-cattles]
-    if sheep-herd != nobody [
+    if sheep-herd != nobody and [have-left] of sheep-herd = false[
       choose-strategy-for-sheeps]
     ; Choix stratégiques pastoraux du chef de ménage
-    update-known-space
   ]
+  update-known-space
 
   ; Mise à jour des valeurs Stats pour visualisation
   calculStat
@@ -733,21 +762,28 @@ end
 
 
 to update-known-space
-  let home-patch current-home-patch
-  if breed = cattles or breed = sheeps [
-    set known-space (patch-set known-space ([known-space] of foyer-owner))
-  ]
-  if breed = foyers [
+  ask foyers [
+    let home-patch current-home-patch
     if cattle-herd != nobody [
       set known-space (patch-set known-space ([known-space] of cattle-herd))]
     if sheep-herd != nobody [
       set known-space (patch-set known-space ([known-space] of sheep-herd))]
+    set close-known-space known-space with [distance home-patch <= 6]
+    set distant-known-space known-space who-are-not close-known-space
   ]
-  ; Pour tous les agents : recalcul du close et du distant-known-space
-  set close-known-space known-space with [distance home-patch <= 6]
-  set distant-known-space known-space who-are-not close-known-space
-  if breed = cattles or breed = sheeps [
+  ask cattles [
+    let home-patch current-home-patch
+    set known-space (patch-set known-space ([known-space] of foyer-owner))
     set original-camp-known-space [close-known-space] of foyer-owner
+    set close-known-space known-space with [distance home-patch <= 6]
+    set distant-known-space known-space who-are-not close-known-space
+  ]
+  ask sheeps [
+    let home-patch current-home-patch
+    set known-space (patch-set known-space ([known-space] of foyer-owner))
+    set original-camp-known-space [close-known-space] of foyer-owner
+    set close-known-space known-space with [distance home-patch <= 6]
+    set distant-known-space known-space who-are-not close-known-space
   ]
 
 end
@@ -1023,7 +1059,7 @@ good-shepherd-percentage
 good-shepherd-percentage
 0
 100
-100.0
+0.0
 1
 1
 NIL
@@ -1038,7 +1074,7 @@ proportion-big-herders
 proportion-big-herders
 0
 100
-100.0
+53.0
 1
 1
 NIL
@@ -1206,10 +1242,10 @@ year-index
 11
 
 PLOT
-1470
-105
-1900
-255
+1115
+90
+1410
+265
 Biomasse (MS) par hectare
 NIL
 NIL
@@ -1302,7 +1338,7 @@ number-of-camps
 number-of-camps
 0
 150
-150.0
+64.0
 1
 1
 NIL
@@ -1473,7 +1509,7 @@ avg-UBT-per-camp
 avg-UBT-per-camp
 10
 100
-10.0
+40.0
 5
 1
 NIL
@@ -1663,15 +1699,15 @@ PENS
 "moyenne fruits" 1.0 0 -4699768 true "" "plot mean [current-fruit-stock] of tree-populations"
 
 SLIDER
-750
-615
-920
-648
+30
+640
+200
+673
 decreasing-factor
 decreasing-factor
 0
 100
-0.0
+24.0
 1
 1
 NIL
@@ -1695,15 +1731,15 @@ NIL
 1
 
 SLIDER
-750
-650
-920
-683
+30
+675
+200
+708
 FUtility
 FUtility
 0
 1
-1.0
+0.9
 0.1
 1
 NIL
@@ -1893,7 +1929,7 @@ TEXTBOX
 730
 320
 745
-545
+635
 |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 12
 0.0
@@ -1921,9 +1957,9 @@ TEXTBOX
 
 TEXTBOX
 730
-525
+615
 1070
-550
+640
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 10
 0.0
@@ -1933,7 +1969,7 @@ TEXTBOX
 1055
 320
 1070
-545
+635
 |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 12
 0.0
@@ -2138,9 +2174,9 @@ PENS
 
 SLIDER
 750
-560
-880
-593
+540
+885
+573
 reforestation-plots-number
 reforestation-plots-number
 0
@@ -2152,10 +2188,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-25
-595
-197
-628
+750
+580
+885
+613
 COGES-camps
 COGES-camps
 2
@@ -2165,6 +2201,36 @@ COGES-camps
 1
 NIL
 HORIZONTAL
+
+TEXTBOX
+730
+525
+1070
+543
+------------------------------------------------------------------------------------
+10
+0.0
+1
+
+TEXTBOX
+890
+550
+1055
+568
+Parcelles de reforestation
+12
+0.0
+1
+
+TEXTBOX
+890
+580
+1050
+610
+Nombre de campements par COGES
+12
+0.0
+1
 
 @#$#@#$#@
 ## WHAT IS IT?

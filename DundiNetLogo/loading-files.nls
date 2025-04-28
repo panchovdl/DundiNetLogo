@@ -59,16 +59,21 @@ to load-tree-age-data [filename]
   while [not file-at-end?] [
     let line csv:from-row file-read-line
     ; Convertir les éléments en types appropriés
-    let trees-type item 0 line        ; "nutritive", "lessNutritive", "fruity"
-    let ages item 1 line ; Âge (1 à 8)
-    let max-fruits item 2 line
+    let soil-types item 0 line
+    let trees-type item 1 line        ; "nutritive", "lessNutritive", "fruity"
+    let ages item 2 line ; Âge (1 à 8)
     let max-leaves item 3 line
-    let max-woods item 4 line
-    let sensitivities item 5 line
+    let max-fruits item 4 line
+    let max-woods item 5 line
+    let accessibility item 6 line
+    let max-fruits-nb item 7 line
     ; Ajouter les données à la table `tree-age-table`
-    table:put tree-age-table (list trees-type ages) (list max-fruits max-leaves max-woods sensitivities)
+    table:put tree-age-table (list soil-types trees-type ages) (list max-leaves max-fruits max-woods accessibility max-fruits-nb)
   ]
+  
+    ;  show  tree-age-table
   file-close
+  
 end
 
 
@@ -88,10 +93,50 @@ to load-tree-nutrition-data [filename]
     let trees-type item 0 line        ; "nutritive", "lessNutritive", "fruity"
     let landscapes item 1 line ; "Baldiol", "Sangre", "Seeno", "Caangol"
     let seasons item 2 line
-    let tree-UF-data item 3 line
-    let tree-MAD-data item 4 line
+    let leaf-status item 3 line 
+    let tree-leaf-UF-data item 4 line
+    let tree-leaf-MAD-data item 5 line
+    let fruit-status item 6 line
+    let tree-fruit-UF-data item 7 line
+    let tree-fruit-MAD-data item 8 line
     ; Ajouter les données à la liste `tree-nutrition-data`
-    table:put tree-nutrition-table (list trees-type landscapes seasons) (list tree-UF-data tree-MAD-data)
+    table:put tree-nutrition-table (list trees-type landscapes seasons) (list leaf-status tree-leaf-UF-data tree-leaf-MAD-data fruit-status tree-fruit-UF-data tree-fruit-MAD-data)
   ]
+  
+  ;    show  tree-nutrition-table
+  file-close
+end
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ouverture des fichiers pour les taux de régénération des arbres ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+to load-tree-germination-data [ filename ]
+  set tree-germination-table table:make
+  file-open filename      
+  ;; 2. lire chaque ligne du fichier
+  while [ not file-at-end? ] [
+    let row csv:from-row file-read-line        ;; renvoie une liste de chaînes
+    if length row >= 9 [                       ;; ligne vide ou incomplète → on saute
+      ;; -- extraction et conversion --
+      let landscape-item          item 0 row
+      let trees-type              item 1 row
+      let germin-rate             item 2 row
+      let young-regeneration-rate item 3 row
+      let dormance-need           item 4 row
+      let one-fruit-w             item 5 row ;; évite 0
+      let seed-nb-fruit           item 6 row
+      let one-seed-w              item 7 row
+      let ratio-consum            item 8 row
+      
+      table:put tree-germination-table
+               (list landscape-item trees-type)
+               (list germin-rate young-regeneration-rate dormance-need
+                     one-fruit-w seed-nb-fruit one-seed-w ratio-consum)
+    ]
+
+  ]
+  ;    show tree-germination-table
   file-close
 end

@@ -9,9 +9,9 @@ to setup-landscape
       set K K-Baldiol  ; Stock de production de Matière Sèche (MS - DM[en]) sur 1 km² pour "Baldiol"
       set K-max K-Baldiol ; stock max
       set current-grass 100
-      set num-nutritious round (tree-cover * 0.5)
-      set num-less-nutritious round (tree-cover * 0.25)
-      set num-fruity round (tree-cover * 0.25)
+      set num-nutritious round (tree-cover * 0.4)
+      set num-less-nutritious round (tree-cover * 0.3)
+      set num-fruity round (tree-cover * 0.3)
       set patch-sensitivity 2
       set max-tree-number 8000
     ]
@@ -29,9 +29,9 @@ to setup-landscape
       set K K-Sangre  ; Stock de production de Matière Sèche (MS - DM[en]) sur 1 km² pour Sangre
       set K-max K-Sangre ; stock max
       set current-grass 100
-      set num-nutritious round (tree-cover * 0.8)
-      set num-less-nutritious round (tree-cover * 0.25)
-      set num-fruity round (tree-cover * 0.0001)
+      set num-nutritious round (tree-cover * 0.3)
+      set num-less-nutritious round (tree-cover * 0.1)
+      set num-fruity round (tree-cover * 0.2)
       set patch-sensitivity 3
       set max-tree-number 15000
     ]
@@ -39,9 +39,9 @@ to setup-landscape
       set K K-Seeno  ; Stock de production de Matière Sèche (MS - DM[en]) sur 1 km² pour Seeno
       set K-max K-Seeno ; stock max
       set current-grass 100
-      set num-nutritious round (tree-cover * 0.5)
-      set num-less-nutritious round (tree-cover * 0.25)
-      set num-fruity round (tree-cover * 0.25)
+      set num-nutritious round (tree-cover * 0.4)
+      set num-less-nutritious round (tree-cover * 0.2)
+      set num-fruity round (tree-cover * 0.4)
       set patch-sensitivity 1
       set max-tree-number 5000
     ]
@@ -247,16 +247,16 @@ end
 to assign-grass-proportions ; Réassigner la proportion de monocotylédones (p) en fonction du type de sol
   ask patches [
     if soil-type = "Baldiol" [
-      set p random-float (0.0 - 0.2) + 0.3  ; Intervalle [0.3, 0.5]
+      set p random-float (0.0 - 0.1) + 0.7  ; Intervalle [0.3, 0.5]
     ]
     if soil-type = "Caangol" [
-      set p random-float (0.0 - 0.3) + 0.1  ; Intervalle [0.1, 0.4]
+      set p random-float (0.0 - 0.1) + 0.8  ; Intervalle [0.1, 0.4]
     ]
     if soil-type = "Sangre" [
-      set p random-float (0.0 - 0.3) + 0.3  ; Intervalle [0.3, 0.6]
+      set p random-float (0.0 - 0.1) + 0.6  ; Intervalle [0.3, 0.6]
     ]
     if soil-type = "Seeno" [
-      set p random-float (0.0 - 0.2) + 0.8  ; Intervalle [0.6, 0.8]
+      set p random-float (0.0 - 0.1) + 0.65  ; Intervalle [0.6, 0.8]
     ]
     
     ; Assurer que p est entre 0 et 1
@@ -278,27 +278,27 @@ to update-UF-and-MAD
     ; Définit pour les deux espèces les valeurs en UF et MAD par kg de MS (valeurs de Boudet, 1975, "Manuel sur les pâturages tropicaux et cultures fourragères" en prenant comme référence une valeur proche des graminées les plus présents (monocotylédones) et zornia comme légumineuse (dicotylédone))
     if current-season = "Nduungu" [
       set monocot-UF-per-kg-MS 0.5
-      set monocot-MAD-per-kg-MS 60
-      set dicot-UF-per-kg-MS 0.6
-      set dicot-MAD-per-kg-MS 100
+      set monocot-MAD-per-kg-MS 34.4
+      set dicot-UF-per-kg-MS 0.77
+      set dicot-MAD-per-kg-MS 108.5
     ]
     if current-season = "Dabbuunde" [
-      set monocot-UF-per-kg-MS 0.6
-      set monocot-MAD-per-kg-MS 20
-      set dicot-UF-per-kg-MS 0.8
-      set dicot-MAD-per-kg-MS 110
+      set monocot-UF-per-kg-MS 0.53
+      set monocot-MAD-per-kg-MS 41.1
+      set dicot-UF-per-kg-MS 0.84
+      set dicot-MAD-per-kg-MS 93.5
     ]
     if current-season = "Ceedu" [
-      set monocot-UF-per-kg-MS 0.45
+      set monocot-UF-per-kg-MS 0.405
       set monocot-MAD-per-kg-MS 1
       set dicot-UF-per-kg-MS 0.6
-      set dicot-MAD-per-kg-MS 30
+      set dicot-MAD-per-kg-MS 65.5
     ]
     if current-season = "Ceetcelde" [
-      set monocot-UF-per-kg-MS 0.4
-      set monocot-MAD-per-kg-MS 0.01
+      set monocot-UF-per-kg-MS 0.285
+      set monocot-MAD-per-kg-MS 0.2
       set dicot-UF-per-kg-MS 0.4
-      set dicot-MAD-per-kg-MS 30
+      set dicot-MAD-per-kg-MS 89
     ]
   ]
 end
