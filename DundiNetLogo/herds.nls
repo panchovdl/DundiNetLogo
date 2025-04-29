@@ -5,125 +5,151 @@
 
 to setup-herds ; Valeurs à définir
   ask foyers [
-
-    let my-pasture-strategy pasture-strategy
-    let my-shepherd-type shepherd-type  ; Récupérer le shepherd-type du foyer
-    let my-cattle-count cattle-herd-count
-    let my-sheep-count sheep-herd-count
-    ; Créer un troupeau de bovins pour le foyer
-    let my-cattles []
-    hatch-cattles 1 [
-
-      ; caractéristiques physiologiques
-      set head my-cattle-count
-      if head = 0 [ die ]
-      set UBT-size 1
-      set corporal-condition 5
-      set protein-condition 10
-      set initial-live-weight 250 * UBT-size * head
-      set live-weight initial-live-weight
-      set max-live-weight 350 * head 
-      set min-live-weight 66 * head
-
-      ; caractéristiques visuelles
-      set color grey
-      set shape "cow"
-      set size calculate-herd-size head  ;; easier to see
-      set label-color blue - 2
-      set label head
-
-
-      ; consommation et gain/perte de poids
-      set max-daily-DM-ingestible-per-head 7.2 * UBT-size
-      set weight-gain 0
-      set daily-water-consumption 22 * head * UBT-size; 22 l/UBT/J de consommation d'eau
-
-
-      ; relations avec soi et les reste (propriétaire, environnement)
-      set foyer-owner myself
-      set my-cattles self  ; Stocker la tortue dans une variable temporaire
-      set pasture-strategy my-pasture-strategy  ; Transmettre la stratégie de pâturage
-      set shepherd-type my-shepherd-type  ; Transmettre le shepherd-type du foyer
-
-      ; Campements associés
-      set original-home-patch [original-home-patch] of foyer-owner
-      set original-home-camp [original-home-camp] of foyer-owner
-      set current-home-patch original-home-patch
-      set current-home-camp original-home-camp
-      set is-in-temporary-camp false
-      set reforestation-plot [reforestation-plot] of myself
-      move-to current-home-patch
-      set xcor xcor + (random-float 0.8 - 0.4)  ;; Décalage entre -0.4 et +0.4
-      set ycor ycor + (random-float 0.8 - 0.4)
-
-      ; Espace connu et déplacements
-      set known-space [known-space] of foyer-owner
-      set close-known-space known-space in-radius 6
-      set distant-known-space known-space who-are-not close-known-space
-      set original-camp-known-space [close-known-space] of foyer-owner
-      set have-left false
-    ] ; end hatch-cattle
-    ; Attribuer le troupeau créé à son propriétaire
-    set cattle-herd my-cattles
-    if cattle-herd = [] [
-      set cattle-herd nobody]
-
-    ; Créer un troupeau de petits ruminants pour le foyer
-    let my-sheeps []
-    hatch-sheeps 1 [
-
-      ; caractéristiques physiologiques
-      set head my-sheep-count
-      if head = 0 [ die ]
-      set UBT-size 0.16
-      set corporal-condition 5
-      set protein-condition 10
-      set initial-live-weight 250 * UBT-size * head
-      set live-weight initial-live-weight
-      set max-live-weight 80 * head
-      set min-live-weight 21 * head
-
-      ; caractéristiques visuelles
-      set color black
-      set shape "sheep"
-      set size calculate-herd-size head  ;; easier to see
-      set label-color blue - 2
-      set label head
-
-      ; consommation et gain/perte de poids
-      set max-daily-DM-ingestible-per-head 7.2 * UBT-size
-      set weight-gain 0
-      set daily-water-consumption 22 * head * UBT-size; 22 l/UBT/J de consommation d'eau
-
-      ; relations avec soi et les reste (propriétaire, environnement)
-      set foyer-owner myself
-      set my-sheeps self  ; Stocker la tortue dans une variable temporaire
-      set pasture-strategy my-pasture-strategy  ; Transmettre la stratégie de pâturage
-      set shepherd-type my-shepherd-type  ; Transmettre le shepherd-type du foyer
-
-      ; Campements associés
-      set original-home-patch [original-home-patch] of foyer-owner
-      set original-home-camp [original-home-camp] of foyer-owner
-      set current-home-patch original-home-patch
-      set current-home-camp original-home-camp
-      set is-in-temporary-camp false
-      set reforestation-plot [reforestation-plot] of myself
-      move-to current-home-patch
-      set xcor xcor + (random-float 0.8 - 0.4)  ;; Décalage entre -0.4 et +0.4
-      set ycor ycor + (random-float 0.8 - 0.4)
-      
-      ; Espace connu et déplacements
-      set known-space [known-space] of foyer-owner
-      set original-camp-known-space known-space
-      set close-known-space known-space in-radius 6
-      set distant-known-space known-space who-are-not close-known-space
-      set have-left false
-    ]
-    ; Attribuer le troupeau créé à son propriétaire
-    set sheep-herd my-sheeps
-        if sheep-herd = [] [
-      set sheep-herd nobody]
+    create-herds-for-me
   ]
+end
+
+to create-herds-for-me 
+  
+  let my-pasture-strategy pasture-strategy
+  let my-shepherd-type shepherd-type  ; Récupérer le shepherd-type du foyer
+  let my-cattle-count cattle-herd-count
+  let my-sheep-count sheep-herd-count
+  ; Créer un troupeau de bovins pour le foyer
+  let my-cattles []
+  hatch-cattles 1 [
+    
+    ; caractéristiques physiologiques
+    set head my-cattle-count
+    if head = 0 [ die ]
+    set UBT-size 1
+    set corporal-condition 5
+    set protein-condition 10
+    set initial-live-weight 250 * UBT-size * head
+    set live-weight initial-live-weight
+    set max-live-weight 350 * head 
+    set min-live-weight 66 * head
+    
+    ; caractéristiques visuelles
+    set color grey
+    set shape "cow"
+    set size calculate-herd-size head  ;; easier to see
+    set label-color blue - 2
+    set label head
+    
+    
+    ; consommation et gain/perte de poids
+    set max-daily-DM-ingestible-per-head 7.2 * UBT-size
+    set weight-gain 0
+    set daily-water-consumption 22 * head * UBT-size; 22 l/UBT/J de consommation d'eau
+    
+    
+    ; relations avec soi et les reste (propriétaire, environnement)
+    set foyer-owner myself
+    set my-cattles self  ; Stocker la tortue dans une variable temporaire
+    set pasture-strategy my-pasture-strategy  ; Transmettre la stratégie de pâturage
+    set shepherd-type my-shepherd-type  ; Transmettre le shepherd-type du foyer
+    
+    
+    ifelse [is-transhumant] of foyer-owner [
+      set current-home-patch [current-home-patch] of foyer-owner
+      set original-home-patch nobody
+      set original-home-camp nobody
+      set current-home-camp [current-home-camp] of foyer-owner
+      set is-in-temporary-camp true
+      set original-camp-known-space nobody
+    ] [
+      set original-home-patch [original-home-patch] of foyer-owner
+      set original-home-camp [original-home-camp] of foyer-owner
+      set current-home-patch original-home-patch
+      set current-home-camp original-home-camp
+      set is-in-temporary-camp false
+      set reforestation-plot [reforestation-plot] of myself
+      set original-camp-known-space [close-known-space] of foyer-owner
+    ]
+
+    move-to current-home-patch
+    set xcor xcor + (random-float 0.8 - 0.4)  ;; Décalage entre -0.4 et +0.4
+    set ycor ycor + (random-float 0.8 - 0.4)
+    
+    ; Espace connu et déplacements
+    set known-space [known-space] of foyer-owner
+    set close-known-space known-space in-radius 6
+    set distant-known-space known-space who-are-not close-known-space
+    set have-left false
+    
+  ] ; end hatch-cattle
+    ; Attribuer le troupeau créé à son propriétaire
+  set cattle-herd my-cattles
+  if cattle-herd = [] [
+    set cattle-herd nobody]
+  
+  ; Créer un troupeau de petits ruminants pour le foyer
+  let my-sheeps []
+  hatch-sheeps 1 [
+    
+    ; caractéristiques physiologiques
+    set head my-sheep-count
+    if head = 0 [ die ]
+    set UBT-size 0.16
+    set corporal-condition 5
+    set protein-condition 10
+    set initial-live-weight 250 * UBT-size * head
+    set live-weight initial-live-weight
+    set max-live-weight 80 * head
+    set min-live-weight 21 * head
+    
+    ; caractéristiques visuelles
+    set color black
+    set shape "sheep"
+    set size calculate-herd-size head  ;; easier to see
+    set label-color blue - 2
+    set label head
+    
+    ; consommation et gain/perte de poids
+    set max-daily-DM-ingestible-per-head 7.2 * UBT-size
+    set weight-gain 0
+    set daily-water-consumption 22 * head * UBT-size; 22 l/UBT/J de consommation d'eau
+    
+    ; relations avec soi et les reste (propriétaire, environnement)
+    set foyer-owner myself
+    set my-sheeps self  ; Stocker la tortue dans une variable temporaire
+    set pasture-strategy my-pasture-strategy  ; Transmettre la stratégie de pâturage
+    set shepherd-type my-shepherd-type  ; Transmettre le shepherd-type du foyer
+    
+    
+    
+    ifelse [is-transhumant] of foyer-owner [
+      set current-home-patch [current-home-patch] of foyer-owner
+      set original-home-patch nobody
+      set original-home-camp nobody
+      set current-home-camp [current-home-camp] of foyer-owner
+      set is-in-temporary-camp true
+      set original-camp-known-space nobody
+    ] [
+      set original-home-patch [original-home-patch] of foyer-owner
+      set original-home-camp [original-home-camp] of foyer-owner
+      set current-home-patch original-home-patch
+      set current-home-camp original-home-camp
+      set is-in-temporary-camp false
+      set reforestation-plot [reforestation-plot] of myself
+      set original-camp-known-space [close-known-space] of foyer-owner
+    ]
+
+    move-to current-home-patch
+    set xcor xcor + (random-float 0.8 - 0.4)  ;; Décalage entre -0.4 et +0.4
+    set ycor ycor + (random-float 0.8 - 0.4)
+    
+    ; Espace connu et déplacements
+    set known-space [known-space] of foyer-owner
+    set close-known-space known-space in-radius 6
+    set distant-known-space known-space who-are-not close-known-space
+    set have-left false
+  ]
+  ; Attribuer le troupeau créé à son propriétaire
+  set sheep-herd my-sheeps
+  if sheep-herd = [] [
+    set sheep-herd nobody]
 end
 
 
@@ -156,87 +182,123 @@ end
 
 ;; Cherche le patch non-viable le plus proche de p-target qui a de la place
 ;; (utile lorsque le best-patch est saturé)
+
+
 to-report nearest-with-space [p-target]
-  let radial ( [patches in-radius 1] of p-target )       ;; voisins de Moore
-  report min-one-of ( radial with [ patch-has-space? self ] ) [ distance p-target ]
+
+  let radial [patches in-radius 1] of p-target           ;; voisins de Moore
+  let candidats radial with [
+        patch-has-space? self and                     ;; < 2 campements
+        (not is-fenced)                               ;; pas protégé
+  ]
+
+  ifelse any? candidats [
+    report min-one-of candidats [distance p-target]
+  ] [
+    report nobody
+  ]
 end
 
+to go-back-home
+  ; stratégie 1 : retour
+  ifelse [is-transhumant] of foyer-owner [
+    move-to one-of [neighbors] of current-home-camp
+  ] [
+    ifelse is-in-temporary-camp [
+      set current-home-patch original-home-patch
+      set current-home-camp original-home-camp
+      set is-in-temporary-camp false
+      move-to one-of original-camp-known-space
+    ] [
+      move-to one-of original-camp-known-space
+    ] ; end of temp-camp
+  ] ; end ifelse trans
+end
 
 to move
   ;; 1. déterminer le meilleur patch
   let best-patch find-best-nearest-patch known-space shepherd-type current-season FUtility
   ifelse best-patch = nobody [
-      ; stratégie 1 : retour (inchangée)
-      let home-known-space original-camp-known-space with [is-fenced = false]
-      move-to one-of home-known-space
-      if is-in-temporary-camp [
-        set current-home-patch original-home-patch
-        set is-in-temporary-camp false
-      ]
+    go-back-home
   ] [
-
   ;; 2. Vérifier s’il reste de la place sur ce patch
   if not patch-has-space? best-patch [
     let alt nearest-with-space best-patch
-    if alt != nobody [ set best-patch alt ]
-  ]
-
-  set daily-trip distance best-patch
-  ;; 4. Cas A : le foyer est dans son campement permanent
-  if not is-in-temporary-camp [
-     
-    ifelse daily-trip >= 6 [
-    ;; créer / déplacer campement ⇐ uniquement si le patch choisi est encore disponible
-    if patch-has-space? best-patch [
-      set current-home-patch best-patch
-      set is-in-temporary-camp true
-      move-to current-home-patch
-        set xcor xcor + (random-float 0.9 - 0.45)
-        set ycor ycor + (random-float 0.9 - 0.45)
-      ;; étendre l’espace connu
-          let nearby-patches [patches in-radius 2] of current-home-patch
-      set known-space (patch-set known-space nearby-patches)
+    ifelse alt != nobody [ set best-patch alt 
+      ] [
+        go-back-home
+      ]
     ]
+    
+    set daily-trip distance best-patch
+    
+    
+    ;; 4. Cas A : le foyer est dans son campement permanent
+    
+    if not is-in-temporary-camp [
+      ifelse daily-trip >= 6 [
+        ;; créer / déplacer campement ⇐ uniquement si le patch choisi est encore disponible
+        if patch-has-space? best-patch [
+          set current-home-patch best-patch
+          set is-in-temporary-camp true
+          move-to current-home-patch
+          ;; étendre l’espace connu
+          let nearby-patches [patches in-radius 2] of current-home-patch
+          set known-space (patch-set known-space nearby-patches)
+        ]
   ] [
     ;; best-patch < 6 → simple déplacement
     move-to best-patch
-    set xcor xcor + (random-float 0.9 - 0.45)
-    set ycor ycor + (random-float 0.9 - 0.45)
   ]
   
   ] ;; fin Cas A
 
 
-  ;; 5. Cas B : le foyer est déjà dans un campement temporaire
+  ;; 5. Cas B : le foyer est déjà dans un campement temporaire OU transhumant
   if is-in-temporary-camp [
-    if daily-trip >= 2 [
-      ifelse member? best-patch original-camp-known-space [
-
-          ;; Move to the best patch
-          move-to best-patch
-          set current-home-patch original-home-patch
-          set is-in-temporary-camp false
-          set xcor xcor + (random-float 0.9 - 0.45)
-          set ycor ycor + (random-float 0.9 - 0.45)
+      ifelse daily-trip >= 2 [
+        ifelse [is-transhumant] of foyer-owner [
+         ifelse not any? camps-on (patch-set best-patch neighbors4 best-patch) [
+            
+            ;; Create a temporary camp
+            set current-home-patch best-patch
+            move-to best-patch
+            ;; Add patches within a radius of 2 cells around the camp to known-space
+            let nearby-patches [patches in-radius 2] of current-home-patch
+            set known-space (patch-set known-space nearby-patches)
+          ] [
+            move-to best-patch
+          ] ; end ifelse patch-has-space
 
         ] [
-        ifelse patch-has-space? best-patch [
+          ifelse member? best-patch original-camp-known-space [
+            
+            ;; Move to the best patch
+            move-to best-patch
+            set current-home-patch original-home-patch
+            set is-in-temporary-camp false
+            set xcor xcor + (random-float 0.9 - 0.45)
+            set ycor ycor + (random-float 0.9 - 0.45)
 
-          ;; Create a temporary camp
-          set current-home-patch best-patch
-          set is-in-temporary-camp true
-          move-to current-home-patch
-          set xcor xcor + (random-float 0.9 - 0.45)
-          set ycor ycor + (random-float 0.9 - 0.45)
-
-          ;; Add patches within a radius of 2 cells around the camp to known-space
-          let nearby-patches [patches in-radius 2] of current-home-patch
-          set known-space (patch-set known-space nearby-patches)
-        ] [
-          move-to best-patch
-          set xcor xcor + (random-float 0.9 - 0.45)
-          set ycor ycor + (random-float 0.9 - 0.45)
-          ]
+          ] [
+            ifelse patch-has-space? best-patch [
+              
+              ;; Create a temporary camp
+              set current-home-patch best-patch
+              set is-in-temporary-camp true
+              move-to current-home-patch
+              set xcor xcor + (random-float 0.9 - 0.45)
+              set ycor ycor + (random-float 0.9 - 0.45)
+              
+              ;; Add patches within a radius of 2 cells around the camp to known-space
+              let nearby-patches [patches in-radius 2] of current-home-patch
+              set known-space (patch-set known-space nearby-patches)
+            ] [
+              move-to best-patch
+              set xcor xcor + (random-float 0.9 - 0.45)
+              set ycor ycor + (random-float 0.9 - 0.45)
+            ] ; end ifelse patch-has-space
+          ] ; end ifelse member
         ]
       ] [
         ;; best-patch à < 2 patches : juste y aller
@@ -244,8 +306,9 @@ to move
         set xcor xcor + (random-float 0.9 - 0.45)
         set ycor ycor + (random-float 0.9 - 0.45)
       ]
-    ] ;; fin Cas B
-  ]
+    ]
+  ] ;; fin Cas B
+  
 end
 
 
@@ -502,7 +565,9 @@ to consume-tree-resources [patch-of-grass-eaten remaining-needs] ;; contexte tro
            
         let max_consumable (max-fruits-consumable + max-leaves-consumable)
         set total-available total-available + max_consumable
-        set tree-max-consumable lput (list who max-fruits-consumable max-leaves-consumable) tree-max-consumable
+        if total-available > 1 [
+          set tree-max-consumable lput (list who max-fruits-consumable max-leaves-consumable) tree-max-consumable
+        ]
       ]
     ]
     ; Déterminer la quantité à consommer

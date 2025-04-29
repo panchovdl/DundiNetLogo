@@ -51,7 +51,7 @@ to setup-foyers
           set color brown
           set size 0.1
           set shape "person"
-          set pasture-strategy "directed"
+          set is-transhumant     false
           
           ; Propriétés initiales associées aux troupeaux
           set cattle-herd-count 0
@@ -139,7 +139,91 @@ to setup-foyers
   ]; end boucle création des foyers
   
 
+end;; ---------------------------------------------------------
+;;  create-transhumant-foyers  (révisé)
+;;  • nb : nombre de foyers à créer
+;;  • band : patch-set d’entrée (bord Nord le plus souvent)
+;; ---------------------------------------------------------
+to create-transhumant-foyers [nb band]
+
+  let entry-band band with [patch-has-space? self]
+  let created 0
+
+  while [created < nb and any? entry-band] [
+
+    let target one-of entry-band
+    if target = nobody [ stop ]
+
+    ;; 1) Campement (1 seul par foyer)
+    ask target [
+      sprout-camps 1 [
+        set is-temporary true
+        set shape "house"
+        set color grey + 2
+        set size 0.5
+
+        ;; 2) Foyer directement sur ce camp
+        hatch-foyers 1 [
+          ;; --- VARIABLES SPÉCIFIQUES AUX TRANSHUMANTS ---
+          set is-transhumant     true
+          set shepherd-type       "mauvais"
+          set herder-type         "moyen"
+          set is-in-temporary-camp true
+          set pasture-strategy "directed"
+
+          ;; pas de base domestique
+          set original-home-camp  nobody
+          set original-home-patch nobody
+          set current-home-camp   myself
+          set current-home-patch  target
+          
+          ;Définir les variables d'exploration
+          set far-exploration-count 0       ; Compteur d'exploration au loin
+          set close-exploration-count 0     ; Compteur d'exploration proche
+          
+          ;; taille des troupeaux ⇒ “moyen” (15 ± 10 bovins, 20 ± 10 ovins)
+          set-herd-sizes
+          
+          ; Définir la taille des troupeaux de bovins en fonction de la catégorie
+          if cattle-herd-size = "grand" [set cattle-herd-count random 20 + 30]
+          if cattle-herd-size = "moyen" [set cattle-herd-count random 15 + 10]
+          if cattle-herd-size = "petit" [set cattle-herd-count random 9 + 1]
+          ; Définir la taille des troupeaux de moutons en fonction de la catégorie
+          if sheep-herd-size = "grand" [set sheep-herd-count random 40 + 30]
+          if sheep-herd-size = "moyen" [set sheep-herd-count random 20 + 10]
+          if sheep-herd-size = "petit" [set sheep-herd-count random 9 + 1]
+          
+          
+          
+          ; Seuils d'évaluation de la santé du troupeau
+          set cattle-low-threshold-cc 1
+          set sheep-low-threshold-cc 1
+          set cattle-high-threshold-cc CattleNECSatifactionIndex
+          set sheep-high-threshold-cc SheepNECSatifactionIndex
+          
+          
+          
+          ;; autres paramètres par défaut
+          set color brown
+          set size 0.1
+          set shape "person"
+
+          ;; connais son voisinage immédiat
+          set known-space patches in-radius 3
+          set close-known-space known-space
+          set distant-known-space no-patches
+          ask self [   ;; self est le foyer qu’on vient de créer
+            create-herds-for-me
+          ]
+        ]
+      ]
+    ]
+
+    set created created + 1
+    set entry-band entry-band with [patch-has-space? self]   ;; mise à jour
+  ]
 end
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Qualification des tailles respectives des bovins et petits ruminants par foyer ;;;
@@ -205,8 +289,15 @@ to choose-strategy-for-cattles
   if cattle-cc <= cattle-low-threshold-cc [
     ;; Masquer et déplacer le troupeau de bovins
     if [have-left] of cattle-herd = FALSE [
-      ask cattle-herd  [
-        do-second-strategy
+      ifelse is-transhumant [
+        ask cattle-herd [die]
+        ask sheep-herd [die]
+        ask current-home-camp [die]
+        die
+      ] [
+        ask sheep-herd [
+          do-second-strategy
+        ]
       ]
     ]
   ]
@@ -223,8 +314,15 @@ to choose-strategy-for-sheeps
   if sheep-cc <= sheep-low-threshold-cc [
     ;; Masquer et déplacer le troupeau de moutons
     if [have-left] of sheep-herd = FALSE [
-      ask sheep-herd [
-        do-second-strategy
+      ifelse is-transhumant [
+        ask cattle-herd [die]
+        ask sheep-herd [die]
+        ask current-home-camp [die]
+        die
+      ] [
+        ask sheep-herd [
+          do-second-strategy
+        ]
       ]
     ]
   ]
@@ -253,7 +351,7 @@ to do-first-strategy
     ;; Ajouter ces patches au known-space du foyer
     set known-space (patch-set known-space line-patches)
     ;; Retourner au campement principal
-    move-to original-home-patch
+    move-to current-home-patch
   ] [
     ;    if any? friends [
     ;      call-one-friend
@@ -266,7 +364,7 @@ to do-first-strategy
         ;; Ajouter ces patches au known-space du foyer
         set known-space (patch-set known-space line-patches)
         ;; Retourner au campement principal
-        move-to original-home-patch
+        move-to current-home-patch
         set far-exploration-count far-exploration-count + 1
       ]
     ] [
@@ -279,8 +377,9 @@ end
 
 ; Abandonner la zone
 to do-second-strategy
-  move-to original-home-patch          ; Déplacer au campement principal
-  set have-left true
-  set is-in-temporary-camp false
-  hide-turtle
+
+    move-to original-home-patch          ; Déplacer au campement principal
+    set have-left true
+    set is-in-temporary-camp false
+    hide-turtle
 end

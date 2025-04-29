@@ -240,6 +240,7 @@ foyers-own [
   shepherd-type                    ; Type de berger du foyer
   herder-type                      ; Caractéristique d'élevage du foyer (grand moyen petit)
   pasture-strategy                 ; Stratégies de pâturage
+  is-transhumant
 
   ; Surveillance de l'état du troupeau
   ; Bovins
@@ -625,6 +626,11 @@ to go
     ]
     ask cattles [set known-space [known-space] of foyer-owner]
     ask sheeps [set known-space [known-space] of foyer-owner]
+    ask patches [
+    ask tree-populations-here [set
+      germinated-seed-nb 0
+    ]
+    ]
   ]
 
 
@@ -1059,7 +1065,7 @@ good-shepherd-percentage
 good-shepherd-percentage
 0
 100
-0.0
+97.0
 1
 1
 NIL
@@ -1338,7 +1344,7 @@ number-of-camps
 number-of-camps
 0
 150
-64.0
+1.0
 1
 1
 NIL
@@ -1509,7 +1515,7 @@ avg-UBT-per-camp
 avg-UBT-per-camp
 10
 100
-40.0
+65.0
 5
 1
 NIL
@@ -1707,7 +1713,7 @@ decreasing-factor
 decreasing-factor
 0
 100
-24.0
+100.0
 1
 1
 NIL
@@ -1739,7 +1745,7 @@ FUtility
 FUtility
 0
 1
-0.9
+1.0
 0.1
 1
 NIL
@@ -2231,6 +2237,51 @@ Nombre de campements par COGES
 12
 0.0
 1
+
+SLIDER
+750
+680
+922
+713
+influx-Ceedu
+influx-Ceedu
+0
+100
+41.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+925
+645
+1055
+678
+influx-Nduungu
+influx-Nduungu
+0
+100
+58.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+750
+645
+922
+678
+influx-Ceetcelde
+influx-Ceetcelde
+0
+100
+47.0
+1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
