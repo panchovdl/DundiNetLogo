@@ -132,12 +132,27 @@ to calculStat
   set meanTrees1yearsByPatch sum [population-size] of tree-populations with [tree-pop-age = 1] / count patches
   set meanTreesOldesByPatch sum [population-size] of tree-populations with [tree-pop-age > 4] / count patches
   set meanTreesYoungsByPatch sum [population-size] of tree-populations with [tree-pop-age <= 4] / count patches
-
-  set meanFruitsConsumedCattle mean [fruits-eaten] of cattles with [have-left = false and is-transhumant = false]
-  set meanLeavesConsumedCattle mean [leaves-eaten] of cattles with [have-left = false and is-transhumant = false]
-  set meanFruitsConsumedSheep  mean [fruits-eaten] of sheeps with [have-left = false and is-transhumant = false]
-  set meanLeavesConsumedSheep mean [leaves-eaten] of sheeps with [have-left = false and is-transhumant = false]
   
+  ifelse count cattles with [have-left = false and is-transhumant = false] > 0 [
+    set meanFruitsConsumedCattle mean [fruits-eaten] of cattles with [have-left = false and is-transhumant = false]
+  ] [
+    set meanFruitsConsumedCattle 0
+  ]
+  ifelse count cattles with [have-left = false and is-transhumant = false] > 0  [
+    set meanLeavesConsumedCattle mean [leaves-eaten] of cattles with [have-left = false and is-transhumant = false]
+  ] [
+    set meanLeavesConsumedCattle 0
+  ]
+  ifelse count sheeps with [have-left = false and is-transhumant = false] > 0  [
+    set meanFruitsConsumedSheep mean [fruits-eaten] of sheeps with [have-left = false and is-transhumant = false]
+  ] [
+    set meanFruitsConsumedSheep 0
+  ]
+  ifelse count sheeps with [have-left = false and is-transhumant = false] > 0  [
+    set meanLeavesConsumedSheep mean [leaves-eaten] of sheeps with [have-left = false and is-transhumant = false]
+  ] [
+    set meanLeavesConsumedSheep 0
+  ]
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Intégration des variables agents ;;
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -166,6 +181,8 @@ to calculStat
   set waterStock sum [water-stock] of patches
   
 
+  set meanDistantKnownSpaceSheeps meanKnownSpace sheeps
+  set meanDistantKnownSpaceCattles meanKnownSpace cattles
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Calcul du gain de poids ;;
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -306,7 +323,7 @@ to calculStat
   ]
 
   
-  ifelse (ticks-with-transhumants > 0 and totalTransFoyers > 0) [
+  ifelse totalTransFoyers > 0 [
     
        ask foyers with [is-transhumant = true] [
       if sheep-herd != nobody [
@@ -323,22 +340,12 @@ to calculStat
     set MSTTransSheep-NEC (mean [transSheepNEC-satisfaction] of foyers with [is-transhumant = true]) / ticks-with-transhumants
     set MSTTransCattle-NEC (mean [transCattleNEC-satisfaction] of foyers with [is-transhumant = true]) / ticks-with-transhumants
   ] [
-    
+    set ticks-with-transhumants 0
     set MSTTransSheep-NEC MSTTransSheep-NEC
     set MSTTransCattle-NEC MSTTransCattle-NEC
   ]
   
-    let nb-satisfaits count foyers with [
-    is-transhumant = true and
-    global-satisfaction = 1   ;; le slider%
-  ]
   
-ifelse TotalTransFoyers > 0 [
-  set mst-temps-passe mst-temps-passe + (nb-satisfaits / TotalTransFoyers)
-  ] [
-stop
-  ]
-   
   
 ;  if ticks > 0 [
 ;    if TreeDensitySatisfaction-olds < totalTreesOldes [
@@ -400,6 +407,4 @@ stop
   set sumMediumHerder count foyers with [herder-type = "moyen"]
   set sumLargeHerder count foyers with [herder-type = "grand"]
   
-  set meanDistantKnownSpaceSheeps meanKnownSpace (sheeps with [not is-transhumant])
-  set meanDistantKnownSpaceCattles meanKnownSpace (cattles with [not is-transhumant])
 end

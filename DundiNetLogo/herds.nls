@@ -157,8 +157,8 @@ end
 to recalcul-herd-parameters
   set initial-live-weight 250 * UBT-size * head
   set live-weight initial-live-weight
-  set max-live-weight 350 * head
-  set min-live-weight 66 * head
+  set max-live-weight 350 * head * UBT-size
+  set min-live-weight 66 * head * UBT-size
 
   set max-daily-DM-ingestible-per-head 7.2 * UBT-size
   set daily-min-UF-needed-head 0.45 * max-daily-DM-ingestible-per-head

@@ -69,6 +69,10 @@ globals [
   total-UBT-created                ; Vé
   ticks-with-transhumants
 
+  mst-temps-passe-annee
+  serie-mst-temps-passe
+  nb-satisfied-year
+
 ]
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -245,7 +249,7 @@ foyers-own [
   planned-days
   days-present
   presence-satisfaction
-  global-satisfaction
+  counted-satisfied?
 
 
   ; Surveillance de l'état du troupeau
@@ -419,7 +423,8 @@ to setup
   set-patch-size 22  ; Ajuster la taille des patches
   set listValueHerdeType []
 
-
+  set serie-mst-temps-passe []      ;; liste vide
+  set mst-temps-passe-annee 0
 
   ; Chargement des valeurs environnementales
   load-environment "environment_vel.txt"
@@ -604,6 +609,9 @@ to go
   ; Mise à jour du modèle général et temporalité
   update-season
 
+  ; Mise à jour quotidienne de l'espace connu
+  update-known-space
+
   ; Mise à jour saisonnière
   if current-season != last-season [
     update-UF-and-MAD                 ; Mettre à jour les valeurs de MAD et UF pour le tapis herbacé
@@ -615,6 +623,8 @@ to go
 
   ; Mise à jour annuelle
   if year-counter >= total-ticks-per-year [
+    evaluate-MST-Time
+
     ask patches with [current-grass < 100] [
       set current-monocot-grass 50
       set current-dicot-grass 50
@@ -698,20 +708,8 @@ to go
     ; Choix stratégiques pastoraux du chef de ménage
   ]
 
-  ask foyers with [is-transhumant = true] [
-    set days-present days-present + 1
-    if planned-days > 0 [
-      set presence-satisfaction (days-present / planned-days) * 100
-    ]
-    ifelse presence-satisfaction >= min-time-ratio [
-      set global-satisfaction 1   ;; content
-    ] [
-      set global-satisfaction 0   ;; mécontent
-    ]
-  ]
 
-  update-known-space
-
+  evaluate-presence-satisfaction-for-transhumants
 
   ; Mise à jour des valeurs Stats pour visualisation
   calculStat
@@ -738,6 +736,22 @@ to update-year-type
   set current-year-type item year-index year-types
 end
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Evaluation quotidienne de la satisfaction en temps de présence par les transhumants ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+to evaluate-presence-satisfaction-for-transhumants
+  ;; --------- a. calcul de la satisfaction annuelle ----------
+  ask foyers with [is-transhumant = true] [
+    set days-present days-present + 1
+    set presence-satisfaction (days-present / planned-days) * 100
+    if ( counted-satisfied? = false) and (presence-satisfaction >= min-time-ratio) [
+      set mst-temps-passe-annee mst-temps-passe-annee + 1
+      set counted-satisfied? true
+    ]
+  ]
+end
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Retour des troupeaux ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -789,6 +803,20 @@ to call-one-friend
 end
 ;  to color-trees  ;; patch procedure
 ;  set pcolor scale-color (green - 1) trees 0 (2 * max-grass-height)
+
+
+to evaluate-MST-Time
+  ;; a. on stocke la valeur annuelle
+  set serie-mst-temps-passe lput mst-temps-passe-annee serie-mst-temps-passe
+  let total-influx (influx-Ceedu + influx-Ceetcelde + influx-Nduungu)
+
+  let satisfied-this-year last serie-mst-temps-passe
+  set nb-satisfied-year satisfied-this-year / total-influx
+
+  ;; c. on remet à zéro pour la nouvelle année
+  set mst-temps-passe-annee 0
+
+end
 
 
 to update-known-space
@@ -886,6 +914,8 @@ to update-plot
         [0]]]] _listString)
 
 end
+
+
 @#$#@#$#@
 GRAPHICS-WINDOW
 210
@@ -1045,7 +1075,7 @@ CHOOSER
 visualization-mode
 visualization-mode
 "soil-type" "tree-cover" "grass-cover" "grass-quality" "known-space"
-4
+0
 
 BUTTON
 40
@@ -1210,11 +1240,11 @@ PENS
 "Min" 1.0 0 -13791810 true "" "plot minCattlesLiveWeight"
 
 PLOT
-1955
+1960
 660
-2335
+2330
 810
-Espace connu + de 5 km
+Espace connu + de 5 km ( moyenne locaux)
 NIL
 NIL
 0.0
@@ -1374,7 +1404,7 @@ number-of-camps
 number-of-camps
 0
 150
-150.0
+1.0
 1
 1
 NIL
@@ -1545,7 +1575,7 @@ avg-UBT-per-camp
 avg-UBT-per-camp
 10
 100
-70.0
+35.0
 5
 1
 NIL
@@ -1744,7 +1774,7 @@ decreasing-factor
 decreasing-factor
 0
 100
-100.0
+0.0
 1
 1
 NIL
@@ -1776,7 +1806,7 @@ FUtility
 FUtility
 0
 1
-0.0
+0.9
 0.1
 1
 NIL
@@ -1966,7 +1996,7 @@ TEXTBOX
 730
 320
 745
-770
+815
 |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 12
 0.0
@@ -1994,9 +2024,9 @@ TEXTBOX
 
 TEXTBOX
 730
-735
+795
 1070
-760
+820
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 10
 0.0
@@ -2006,7 +2036,7 @@ TEXTBOX
 1055
 320
 1070
-770
+815
 |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 12
 0.0
@@ -2016,7 +2046,7 @@ TEXTBOX
 210
 555
 235
-1015
+1085
 |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 20
 0.0
@@ -2076,7 +2106,7 @@ TEXTBOX
 700
 555
 725
-1015
+1085
 |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||-
 20
 0.0
@@ -2164,9 +2194,9 @@ TEXTBOX
 
 TEXTBOX
 210
-975
+1045
 725
-1025
+1095
 --------------------------------------------------------------------------------------------------------------------------------------------------
 20
 0.0
@@ -2192,10 +2222,10 @@ PENS
 "Vaches" 1.0 0 -16777216 true "" "plot meanCattlesGrassEaten"
 
 PLOT
-810
-795
+790
 1010
-945
+990
+1160
 plot 2
 NIL
 NIL
@@ -2278,7 +2308,7 @@ influx-Ceedu
 influx-Ceedu
 0
 100
-55.0
+9.0
 1
 1
 NIL
@@ -2293,7 +2323,7 @@ influx-Nduungu
 influx-Nduungu
 0
 100
-32.0
+6.0
 1
 1
 NIL
@@ -2308,7 +2338,7 @@ influx-Ceetcelde
 influx-Ceetcelde
 0
 100
-58.0
+10.0
 1
 1
 NIL
@@ -2316,9 +2346,9 @@ HORIZONTAL
 
 SLIDER
 240
-1020
+1005
 350
-1053
+1038
 min-time-ratio
 min-time-ratio
 0
@@ -2330,9 +2360,9 @@ NIL
 HORIZONTAL
 
 PLOT
-1955
+1960
 1110
-2220
+2260
 1240
 MST-Temps-Passé
 NIL
@@ -2345,12 +2375,12 @@ true
 false
 "" ""
 PENS
-"default" 1.0 0 -16777216 true "" "plot mst-temps-passe"
+"default" 1.0 0 -16777216 true "" "plot mst-temps-passe-annee"
 
 PLOT
-1955
+1960
 960
-2220
+2260
 1110
 MST NEC Transhumants
 NIL
@@ -2367,9 +2397,9 @@ PENS
 "pen-1" 1.0 0 -16777216 true "" "plot MSTTransCattle-NEC"
 
 PLOT
-1955
+1960
 810
-2265
+2260
 960
 NEC Moyenne Transhumants
 NIL
@@ -2425,6 +2455,79 @@ Nb de transhumants arrivés en SP
 12
 0.0
 1
+
+SLIDER
+750
+755
+885
+788
+good-shepherd-trans-percentage
+good-shepherd-trans-percentage
+0
+100
+51.0
+1
+1
+NIL
+HORIZONTAL
+
+TEXTBOX
+730
+735
+1080
+753
+------------------------------------------------------------------------------------
+12
+0.0
+1
+
+TEXTBOX
+890
+750
+1040
+805
+Proportion de bons bergers parmi les éleveurs transhumants
+12
+0.0
+1
+
+TEXTBOX
+210
+976
+745
+994
+-------------------------------------------------------------------------
+20
+0.0
+1
+
+TEXTBOX
+360
+1000
+695
+1045
+Proportion de temps minimal de présence satisfaisant pour les transhumant par rapport à la durée prévue initialement
+12
+0.0
+1
+
+PLOT
+1615
+1115
+1815
+1265
+plot 1
+serie-
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot nb-satisfied-year"
 
 @#$#@#$#@
 ## WHAT IS IT?

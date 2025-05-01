@@ -147,6 +147,26 @@ end
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 to create-transhumant-foyers [nb band]
+  
+  
+  ;; -----------------------------------------------------------------
+  ;; 1. calcul des parts de « bon » / « mauvais » bergers transhumants
+  ;; -----------------------------------------------------------------
+  let num-good-trans round (nb * (good-shepherd-trans-percentage / 100))
+  let num-bad-trans  nb - num-good-trans
+  
+  let trans-shepherd-types []
+  repeat num-good-trans [ set trans-shepherd-types lput "bon"     trans-shepherd-types ]
+  repeat num-bad-trans  [ set trans-shepherd-types lput "mauvais" trans-shepherd-types ]
+  set trans-shepherd-types shuffle trans-shepherd-types           ;; distribution aléatoire
+  
+  ;; pointeur dans la liste
+  let shepherd-index 0
+  
+  
+  ;; -----------------------------------------------------------------
+  ;; 2. Création des foyers
+  ;; -----------------------------------------------------------------
 
   let entry-band band with [ patch-has-space? self and is-fenced = false ]
   let created 0
@@ -167,12 +187,17 @@ to create-transhumant-foyers [nb band]
 
         ;; 2) Foyer directement sur ce camp
         hatch-foyers 1 [
+          
           ;; --- VARIABLES SPÉCIFIQUES AUX TRANSHUMANTS ---
           set is-transhumant     true
-          set shepherd-type       "mauvais"
           set herder-type         "moyen"
           set is-in-temporary-camp true
           set pasture-strategy "directed"
+          
+          
+          ;; --- Attribution du statut de berger
+          set shepherd-type item shepherd-index trans-shepherd-types
+          set shepherd-index shepherd-index + 1
           
           set planned-days length-season current-season     ;; fonction utilitaire ci-dessous
           set days-present 0

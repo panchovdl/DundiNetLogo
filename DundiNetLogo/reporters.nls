@@ -493,6 +493,7 @@ end
 
 
 to-report meanKnownSpace [agents]
+  set agents agents with [is-transhumant = false]
   ; Initialiser une variable pour stocker la somme des counts
   let _total-count 0
   ; Initialiser une variable pour stocker le nombre de moutons
