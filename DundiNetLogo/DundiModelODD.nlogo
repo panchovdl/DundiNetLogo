@@ -1,5 +1,5 @@
 __includes["calculStat.nls" "landUnits.nls" "camps.nls" "tree-populations.nls" "herds.nls" "crop-lands.nls" "households.nls" "seasons.nls" "reporters.nls" "loading-files.nls"]
-extensions [csv table] ;profiler]
+extensions [csv table]; profiler]
 
 
 globals [
@@ -72,6 +72,7 @@ globals [
   mst-temps-passe-annee
   serie-mst-temps-passe
   nb-satisfied-year
+
 
 ]
 
@@ -423,8 +424,10 @@ to setup
   set-patch-size 22  ; Ajuster la taille des patches
   set listValueHerdeType []
 
-  set serie-mst-temps-passe []      ;; liste vide
+  set serie-mst-temps-passe []
   set mst-temps-passe-annee 0
+  set nb-satisfied-year 0
+
 
   ; Chargement des valeurs environnementales
   load-environment "environment_vel.txt"
@@ -494,7 +497,6 @@ to set-initial-values
   set pS (100 - (proportion-big-herders + proportion-medium-herders)) / 100
 
   ; Définir la taille des troupeaux en UBT
-
   set total-UBT-created 0
   set UBT_grand 100
   set UBT_moyen 50
@@ -604,13 +606,18 @@ end
 
 to go
   ;  profiler:reset
-  ;  profiler:start
+ ;  profiler:start
+
+
 
   ; Mise à jour du modèle général et temporalité
   update-season
 
-  ; Mise à jour quotidienne de l'espace connu
-  update-known-space
+
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Mises à jour saisonnières ;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
   ; Mise à jour saisonnière
   if current-season != last-season [
@@ -621,23 +628,34 @@ to go
   ]
 
 
-  ; Mise à jour annuelle
+
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Mises à jour annuelles ;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
   if year-counter >= total-ticks-per-year [
-    evaluate-MST-Time
 
     ask patches with [current-grass < 100] [
       set current-monocot-grass 50
       set current-dicot-grass 50
       set current-grass current-monocot-grass + current-dicot-grass
     ]
+
+
+    ; Scheduler
     set year-counter 0                            ; Au premier jour de chaque nouvelle année, remet le compteur d'année à 0
     update-year-type                              ; Au premier jour de chaque nouvelle année, redéfinit si l'année sera bonne, moyenne, mauvaise
     set-season-durations                          ; Au premier jour de chaque nouvelle année et en fonction de l'année, redéfinit les durées pour chacune des siaosn pour l'année en cours
+
+    ; Environnement
     update-tree-age                               ; Au premier jour de chaque nouvelle année, fait grandir les populations d'arbres d'un an
     renew-tree-population                         ; Au premier jour de chaque nouvelle année, crée une nouvelle population d'arbres d'un an
     assign-grass-proportions                      ; Au premier jour de chaque nouvelle année, relance la génération aléatoire des proportions en monocotylédone et dicotylédone
-                                                  ; Retour des troupeaux et mise à jour de l'espace connu
-    call-back-herds
+
+    ; Agents (Rappel des agents et remise à jour de l'espace connu)
+    call-back-herds                               ; Retour des troupeaux et mise à jour de l'espace connu
     ask foyers [
       set far-exploration-count 0                 ; Compteur d'exploration au loin
       set close-exploration-count 0               ; Compteur d'exploration proche
@@ -647,21 +665,32 @@ to go
     ask sheeps [set known-space [known-space] of foyer-owner]
 
 
+    ; Evaluation MST transhumants
+    evaluate-MST-Time
+
     ;; remettre à zéro pour l’année suivante
-    set mst-temps-passe 0
+    set mst-temps-passe-annee 0
 
 ]
 
+
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Mises à jour quotidiennes ;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
   ; Mise à jour quotidienne des ressources
   grow-grass
   update-grass-quality              ; Indiquer la qualité de l'herbe
   grow-tree-resources
+
   if mean [current-leaf-stock] of tree-populations < 0 [
     show-tree-populations-info]
 
+  ;-------------------------;
+  ; Remise à 0 consommation ;
+  ;-------------------------;
 
-  ; Activités des agents
   if count cattles > 0 [
     ask cattles [
       set DM-ingested 0
@@ -686,6 +715,14 @@ to go
       set leaves-eaten 0
     ]
   ]
+
+
+
+  ;--------------------;
+  ; Actions des agents ;
+  ;--------------------;
+
+  ; Troupeau
   ask cattles with [have-left = false] [
     move
     eat
@@ -699,7 +736,7 @@ to go
     trample-trees
   ]
 
-  ; Activités des Foyers
+  ; Foyers
   ask foyers [
     if cattle-herd != nobody and [have-left] of cattle-herd = false [
       choose-strategy-for-cattles]
@@ -708,7 +745,16 @@ to go
     ; Choix stratégiques pastoraux du chef de ménage
   ]
 
+  ; Mise à jour quotidienne de l'espace connu (tous agents non environnement)
+  update-known-space
 
+
+
+  ;-----------------------------------------;
+  ; Evaluations quotidiennes et indicateurs ;
+  ;-----------------------------------------;
+
+  ; Evaluation des transhumants sur leur satisfaction de temps de présence effectif
   evaluate-presence-satisfaction-for-transhumants
 
   ; Mise à jour des valeurs Stats pour visualisation
@@ -719,9 +765,13 @@ to go
   update-plot
 
   tick
-  ;  profiler:stop
-  ;  print profiler:report
+
+
+   ; profiler:stop
+    ;print profiler:report
 end
+
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Mise à jour des types d'années ;;;
@@ -737,9 +787,15 @@ to update-year-type
 end
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Evaluation quotidienne de la satisfaction en temps de présence par les transhumants ;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Evaluation de la satisfaction en temps de présence par les transhumants ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+
+  ;------------------------;
+  ; Evaluation quotidienne ;
+  ;------------------------;
 
 to evaluate-presence-satisfaction-for-transhumants
   ;; --------- a. calcul de la satisfaction annuelle ----------
@@ -752,6 +808,29 @@ to evaluate-presence-satisfaction-for-transhumants
     ]
   ]
 end
+
+
+  ;---------------------;
+  ; Evaluation annuelle ;
+  ;---------------------;
+
+to evaluate-MST-Time
+  ;; a. on stocke la valeur annuelle
+  set serie-mst-temps-passe lput mst-temps-passe-annee serie-mst-temps-passe
+  let total-influx (influx-Ceedu + influx-Ceetcelde + influx-Nduungu)
+
+  let satisfied-this-year last serie-mst-temps-passe
+  set nb-satisfied-year satisfied-this-year / total-influx
+
+  ;; c. on remet à zéro pour la nouvelle année
+  set mst-temps-passe-annee 0
+
+end
+
+
+
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Retour des troupeaux ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -778,46 +857,14 @@ to call-back-herds
 end
 
 
-to update-tree-visualisation
-  ;; Supprimer les anciennes icônes
-  ask mature-tree-pops [ die ]
-  ;; Créer de nouvelles icônes pour les arbres matures
-  ask patches [
-    let mature-tree-populations tree-populations-here with [tree-pop-age >= 8]
-    if any? mature-tree-populations [
-      let total-population sum [population-size] of mature-tree-populations
-      sprout-mature-tree-pops 1 [
-        set shape "tree"
-        set color green
-        set size calculate-tree-icon-size total-population
-        set xcor xcor + (random-float 0.9 - 0.45)
-        set ycor ycor + (random-float 0.9 - 0.45)
-      ]
-    ]
-  ]
-end
 
-to call-one-friend
-
-
-end
 ;  to color-trees  ;; patch procedure
 ;  set pcolor scale-color (green - 1) trees 0 (2 * max-grass-height)
 
 
-to evaluate-MST-Time
-  ;; a. on stocke la valeur annuelle
-  set serie-mst-temps-passe lput mst-temps-passe-annee serie-mst-temps-passe
-  let total-influx (influx-Ceedu + influx-Ceetcelde + influx-Nduungu)
-
-  let satisfied-this-year last serie-mst-temps-passe
-  set nb-satisfied-year satisfied-this-year / total-influx
-
-  ;; c. on remet à zéro pour la nouvelle année
-  set mst-temps-passe-annee 0
-
-end
-
+;;;;;;;;;;;;;;;;;;;;;;;;
+;;; MAJ espace connu ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;
 
 to update-known-space
   ask foyers [
@@ -853,6 +900,9 @@ to update-known-space
 end
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Gestion de l'eau ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;
 
 to manage-water-points
   ask patches with [water-point = true] [
@@ -863,6 +913,16 @@ to manage-water-points
   ]
 end
 
+
+
+
+
+;;;;;;;;;;;;;
+;; Visuels ;;
+;;;;;;;;;;;;;
+
+
+; Qualité de l'herbe
 to display-grass-quality
 
   ask patches [
@@ -882,6 +942,8 @@ to display-grass-quality
   ]
 end
 
+
+; Espace connu
 to display-knownSpace
   ask patches [set pcolor white]
   ask foyers [
@@ -904,6 +966,8 @@ end
 
 ;end
 
+
+; Plot Nombre d'éleveurs par taille
 to update-plot
   let _typeF (list "petit" "moyen" "grand")
   let _listString  [herder-type] of foyers
@@ -915,7 +979,25 @@ to update-plot
 
 end
 
-
+; Visualisation des arbres
+to update-tree-visualisation
+  ;; Supprimer les anciennes icônes
+  ask mature-tree-pops [ die ]
+  ;; Créer de nouvelles icônes pour les arbres matures
+  ask patches [
+    let mature-tree-populations tree-populations-here with [tree-pop-age >= 8]
+    if any? mature-tree-populations [
+      let total-population sum [population-size] of mature-tree-populations
+      sprout-mature-tree-pops 1 [
+        set shape "tree"
+        set color green
+        set size calculate-tree-icon-size total-population
+        set xcor xcor + (random-float 0.9 - 0.45)
+        set ycor ycor + (random-float 0.9 - 0.45)
+      ]
+    ]
+  ]
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
 210
@@ -1389,7 +1471,7 @@ CattleNECSatifactionIndex
 CattleNECSatifactionIndex
 0
 5
-3.0
+2.0
 1
 1
 NIL
@@ -1774,7 +1856,7 @@ decreasing-factor
 decreasing-factor
 0
 100
-0.0
+55.0
 1
 1
 NIL
@@ -1806,7 +1888,7 @@ FUtility
 FUtility
 0
 1
-0.9
+0.0
 0.1
 1
 NIL
@@ -2222,11 +2304,11 @@ PENS
 "Vaches" 1.0 0 -16777216 true "" "plot meanCattlesGrassEaten"
 
 PLOT
-790
-1010
-990
-1160
-plot 2
+1120
+1120
+1405
+1240
+Population d'arbres d'un an
 NIL
 NIL
 0.0
@@ -2353,7 +2435,7 @@ min-time-ratio
 min-time-ratio
 0
 100
-32.0
+57.0
 1
 1
 NIL
@@ -2364,7 +2446,7 @@ PLOT
 1110
 2260
 1240
-MST-Temps-Passé
+MST Temps passé
 NIL
 NIL
 0.0
@@ -2465,7 +2547,7 @@ good-shepherd-trans-percentage
 good-shepherd-trans-percentage
 0
 100
-51.0
+59.0
 1
 1
 NIL
@@ -2512,12 +2594,12 @@ Proportion de temps minimal de présence satisfaisant pour les transhumant par r
 1
 
 PLOT
-1615
-1115
-1815
-1265
-plot 1
-serie-
+1620
+1110
+1885
+1230
+Transhumants satisfait sur total Trans par an
+NIL
 NIL
 0.0
 10.0
@@ -2527,7 +2609,34 @@ true
 false
 "" ""
 PENS
-"default" 1.0 0 -16777216 true "" "plot nb-satisfied-year"
+"default" 1.0 0 -16777216 true "" "plot nb-satisfied-year * 100"
+
+PLOT
+735
+830
+1070
+1110
+Populations par ages
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+true
+"" ""
+PENS
+"8 Y" 1.0 0 -16777216 true "" "plot meanTrees8yearsByPatch"
+"7 Y" 1.0 0 -7500403 true "" "plot meanTrees7yearsByPatch"
+"6 Y" 1.0 0 -2674135 true "" "plot meanTrees6yearsByPatch"
+"5 Y" 1.0 0 -955883 true "" "plot meanTrees5yearsByPatch"
+"4 Y" 1.0 0 -6459832 true "" "plot meanTrees4yearsByPatch"
+"3 Y" 1.0 0 -1184463 true "" "plot meanTrees3yearsByPatch"
+"2 Y" 1.0 0 -10899396 true "" "plot meanTrees2yearsByPatch"
+"1 Y" 1.0 0 -13840069 true "" "plot meanTrees1yearsByPatch"
+"pen-8" 1.0 0 -14835848 true "" ""
+"pen-9" 1.0 0 -11221820 true "" ""
 
 @#$#@#$#@
 ## WHAT IS IT?

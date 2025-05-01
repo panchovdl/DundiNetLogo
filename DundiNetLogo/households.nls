@@ -198,7 +198,7 @@ to create-transhumant-foyers [nb band]
           ;; --- Attribution du statut de berger
           set shepherd-type item shepherd-index trans-shepherd-types
           set shepherd-index shepherd-index + 1
-          
+          set counted-satisfied? false
           set planned-days length-season current-season     ;; fonction utilitaire ci-dessous
           set days-present 0
 

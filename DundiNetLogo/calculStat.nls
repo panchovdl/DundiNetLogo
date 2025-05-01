@@ -110,6 +110,7 @@ globals [
   
   meanDistantKnownSpaceSheeps
   meanDistantKnownSpaceCattles
+
 ]
 
 to calculStat
@@ -117,10 +118,17 @@ to calculStat
   
   
   
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Intégration des variables environnement ;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  
   set totalGrass sum [current-grass] of patches
   set meanGrass mean [current-grass] of patches
   set totalTrees sum [population-size] of tree-populations
   
+  
+  
+  ; Population moyenne par classe d'ages
   
   set meanTrees8yearsByPatch sum [population-size] of tree-populations with [tree-pop-age >= 8] / count patches
   set meanTrees7yearsByPatch sum [population-size] of tree-populations with [tree-pop-age = 7] / count patches
@@ -132,6 +140,53 @@ to calculStat
   set meanTrees1yearsByPatch sum [population-size] of tree-populations with [tree-pop-age = 1] / count patches
   set meanTreesOldesByPatch sum [population-size] of tree-populations with [tree-pop-age > 4] / count patches
   set meanTreesYoungsByPatch sum [population-size] of tree-populations with [tree-pop-age <= 4] / count patches
+  
+  
+  ; Variables d'accès à l'eau
+   
+  set waterStock sum [water-stock] of patches
+  
+  
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Intégration des variables agents ;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  
+  set sumSmallHerder count foyers with [herder-type = "petit"]
+  set sumMediumHerder count foyers with [herder-type = "moyen"]
+  set sumLargeHerder count foyers with [herder-type = "grand"]
+  
+  ;; Locaux 
+  
+  set totalFoyers count foyers
+  set totalLocalFoyers count foyers with [is-transhumant = false] 
+  set totalCattles sum [head] of cattles with [is-transhumant = false]
+  set totalSheeps sum [head] of sheeps with [is-transhumant = false]
+    
+  set cattlesHaveLeft count cattles with [have-left = true]
+  set sheepsHaveLeft count sheeps with [have-left = true]
+
+  set sheepsTempCamp count sheeps with [is-in-temporary-camp = true and is-transhumant = false]
+  set cattlesTempCamp count cattles with [is-in-temporary-camp = true and is-transhumant = false]
+  
+  set meanDistantKnownSpaceSheeps meanKnownSpace sheeps
+  set meanDistantKnownSpaceCattles meanKnownSpace cattles
+  
+  ;; Transhumants
+  
+  set totalTransCattles sum [head] of cattles with [is-transhumant = true]
+  set totalTransSheeps sum [head] of sheeps with [is-transhumant = true]
+  set totalTransFoyers count foyers with [is-transhumant = true]
+
+  
+  
+  
+  
+  
+  
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Consommation des troupeaux ;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   
   ifelse count cattles with [have-left = false and is-transhumant = false] > 0 [
     set meanFruitsConsumedCattle mean [fruits-eaten] of cattles with [have-left = false and is-transhumant = false]
@@ -152,41 +207,22 @@ to calculStat
     set meanLeavesConsumedSheep mean [leaves-eaten] of sheeps with [have-left = false and is-transhumant = false]
   ] [
     set meanLeavesConsumedSheep 0
+  ]  
+  
+  
+  if count sheeps with [have-left = false and is-transhumant = false] > 0 [ ;; Est-ce qu'il y a quelque chose a faire dans le else ?
+    set meanSheepsGrassEaten mean [mean-DM-ingested] of sheeps with [have-left = false and is-transhumant = false]
   ]
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; Intégration des variables agents ;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  if count cattles with [have-left = false and is-transhumant = false] > 0[ ;; Est-ce qu'il y a quelque chose a faire dans le else ?
+    set meanCattlesGrassEaten mean [mean-DM-ingested] of cattles with [have-left = false and is-transhumant = false]
+  ]
   
-  ;; Locaux 
   
-  set totalFoyers count foyers
-  set totalLocalFoyers count foyers with [is-transhumant = false] 
-  set totalCattles sum [head] of cattles with [is-transhumant = false]
-  set totalSheeps sum [head] of sheeps with [is-transhumant = false]
-    
-  set cattlesHaveLeft count cattles with [have-left = true]
-  set sheepsHaveLeft count sheeps with [have-left = true]
-    
-
-  set sheepsTempCamp count sheeps with [is-in-temporary-camp = true and is-transhumant = false]
-  set cattlesTempCamp count cattles with [is-in-temporary-camp = true and is-transhumant = false]
   
-  ;; Transhumants
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Calcul du gain de poids Locaux;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   
-  set totalTransCattles sum [head] of cattles with [is-transhumant = true]
-  set totalTransSheeps sum [head] of sheeps with [is-transhumant = true]
-  set totalTransFoyers count foyers with [is-transhumant = true]
-  set mst-temps-passe 0
-   
-  set waterStock sum [water-stock] of patches
-  
-
-  set meanDistantKnownSpaceSheeps meanKnownSpace sheeps
-  set meanDistantKnownSpaceCattles meanKnownSpace cattles
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; Calcul du gain de poids ;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   
   ifelse count sheeps with [have-left = false and is-transhumant = false] > 0 [
     set sheepsWeightGain mean [weight-gain] of sheeps with [have-left = false and is-transhumant = false]
   ] [
@@ -253,18 +289,13 @@ to calculStat
     set MSTCattle-NEC (mean[cattleNEC-satisfaction] of foyers with [is-transhumant = false]) / ticks
   ]
   
-    if count sheeps with [have-left = false and is-transhumant = false] > 0 [ ;; Est-ce qu'il y a quelque chose a faire dans le else ?
-    set meanSheepsGrassEaten mean [mean-DM-ingested] of sheeps with [have-left = false and is-transhumant = false]
-  ]
-   if count cattles with [have-left = false and is-transhumant = false] > 0[ ;; Est-ce qu'il y a quelque chose a faire dans le else ?
-    set meanCattlesGrassEaten mean [mean-DM-ingested] of cattles with [have-left = false and is-transhumant = false]
-  ]
   
 
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; Calcul de la NEC Transhumants ;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Calcul du gain de poids transhumants;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  
   
   ;; y a-t-il encore des troupeaux transhumants en jeu ?
   let trans-cattles cattles with [have-left = false and is-transhumant = true]
@@ -313,19 +344,21 @@ to calculStat
     set minTransSheepsLiveWeight 0
   ]
   
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Calcul de la NEC Transhumants ;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   
-  
-  
+ 
   
   if TotalTransFoyers > 0 [ ;; Est-ce qu'il y a quelque chose a faire dans le else ?
     set meanTransCattlesNEC mean [corporal-condition] of cattles with [have-left = false and is-transhumant = true]
     set meanTransSheepsNEC mean [corporal-condition] of sheeps with [have-left = false and is-transhumant = true]
   ]
-
+  
   
   ifelse totalTransFoyers > 0 [
     
-       ask foyers with [is-transhumant = true] [
+    ask foyers with [is-transhumant = true] [
       if sheep-herd != nobody [
         if SheepNECSatifactionIndex <= [corporal-condition] of sheep-herd [
           set transSheepNEC-satisfaction (transSheepNEC-satisfaction + 1)
@@ -347,15 +380,9 @@ to calculStat
   
   
   
-;  if ticks > 0 [
-;    if TreeDensitySatisfaction-olds < totalTreesOldes [
-;      set traj-trees traj-trees  + 1
-;    ]
-;    set MST-trees traj-trees / ticks
-;  ]
-  
-  
-  
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Calcul du MST Populations d'arbres ;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   
   set caangol-surface count patches with [soil-type = "Caangol"]
   set sangre-surface count patches with [soil-type = "Sangre"]
@@ -403,8 +430,5 @@ to calculStat
     set MST-Caangol traj-satisfaction-Caangol / ticks
   ]
   
-  set sumSmallHerder count foyers with [herder-type = "petit"]
-  set sumMediumHerder count foyers with [herder-type = "moyen"]
-  set sumLargeHerder count foyers with [herder-type = "grand"]
   
 end

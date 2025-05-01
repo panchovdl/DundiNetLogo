@@ -445,9 +445,9 @@ to eat
   ]
 
   ; Calculer le reste de MS à consommer en fonction de la consommation journalière maximale et la quantité voulue à consommer par le troupeau
- let remaining-DM-to-consume (daily-needs-DM - DM-ingested)
+ let remaining-DM-to-consume (desired-DM-intake - DM-ingested)
 
-  set remaining-DM-to-consume min (list remaining-DM-to-consume (daily-needs-DM * max-tree-ratio))
+  set remaining-DM-to-consume min (list remaining-DM-to-consume (desired-DM-intake * max-tree-ratio))
 
   if remaining-DM-to-consume > 0 [
     consume-tree-resources patch-here remaining-DM-to-consume

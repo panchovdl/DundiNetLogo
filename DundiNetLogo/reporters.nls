@@ -38,7 +38,7 @@ to-report growth-fruit-logistic [current-fruit max-fruit status season]
     if status = "croissance" or status = "dispo" [
       set r 0.05
     ]
-    let growth r * (precision current-fruit 3) * (precision ((max-fruit - current-fruit) / max-fruit) 3)
+    let growth r * (precision current-fruit 1) * (precision ((max-fruit - current-fruit) / max-fruit) 1)
     if abs(growth) > 1e15 [
       report 0
     ]
@@ -61,7 +61,7 @@ to-report growth-leaf-logistic [current-leaves max-leaves status season]
     if status = "croissance" or status = "dispo" [
       set r 0.1
     ]
-    let growth r * (precision current-leaves 3) * (precision ((max-leaves - current-leaves) / max-leaves) 3)
+    let growth r * (precision current-leaves 1) * (precision ((max-leaves - current-leaves) / max-leaves) 1)
     if abs(growth) > 1e15 [
       report 0
     ]
@@ -175,7 +175,7 @@ to-report growth-wood-logistic [current-wood max-wood status season]
     if status = "croissance" or status = "dispo" [
       set r 0.01
     ]
-    let growth r * (precision current-wood 3) * (precision ((max-wood - current-wood) / max-wood) 3)
+    let growth r * (precision current-wood 1) * (precision ((max-wood - current-wood) / max-wood) 1)
     if abs(growth) > 1e10 [
       report 0
     ]
