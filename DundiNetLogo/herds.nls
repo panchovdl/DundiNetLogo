@@ -744,7 +744,7 @@ to trample-trees
         if population-size > 0 [
           set trees-killed trees-killed + 1
         ]; end trees-killed
-       if population-size = 0 [
+       if population-size <= 0 [
          die
         ] ; end killing tree-population with population size <= 0
       ] ; end additional supp
@@ -762,7 +762,7 @@ to trample-trees
           if population-size > 0 [
             set trees-killed trees-killed + trees-trampled
           ] ; end trees-killed
-          if population-size = 0 [
+          if population-size <= 0 [
             die
           ] ; end killing tree-population with population size <= 0
         ] ; end first supp
@@ -775,7 +775,7 @@ to trample-trees
           if population-size > 0 [
             set trees-killed trees-killed + 1
           ] ; end trees-killed
-          if population-size = 0 [
+          if population-size <= 0 [
             die
           ] ; end killing tree-population with population size <= 0
         ] ; end additional supp

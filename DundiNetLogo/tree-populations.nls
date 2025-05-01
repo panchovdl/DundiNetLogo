@@ -282,7 +282,7 @@ to update-tree-age
   let advancing-populations []
   ; 2. Incrémenter l'âge de toutes les populations d'arbres
   ask tree-populations [
-    ifelse tree-pop-age < 3 [
+    ifelse tree-pop-age < 5 [
       set tree-pop-age tree-pop-age + 1
       set population-size round (population-size * young-regen-rate)
       let soil-types [soil-type] of patch-here
@@ -294,7 +294,7 @@ to update-tree-age
         let max-wood item 2 age-data
         let accessible item 3 age-data
         let max-fruits-nb item 4 age-data
-        
+       
         set max-wood-stock max-wood * population-size  / 1000
         set max-fruit-stock max-fruit * population-size  / 1000
         set max-leaf-stock max-leaf * population-size  / 1000
@@ -306,7 +306,7 @@ to update-tree-age
       ]
       
       
-      ] [ if tree-pop-age >= 3 and tree-pop-age < 8 [
+      ] [ if tree-pop-age >= 5 and tree-pop-age < 8 [
         set tree-pop-age tree-pop-age + 1
         let soil-types [soil-type] of patch-here
         set population-size round (population-size * 0.95)
@@ -602,7 +602,7 @@ to grow-tree-resources
     if current-fruit-stock <= 0 [set current-fruit-stock 1 ]
     
     if soil-current-fruit-stock > 1 [
-      set soil-current-fruit-stock soil-current-fruit-stock  - 0.01 * (precision soil-current-fruit-stock 2)
+      set soil-current-fruit-stock soil-current-fruit-stock  - 0.01 * (precision soil-current-fruit-stock 1)
     ]
     if germinated-seed-nb > 1 [
       set germinated-seed-nb round germinated-seed-nb - (0.01 * germinated-seed-nb)
