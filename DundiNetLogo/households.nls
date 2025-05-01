@@ -51,7 +51,7 @@ to setup-foyers
           set color brown
           set size 0.1
           set shape "person"
-          set is-transhumant     false
+          set is-transhumant false
           
           ; Propriétés initiales associées aux troupeaux
           set cattle-herd-count 0
@@ -137,17 +137,20 @@ to setup-foyers
     
     set camp-index camp-index + 1
   ]; end boucle création des foyers
-  
 
-end;; ---------------------------------------------------------
-;;  create-transhumant-foyers  (révisé)
-;;  • nb : nombre de foyers à créer
-;;  • band : patch-set d’entrée (bord Nord le plus souvent)
-;; ---------------------------------------------------------
+end
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Création des éleveurs transhumants ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 to create-transhumant-foyers [nb band]
 
-  let entry-band band with [patch-has-space? self]
+  let entry-band band with [ patch-has-space? self and is-fenced = false ]
   let created 0
+  
 
   while [created < nb and any? entry-band] [
 
@@ -170,6 +173,9 @@ to create-transhumant-foyers [nb band]
           set herder-type         "moyen"
           set is-in-temporary-camp true
           set pasture-strategy "directed"
+          
+          set planned-days length-season current-season     ;; fonction utilitaire ci-dessous
+          set days-present 0
 
           ;; pas de base domestique
           set original-home-camp  nobody
@@ -211,7 +217,7 @@ to create-transhumant-foyers [nb band]
           ;; connais son voisinage immédiat
           set known-space patches in-radius 3
           set close-known-space known-space
-          set distant-known-space no-patches
+          set distant-known-space known-space who-are-not close-known-space
           ask self [   ;; self est le foyer qu’on vient de créer
             create-herds-for-me
           ]
@@ -290,12 +296,9 @@ to choose-strategy-for-cattles
     ;; Masquer et déplacer le troupeau de bovins
     if [have-left] of cattle-herd = FALSE [
       ifelse is-transhumant [
-        ask cattle-herd [die]
-        ask sheep-herd [die]
-        ask current-home-camp [die]
-        die
+        do-transhumant-strategy
       ] [
-        ask sheep-herd [
+        ask cattle-herd [
           do-second-strategy
         ]
       ]
@@ -315,10 +318,7 @@ to choose-strategy-for-sheeps
     ;; Masquer et déplacer le troupeau de moutons
     if [have-left] of sheep-herd = FALSE [
       ifelse is-transhumant [
-        ask cattle-herd [die]
-        ask sheep-herd [die]
-        ask current-home-camp [die]
-        die
+        do-transhumant-strategy
       ] [
         ask sheep-herd [
           do-second-strategy
@@ -372,6 +372,15 @@ to do-first-strategy
     ]
   ]
 
+end
+
+to do-transhumant-strategy
+  
+  ask cattle-herd [die]
+  ask sheep-herd [die]
+  ask current-home-camp [die]
+  die
+  
 end
 
 

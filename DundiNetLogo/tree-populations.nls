@@ -53,9 +53,9 @@ to setup-trees ; Valeurs d'initialisation (âge minimum des arbres découverts)
 
             ifelse population-size != 0 [
               ; Initialiser les stocks actuels
-              set max-fruit-stock init-patch-max-fruit-stock
-              set max-leaf-stock init-patch-max-leaf-stock
-              set max-wood-stock init-patch-max-wood-stock
+              set max-fruit-stock init-patch-max-fruit-stock / 1000
+              set max-leaf-stock init-patch-max-leaf-stock / 1000
+              set max-wood-stock init-patch-max-wood-stock / 1000
               set leaves-percent-accessible init-patch-accessible
               set fruits-percent-accessible init-patch-accessible
               set max-fruit-nb init-patch-fruits-nb
@@ -63,9 +63,9 @@ to setup-trees ; Valeurs d'initialisation (âge minimum des arbres découverts)
               set germination-rate item 0 germination-rates
               set young-regen-rate item 1 germination-rates
               set dormance-needed item 2 germination-rates
-              set one-fruit-weight item 3 germination-rates
+              set one-fruit-weight item 3 germination-rates / 1000
               set seed-nb-per-fruit item 4 germination-rates
-              set one-seed-weight item 5 germination-rates
+              set one-seed-weight item 5 germination-rates / 1000
               set ratio-consumable item 6 germination-rates
               
               set leaves-status item 0 nutritional-values
@@ -78,6 +78,7 @@ to setup-trees ; Valeurs d'initialisation (âge minimum des arbres découverts)
               set current-fruit-stock (max-fruit-stock / 2)
               set current-leaf-stock (max-leaf-stock / 2)
               set current-wood-stock max-wood-stock
+              set soil-current-fruit-stock 0
               set fruit-nb min (list (current-fruit-stock / one-fruit-weight) max-fruit-nb)
               set seed-nb fruit-nb * seed-nb-per-fruit
               
@@ -104,7 +105,8 @@ to setup-trees ; Valeurs d'initialisation (âge minimum des arbres découverts)
         let tree-age ifelse-value (i < 7) [i + 1] [8]
         ; Obtenir les données pour ce type d'arbre et cet âge
         let age-data get-age-data soil-types input-tree-type tree-age
-
+        let germination-rates get-germination-data soil-types input-tree-type
+        let nutritional-values get-tree-nutritional-data input-tree-type soil-types current-season
         ; Vérifier si les données pour cet âge existent
         if age-data != [] [
           let max-leaf item 0 age-data
@@ -132,23 +134,22 @@ to setup-trees ; Valeurs d'initialisation (âge minimum des arbres découverts)
             
           
             ifelse population-size != 0 [
-              set max-fruit-stock init-patch-max-fruit-stock
-              set max-leaf-stock init-patch-max-leaf-stock
-              set max-wood-stock init-patch-max-wood-stock
+              
+              set max-fruit-stock init-patch-max-fruit-stock / 1000
+              set max-leaf-stock init-patch-max-leaf-stock / 1000
+              set max-wood-stock init-patch-max-wood-stock / 1000
               set leaves-percent-accessible init-patch-accessible
               set fruits-percent-accessible init-patch-accessible
               set max-fruit-nb init-patch-fruits-nb
               
-              let germination-rates get-germination-data soil-types input-tree-type
               set germination-rate item 0 germination-rates
               set young-regen-rate item 1 germination-rates
               set dormance-needed item 2 germination-rates
-              set one-fruit-weight item 3 germination-rates
+              set one-fruit-weight item 3 germination-rates / 1000
               set seed-nb-per-fruit item 4 germination-rates
-              set one-seed-weight item 5 germination-rates
+              set one-seed-weight item 5 germination-rates / 1000
               set ratio-consumable item 6 germination-rates
               
-              let nutritional-values get-tree-nutritional-data input-tree-type soil-types current-season
               set leaves-status item 0 nutritional-values
               set leaves-UF-per-kg-MS item 1 nutritional-values
               set leaves-MAD-per-kg-MS item 2 nutritional-values
@@ -159,6 +160,7 @@ to setup-trees ; Valeurs d'initialisation (âge minimum des arbres découverts)
               set current-fruit-stock (max-fruit-stock / 2)
               set current-leaf-stock (max-leaf-stock / 2)
               set current-wood-stock max-wood-stock
+              set soil-current-fruit-stock 0
               set fruit-nb min (list (current-fruit-stock / one-fruit-weight) max-fruit-nb)
               set seed-nb fruit-nb * seed-nb-per-fruit
               
@@ -186,6 +188,8 @@ to setup-trees ; Valeurs d'initialisation (âge minimum des arbres découverts)
         
         ; Obtenir les données pour ce type d'arbre et cet âge
         let age-data get-age-data soil-types input-tree-type tree-age
+        let germination-rates get-germination-data soil-types input-tree-type
+        let nutritional-values get-tree-nutritional-data input-tree-type soil-types current-season
         
         ; Vérifier si les données pour cet âge existent
         if age-data != [] [
@@ -214,23 +218,21 @@ to setup-trees ; Valeurs d'initialisation (âge minimum des arbres découverts)
             
             ifelse population-size != 0 [
               ; Initialiser les stocks actuels
-              set max-fruit-stock init-patch-max-fruit-stock
-              set max-leaf-stock init-patch-max-leaf-stock
-              set max-wood-stock init-patch-max-wood-stock
+              set max-fruit-stock init-patch-max-fruit-stock / 1000
+              set max-leaf-stock init-patch-max-leaf-stock / 1000
+              set max-wood-stock init-patch-max-wood-stock / 1000
               set leaves-percent-accessible init-patch-accessible
               set fruits-percent-accessible init-patch-accessible
               set max-fruit-nb init-patch-fruits-nb
               
-              let germination-rates get-germination-data soil-types input-tree-type
               set germination-rate item 0 germination-rates
               set young-regen-rate item 1 germination-rates
               set dormance-needed item 2 germination-rates
-              set one-fruit-weight item 3 germination-rates
+              set one-fruit-weight item 3 germination-rates / 1000
               set seed-nb-per-fruit item 4 germination-rates
-              set one-seed-weight item 5 germination-rates
+              set one-seed-weight item 5 germination-rates / 1000
               set ratio-consumable item 6 germination-rates
               
-              let nutritional-values get-tree-nutritional-data input-tree-type soil-types current-season
               set leaves-status item 0 nutritional-values
               set leaves-UF-per-kg-MS item 1 nutritional-values
               set leaves-MAD-per-kg-MS item 2 nutritional-values
@@ -241,6 +243,7 @@ to setup-trees ; Valeurs d'initialisation (âge minimum des arbres découverts)
               set current-fruit-stock (max-fruit-stock / 2)
               set current-leaf-stock (max-leaf-stock / 2)
               set current-wood-stock max-wood-stock
+              set soil-current-fruit-stock 0
               set fruit-nb min (list (current-fruit-stock / one-fruit-weight) max-fruit-nb)
               set seed-nb fruit-nb * seed-nb-per-fruit
               
@@ -292,11 +295,11 @@ to update-tree-age
         let accessible item 3 age-data
         let max-fruits-nb item 4 age-data
         
-        set max-wood-stock max-wood * population-size
-        set max-fruit-stock max-fruit * population-size
-        set max-leaf-stock max-leaf * population-size
+        set max-wood-stock max-wood * population-size  / 1000
+        set max-fruit-stock max-fruit * population-size  / 1000
+        set max-leaf-stock max-leaf * population-size  / 1000
         set max-fruit-nb max-fruits-nb * population-size
-        set leaves-percent-accessible accessible
+        set leaves-percent-accessible accessible 
         set fruits-percent-accessible accessible
       ] [
         die
@@ -316,9 +319,9 @@ to update-tree-age
           let accessible item 3 age-data
           let max-fruits-nb item 4 age-data
           
-          set max-wood-stock max-wood * population-size
-          set max-fruit-stock max-fruit * population-size
-          set max-leaf-stock max-leaf * population-size
+          set max-wood-stock max-wood * population-size / 1000
+          set max-fruit-stock max-fruit * population-size / 1000
+          set max-leaf-stock max-leaf * population-size / 1000
           set max-fruit-nb max-fruits-nb * population-size
           set leaves-percent-accessible accessible
           set fruits-percent-accessible accessible
@@ -349,7 +352,7 @@ to update-tree-age
     ifelse existing-population != nobody [
       ; Ajouter la taille de la population qui passe à l'âge 8
       ask existing-population [
-        set population-size round (population-size * 0.95)
+        set population-size round (population-size * 0.99)
         set population-size population-size + adv-pop-size
         let soil-types [soil-type] of patch-here
         ; Mettre à jour les stocks maximaux
@@ -360,9 +363,9 @@ to update-tree-age
         let accessible item 3 age-data
         let max-fruits-nb item 4 age-data
         
-        set max-wood-stock max-wood * population-size
-        set max-fruit-stock max-fruit * population-size
-        set max-leaf-stock max-leaf * population-size
+        set max-wood-stock max-wood * population-size  / 1000
+        set max-fruit-stock max-fruit * population-size / 1000
+        set max-leaf-stock max-leaf * population-size / 1000
         set leaves-percent-accessible accessible
         set fruits-percent-accessible accessible
         set max-fruit-nb max-fruits-nb * population-size
@@ -370,6 +373,7 @@ to update-tree-age
         set current-fruit-stock min (list (current-fruit-stock + adv-fruit-stock) max-fruit-stock)
         set current-leaf-stock min (list (current-leaf-stock + adv-leaf-stock) max-leaf-stock)
         set current-wood-stock min (list (current-wood-stock + adv-wood-stock) max-wood-stock)
+        set soil-current-fruit-stock 0
         set fruit-nb min (list (current-fruit-stock / one-fruit-weight) max-fruit-nb)
         set seed-nb fruit-nb * seed-nb-per-fruit
 
@@ -394,9 +398,9 @@ to update-tree-age
           let accessible item 3 age-data
           let max-fruits-nb item 4 age-data
           
-          set max-wood-stock max-wood * population-size
-          set max-fruit-stock max-fruit * population-size
-          set max-leaf-stock max-leaf * population-size
+          set max-wood-stock max-wood * population-size  / 1000
+          set max-fruit-stock max-fruit * population-size / 1000
+          set max-leaf-stock max-leaf * population-size / 1000
           set leaves-percent-accessible accessible
           set fruits-percent-accessible accessible
           set max-fruit-nb max-fruits-nb * population-size
@@ -405,9 +409,9 @@ to update-tree-age
           set germination-rate item 0 germination-rates
           set young-regen-rate item 1 germination-rates
           set dormance-needed item 2 germination-rates
-          set one-fruit-weight item 3 germination-rates
+          set one-fruit-weight item 3 germination-rates / 1000
           set seed-nb-per-fruit item 4 germination-rates
-          set one-seed-weight item 5 germination-rates
+          set one-seed-weight item 5 germination-rates / 1000
           set ratio-consumable item 6 germination-rates
           
           let nutritional-values get-tree-nutritional-data tree-type soil-types current-season
@@ -421,6 +425,7 @@ to update-tree-age
           set current-fruit-stock min (list adv-fruit-stock max-fruit-stock)
           set current-leaf-stock min (list adv-leaf-stock max-leaf-stock)
           set current-wood-stock min (list adv-wood-stock max-wood-stock)
+          set soil-current-fruit-stock 0
           set fruit-nb min (list (current-fruit-stock / one-fruit-weight) max-fruit-nb)
           set seed-nb fruit-nb * seed-nb-per-fruit
           
@@ -447,8 +452,15 @@ to renew-tree-population
     ; Calculer le nombre de nouvelles pousses pour chaque type d'arbre sur le patch
     ask tree-populations-here [
       ; Calculer les nouvelles pousses
-      let new-trees floor ((seed-nb * germination-rate) + germinated-seed-nb * min (list (germination-rate + 0.2) 1))
+      let new-trees 0
+      ifelse dormance-needed = "yes" [
+        set new-trees floor (( (soil-current-fruit-stock / one-fruit-weight) * seed-nb-per-fruit * germination-rate) + germinated-seed-nb * min (list (germination-rate + 0.2) 1))
+      ] [
+        set new-trees floor (( (soil-current-fruit-stock / one-fruit-weight) * seed-nb-per-fruit * germination-rate) + germinated-seed-nb * min (list (germination-rate) 1))
+      ]
         
+      set germinated-seed-nb 0
+      set soil-current-fruit-stock 0
       set new-trees min (list new-trees [max-tree-number] of patch-here)
 
       ; Ajouter les nouvelles pousses au total pour ce type d'arbre
@@ -481,9 +493,9 @@ to renew-tree-population
           let max-wood item 2 age-data
           let accessible item 3 age-data
           let max-fruits-nb item 4 age-data
-          set max-fruit-stock max-fruit * population-size
-          set max-leaf-stock max-leaf * population-size
-          set max-wood-stock max-wood * population-size
+          set max-fruit-stock max-fruit * population-size / 1000
+          set max-leaf-stock max-leaf * population-size / 1000
+          set max-wood-stock max-wood * population-size / 1000
           set leaves-percent-accessible accessible
           set fruits-percent-accessible accessible
           set max-fruit-nb max-fruits-nb * population-size
@@ -492,9 +504,9 @@ to renew-tree-population
           set germination-rate item 0 germination-rates
           set young-regen-rate item 1 germination-rates
           set dormance-needed item 2 germination-rates
-          set one-fruit-weight item 3 germination-rates
+          set one-fruit-weight item 3 germination-rates / 1000
           set seed-nb-per-fruit item 4 germination-rates
-          set one-seed-weight item 5 germination-rates
+          set one-seed-weight item 5 germination-rates / 1000
           set ratio-consumable item 6 germination-rates
           
           let nutritional-values get-tree-nutritional-data tree-type soil-types current-season
@@ -505,10 +517,10 @@ to renew-tree-population
           set fruits-UF-per-kg-MS item 4 nutritional-values
           set fruits-MAD-per-kg-MS item 5 nutritional-values
           
-          
           set current-fruit-stock (max-fruit-stock / 2)
           set current-leaf-stock (max-leaf-stock / 2)
           set current-wood-stock max-wood-stock
+          set soil-current-fruit-stock 0
           set fruit-nb min (list (current-fruit-stock / one-fruit-weight) max-fruit-nb)
           set seed-nb fruit-nb * seed-nb-per-fruit
           
@@ -554,36 +566,50 @@ to grow-tree-resources
     let max-wood item 2 age-data
     let accessible item 3 age-data
     let max-fruits-nb item 4 age-data
-
+    
     ; Réactualiser le max de bois en fonction de la population restante
-    set max-wood-stock max-wood * population-size
+    set max-wood-stock max-wood * population-size / 1000
     
     ; Croissance ou décroissance logistique du bois
     let wood-growth growth-wood-logistic current-wood-stock max-wood-stock leaves-status current-season
     
     let new-wood-stock current-wood-stock + wood-growth
     set current-wood-stock min (list new-wood-stock max-wood-stock)
-    if current-wood-stock < 0.01 * max-wood-stock [
-      set current-wood-stock (0.01 * max-wood-stock)]
+    
     
     ; Ratio de bois par population
     set wood-ratio calculate-wood-ratio
-
+    if (wood-ratio < 0.05) [
+      set population-size population-size - 1
+      set trees-killed trees-killed + 1
+      set wood-ratio calculate-wood-ratio
+      if population-size <= 0 [
+        die
+      ]
+    ]
     ; Réactualiser le max de fruits et feuilles  en fonction de la population restante et du bois
-    set max-fruit-stock max-fruit * population-size * wood-ratio
-    set max-leaf-stock max-leaf * population-size * wood-ratio
+    set max-fruit-stock max-fruit * population-size * wood-ratio / 1000
+    set max-leaf-stock max-leaf * population-size * wood-ratio / 1000
     set max-fruit-nb max-fruits-nb * population-size * wood-ratio
-
+    
     ; Croissance ou décroissance logistique des fruits
     let fruit-growth growth-fruit-logistic current-fruit-stock max-fruit-stock fruits-status current-season
-    ifelse fruit-growth > 0 [ let new-fruit-stock current-fruit-stock + fruit-growth
+    let new-fruit-stock current-fruit-stock + fruit-growth
+    if fruit-growth < 0 [ 
+      set soil-current-fruit-stock min (list (soil-current-fruit-stock - fruit-growth) max-fruit-stock)
+    ]
     set current-fruit-stock min (list new-fruit-stock max-fruit-stock)
     if current-fruit-stock <= 0 [set current-fruit-stock 1 ]
+    
+    if soil-current-fruit-stock > 1 [
+      set soil-current-fruit-stock soil-current-fruit-stock  - 0.01 * (precision soil-current-fruit-stock 2)
+    ]
+    if germinated-seed-nb > 1 [
+      set germinated-seed-nb round germinated-seed-nb - (0.01 * germinated-seed-nb)
+    ]
     set fruit-nb min (list (current-fruit-stock / one-fruit-weight) max-fruit-nb)
     set seed-nb fruit-nb * seed-nb-per-fruit
-    ] [
-      
-    ]
+    
     ; Croissance ou décroissance logistique des feuilles
     let leaf-growth growth-leaf-logistic current-leaf-stock max-leaf-stock leaves-status current-season
     let new-leaf-stock current-leaf-stock + leaf-growth

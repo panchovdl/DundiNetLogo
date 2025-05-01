@@ -3,6 +3,15 @@ globals [
   totalFoyers
   totalSheeps
   totalCattles
+  ticks-wih-transhumants
+  mst-temps-passe
+  
+  totalLocalFoyers
+  
+  totalTransFoyers
+  totalTransSheeps
+  totalTransCattles
+  
   waterStock
   sheepsTempCamp
   cattlesTempCamp
@@ -22,7 +31,23 @@ globals [
   meanCattlesGrassEaten
   MSTSheep-NEC
   MSTCattle-NEC
+  MSTTransSheep-NEC
+  MSTTransCattle-NEC
+  MSTTransFoyers-duration
+  
+  
   trees-killed
+  
+  transSheepsWeightGain
+  transCattlesWeightGain
+  meanTransCattlesLiveWeight
+  maxTransCattlesLiveWeight
+  minTransCattlesLiveWeight
+  meanTransSheepsLiveWeight
+  maxTransSheepsLiveWeight
+  minTransSheepsLiveWeight
+  meanTransCattlesNEC
+  meanTransSheepsNEC
   
   
   meanTrees1yearsByPatch
@@ -83,88 +108,19 @@ globals [
   sumMediumHerder
   sumLargeHerder
   
-  meanDistantKnownSpace
+  meanDistantKnownSpaceSheeps
+  meanDistantKnownSpaceCattles
 ]
 
 to calculStat
-  set totalFoyers count foyers
-      set totalCattles sum [head] of cattles
-      set totalSheeps sum [head] of sheeps
-  set cattlesHaveLeft count cattles with [have-left = true]
-  set sheepsHaveLeft count sheeps with [have-left = true]
-  set waterStock sum [water-stock] of patches
-  set sheepsTempCamp count sheeps with [is-in-temporary-camp = true]
-  set cattlesTempCamp count cattles with [is-in-temporary-camp = true]
-  ifelse count sheeps with [have-left = false] > 0 [
-    set sheepsWeightGain mean [weight-gain] of sheeps with [have-left = false]
-  ] [
-    set sheepsWeightGain 0
-  ]
-  ifelse count cattles with [have-left = false] > 0 [  
-    set cattlesWeightGain mean [weight-gain] of cattles with [have-left = false]
-  ] [
-    set cattlesWeightGain 0
-  ]
-  ;  min, max & average of Cattle Weight  
-  ifelse count cattles with [have-left = false] > 0 [
-    set meanCattlesLiveWeight (mean [live-weight] of cattles with [have-left = false]) / (mean [head]  of cattles with [have-left = false])
-    let oneMaxCattleHerd one-of cattles with [have-left = false] with-max [live-weight]
-    set maxCattlesLiveWeight ( [live-weight] of oneMaxCattleHerd) / ([head] of oneMaxCattleHerd)
-    let oneMinCattleHerd one-of cattles with [have-left = false] with-min [live-weight]
-    set minCattlesLiveWeight ([live-weight] of oneMinCattleHerd) / ([head] of oneMinCattleHerd)
-  ][
-    set meanCattlesLiveWeight 0
-    set maxCattlesLiveWeight 0
-    set minCattlesLiveWeight 0
-  ]
- ;  min, max & average of Sheep Weight   
-  ifelse count sheeps with [have-left = false] > 0 [  
-  set meanSheepsLiveWeight (mean [live-weight] of sheeps with [have-left = false]) / (mean [head]  of sheeps with [have-left = false])
-    let oneMaxSheepHerd one-of sheeps with [have-left = false] with-max [live-weight]
-    set maxSheepsLiveWeight ( [live-weight] of oneMaxSheepHerd) / ([head] of oneMaxSheepHerd)
-    let oneMinSheepHerd one-of sheeps with [have-left = false] with-min [live-weight]
-    set minSheepsLiveWeight ([live-weight] of oneMinSheepHerd) / ([head] of oneMinSheepHerd)
-  ][
-    set meanSheepsLiveWeight 0
-    set maxSheepsLiveWeight 0
-    set minSheepsLiveWeight 0
-  ]
   
-  if count cattles with [have-left = false] > 0[ ;; Est-ce qu'il y a quelque chose a faire dans le else ?
-    set meanCattlesNEC mean [corporal-condition] of cattles with [have-left = false]
-  ]
-  if count sheeps with [have-left = false] > 0 [ ;; Est-ce qu'il y a quelque chose a faire dans le else ?
-    set meanSheepsNEC mean [corporal-condition] of sheeps with [have-left = false]
-  ]
   
-  if ticks > 0 [
-    ask foyers [
-      if sheep-herd != nobody [
-        if SheepNECSatifactionIndex <= [corporal-condition] of sheep-herd [
-          set sheepNEC-satisfaction (sheepNEC-satisfaction + 1)
-        ]
-      ]
-      if cattle-herd != nobody [
-        if CattleNECSatifactionIndex <= [corporal-condition] of cattle-herd [
-          set cattleNEC-satisfaction (cattleNEC-satisfaction + 1)
-        ]
-      ]
-    ]
-    set MSTSheep-NEC (mean[sheepNEC-satisfaction] of foyers) / ticks
-    set MSTCattle-NEC (mean[cattleNEC-satisfaction] of foyers) / ticks
-  ]
-  
-    if count sheeps with [have-left = false] > 0 [ ;; Est-ce qu'il y a quelque chose a faire dans le else ?
-    set meanSheepsGrassEaten mean [mean-DM-ingested] of sheeps with [have-left = false]
-  ]
-   if count cattles with [have-left = false] > 0[ ;; Est-ce qu'il y a quelque chose a faire dans le else ?
-    set meanCattlesGrassEaten mean [mean-DM-ingested] of cattles with [have-left = false]
-  ]
   
   
   set totalGrass sum [current-grass] of patches
   set meanGrass mean [current-grass] of patches
   set totalTrees sum [population-size] of tree-populations
+  
   
   set meanTrees8yearsByPatch sum [population-size] of tree-populations with [tree-pop-age >= 8] / count patches
   set meanTrees7yearsByPatch sum [population-size] of tree-populations with [tree-pop-age = 7] / count patches
@@ -177,10 +133,211 @@ to calculStat
   set meanTreesOldesByPatch sum [population-size] of tree-populations with [tree-pop-age > 4] / count patches
   set meanTreesYoungsByPatch sum [population-size] of tree-populations with [tree-pop-age <= 4] / count patches
 
-  set meanFruitsConsumedCattle sum [fruits-eaten] of cattles with [have-left = false]
-  set meanLeavesConsumedCattle sum [leaves-eaten] of cattles with [have-left = false]
-  set meanFruitsConsumedSheep  sum [fruits-eaten] of sheeps with [have-left = false]
-  set meanLeavesConsumedSheep sum [leaves-eaten] of sheeps with [have-left = false]
+  set meanFruitsConsumedCattle mean [fruits-eaten] of cattles with [have-left = false and is-transhumant = false]
+  set meanLeavesConsumedCattle mean [leaves-eaten] of cattles with [have-left = false and is-transhumant = false]
+  set meanFruitsConsumedSheep  mean [fruits-eaten] of sheeps with [have-left = false and is-transhumant = false]
+  set meanLeavesConsumedSheep mean [leaves-eaten] of sheeps with [have-left = false and is-transhumant = false]
+  
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Intégration des variables agents ;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  
+  ;; Locaux 
+  
+  set totalFoyers count foyers
+  set totalLocalFoyers count foyers with [is-transhumant = false] 
+  set totalCattles sum [head] of cattles with [is-transhumant = false]
+  set totalSheeps sum [head] of sheeps with [is-transhumant = false]
+    
+  set cattlesHaveLeft count cattles with [have-left = true]
+  set sheepsHaveLeft count sheeps with [have-left = true]
+    
+
+  set sheepsTempCamp count sheeps with [is-in-temporary-camp = true and is-transhumant = false]
+  set cattlesTempCamp count cattles with [is-in-temporary-camp = true and is-transhumant = false]
+  
+  ;; Transhumants
+  
+  set totalTransCattles sum [head] of cattles with [is-transhumant = true]
+  set totalTransSheeps sum [head] of sheeps with [is-transhumant = true]
+  set totalTransFoyers count foyers with [is-transhumant = true]
+  set mst-temps-passe 0
+   
+  set waterStock sum [water-stock] of patches
+  
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Calcul du gain de poids ;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   
+  ifelse count sheeps with [have-left = false and is-transhumant = false] > 0 [
+    set sheepsWeightGain mean [weight-gain] of sheeps with [have-left = false and is-transhumant = false]
+  ] [
+    set sheepsWeightGain 0
+  ]
+  
+  ifelse count cattles with [have-left = false and is-transhumant = false] > 0 [  
+    set cattlesWeightGain mean [weight-gain] of cattles with [have-left = false and is-transhumant = false]
+  ] [
+    set cattlesWeightGain 0
+  ]
+  ;  min, max & average of Cattle Weight  
+  ifelse count cattles with [have-left = false and is-transhumant = false] > 0 [
+    set meanCattlesLiveWeight (mean [live-weight] of cattles with [have-left = false and is-transhumant = false]) / (mean [head]  of cattles with [have-left = false and is-transhumant = false])
+    let oneMaxCattleHerd one-of cattles with [have-left = false and is-transhumant = false] with-max [live-weight]
+    set maxCattlesLiveWeight ( [live-weight] of oneMaxCattleHerd) / ([head] of oneMaxCattleHerd)
+    let oneMinCattleHerd one-of cattles with [have-left = false and is-transhumant = false] with-min [live-weight]
+    set minCattlesLiveWeight ([live-weight] of oneMinCattleHerd) / ([head] of oneMinCattleHerd)
+  ][
+    set meanCattlesLiveWeight 0
+    set maxCattlesLiveWeight 0
+    set minCattlesLiveWeight 0
+  ]
+ ;  min, max & average of Sheep Weight   
+  ifelse count sheeps with [have-left = false and is-transhumant = false] > 0 [  
+  set meanSheepsLiveWeight (mean [live-weight] of sheeps with [have-left = false and is-transhumant = false]) / (mean [head]  of sheeps with [have-left = false and is-transhumant = false])
+    let oneMaxSheepHerd one-of sheeps with [have-left = false and is-transhumant = false] with-max [live-weight]
+    set maxSheepsLiveWeight ( [live-weight] of oneMaxSheepHerd) / ([head] of oneMaxSheepHerd)
+    let oneMinSheepHerd one-of sheeps with [have-left = false and is-transhumant = false] with-min [live-weight]
+    set minSheepsLiveWeight ([live-weight] of oneMinSheepHerd) / ([head] of oneMinSheepHerd)
+  ][
+    set meanSheepsLiveWeight 0
+    set maxSheepsLiveWeight 0
+    set minSheepsLiveWeight 0
+  ]
+  
+  
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Calcul de la NEC Locaux ;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  
+  if count cattles with [have-left = false and is-transhumant = false] > 0[ ;; Est-ce qu'il y a quelque chose a faire dans le else ?
+    set meanCattlesNEC mean [corporal-condition] of cattles with [have-left = false and is-transhumant = false]
+  ]
+  if count sheeps with [have-left = false and is-transhumant = false] > 0 [ ;; Est-ce qu'il y a quelque chose a faire dans le else ?
+    set meanSheepsNEC mean [corporal-condition] of sheeps with [have-left = false and is-transhumant = false]
+  ]
+  
+  if ticks > 0 [
+    ask foyers with [is-transhumant = false] [
+      if sheep-herd != nobody [
+        if SheepNECSatifactionIndex <= [corporal-condition] of sheep-herd [
+          set sheepNEC-satisfaction (sheepNEC-satisfaction + 1)
+        ]
+      ]
+      if cattle-herd != nobody [
+        if CattleNECSatifactionIndex <= [corporal-condition] of cattle-herd [
+          set cattleNEC-satisfaction (cattleNEC-satisfaction + 1)
+        ]
+      ]
+    ]
+    set MSTSheep-NEC (mean[sheepNEC-satisfaction] of foyers with [is-transhumant = false]) / ticks
+    set MSTCattle-NEC (mean[cattleNEC-satisfaction] of foyers with [is-transhumant = false]) / ticks
+  ]
+  
+    if count sheeps with [have-left = false and is-transhumant = false] > 0 [ ;; Est-ce qu'il y a quelque chose a faire dans le else ?
+    set meanSheepsGrassEaten mean [mean-DM-ingested] of sheeps with [have-left = false and is-transhumant = false]
+  ]
+   if count cattles with [have-left = false and is-transhumant = false] > 0[ ;; Est-ce qu'il y a quelque chose a faire dans le else ?
+    set meanCattlesGrassEaten mean [mean-DM-ingested] of cattles with [have-left = false and is-transhumant = false]
+  ]
+  
+
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Calcul de la NEC Transhumants ;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  
+  ;; y a-t-il encore des troupeaux transhumants en jeu ?
+  let trans-cattles cattles with [have-left = false and is-transhumant = true]
+  let trans-sheeps  sheeps  with [have-left = false and is-transhumant = true]
+  
+  ifelse TotalTransFoyers > 0 [
+    ;; on incrémente le dénominateur
+    set ticks-with-transhumants ticks-with-transhumants + 1
+  ] [
+    set ticks-wih-transhumants 0
+  ]
+  
+  ifelse count sheeps with [have-left = false and is-transhumant = true] > 0 [
+    set transSheepsWeightGain mean [weight-gain] of sheeps with [have-left = false and is-transhumant = true]
+  ] [
+    set transSheepsWeightGain 0
+  ]
+  ifelse count cattles with [have-left = false and is-transhumant = true] > 0 [  
+    set transCattlesWeightGain mean [weight-gain] of cattles with [have-left = false and is-transhumant = true]
+  ] [
+    set transCattlesWeightGain 0
+  ]
+
+  ;  min, max & average of Cattle Weight  
+  ifelse count cattles with [have-left = false and is-transhumant = true] > 0 [
+    set meanTransCattlesLiveWeight (mean [live-weight] of cattles with [have-left = false and is-transhumant = true]) / (mean [head]  of cattles with [have-left = false and is-transhumant = true])
+    let oneMaxTransCattleHerd one-of cattles with [have-left = false and is-transhumant = true] with-max [live-weight]
+    set maxTransCattlesLiveWeight ( [live-weight] of oneMaxTransCattleHerd) / ([head] of oneMaxTransCattleHerd)
+    let oneMinTransCattleHerd one-of cattles with [have-left = false and is-transhumant = true] with-min [live-weight]
+    set minTransCattlesLiveWeight ([live-weight] of oneMinTransCattleHerd) / ([head] of oneMinTransCattleHerd)
+  ][
+    set meanTransCattlesLiveWeight 0
+    set maxTransCattlesLiveWeight 0
+    set minTransCattlesLiveWeight 0
+  ]
+ ;  min, max & average of Sheep Weight   
+  ifelse count sheeps with [have-left = false and is-transhumant = true] > 0 [  
+    set meanTransSheepsLiveWeight (mean [live-weight] of sheeps with [have-left = false and is-transhumant = true]) / (mean [head]  of sheeps with [have-left = false and is-transhumant = true])
+    let oneMaxTransSheepHerd one-of sheeps with [have-left = false and is-transhumant = true] with-max [live-weight]
+    set maxTransSheepsLiveWeight ( [live-weight] of oneMaxTransSheepHerd) / ([head] of oneMaxTransSheepHerd)
+    let oneMinTransSheepHerd one-of sheeps with [have-left = false and is-transhumant = true] with-min [live-weight]
+    set minTransSheepsLiveWeight ([live-weight] of oneMinTransSheepHerd) / ([head] of oneMinTransSheepHerd)
+  ][
+    set meanTransSheepsLiveWeight 0
+    set maxTransSheepsLiveWeight 0
+    set minTransSheepsLiveWeight 0
+  ]
+  
+  
+  
+  
+  
+  if TotalTransFoyers > 0 [ ;; Est-ce qu'il y a quelque chose a faire dans le else ?
+    set meanTransCattlesNEC mean [corporal-condition] of cattles with [have-left = false and is-transhumant = true]
+    set meanTransSheepsNEC mean [corporal-condition] of sheeps with [have-left = false and is-transhumant = true]
+  ]
+
+  
+  ifelse (ticks-with-transhumants > 0 and totalTransFoyers > 0) [
+    
+       ask foyers with [is-transhumant = true] [
+      if sheep-herd != nobody [
+        if SheepNECSatifactionIndex <= [corporal-condition] of sheep-herd [
+          set transSheepNEC-satisfaction (transSheepNEC-satisfaction + 1)
+        ]
+      ]
+      if cattle-herd != nobody [
+        if CattleNECSatifactionIndex <= [corporal-condition] of cattle-herd [
+          set transCattleNEC-satisfaction (transCattleNEC-satisfaction + 1)
+        ]
+      ]
+    ]
+    set MSTTransSheep-NEC (mean [transSheepNEC-satisfaction] of foyers with [is-transhumant = true]) / ticks-with-transhumants
+    set MSTTransCattle-NEC (mean [transCattleNEC-satisfaction] of foyers with [is-transhumant = true]) / ticks-with-transhumants
+  ] [
+    
+    set MSTTransSheep-NEC MSTTransSheep-NEC
+    set MSTTransCattle-NEC MSTTransCattle-NEC
+  ]
+  
+    let nb-satisfaits count foyers with [
+    is-transhumant = true and
+    global-satisfaction = 1   ;; le slider%
+  ]
+  
+ifelse TotalTransFoyers > 0 [
+  set mst-temps-passe mst-temps-passe + (nb-satisfaits / TotalTransFoyers)
+  ] [
+stop
+  ]
    
   
 ;  if ticks > 0 [
@@ -242,6 +399,7 @@ to calculStat
   set sumSmallHerder count foyers with [herder-type = "petit"]
   set sumMediumHerder count foyers with [herder-type = "moyen"]
   set sumLargeHerder count foyers with [herder-type = "grand"]
- set meanDistantKnownSpace meanKnownSpace sheeps
   
+  set meanDistantKnownSpaceSheeps meanKnownSpace (sheeps with [not is-transhumant])
+  set meanDistantKnownSpaceCattles meanKnownSpace (cattles with [not is-transhumant])
 end

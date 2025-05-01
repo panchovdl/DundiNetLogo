@@ -30,10 +30,10 @@ to-report growth-fruit-logistic [current-fruit max-fruit status season]
     report 0  ; Pas de croissance si max-wood est zéro
   ] [
     if status = "chute" [
-      set r 0
-    ]
-    if status = "sol" [
       set r -0.1
+    ]
+    if status = "au sol" [
+      report (- current-fruit)
     ]
     if status = "croissance" or status = "dispo" [
       set r 0.05
@@ -53,13 +53,13 @@ to-report growth-leaf-logistic [current-leaves max-leaves status season]
     report 0  ; Pas de croissance si max-wood est zéro
   ] [
     if status = "chute"  [
-      set r 0
+      set r -0.1
     ]
     if status = "sol" [
       set r -0.1
     ]
     if status = "croissance" or status = "dispo" [
-      set r 0.05
+      set r 0.1
     ]
     let growth r * (precision current-leaves 3) * (precision ((max-leaves - current-leaves) / max-leaves) 3)
     if abs(growth) > 1e15 [
@@ -332,7 +332,13 @@ to-report calculate-herd-size [heads]
 end
 
 
-
+to-report length-season [season-name]
+  ;; retourne le nombre de ticks (jours) que dure la saison
+  if season-name = "Nduungu" [ report nduungu-duration ]
+  if season-name = "Ceedu"   [ report ceedu-duration + ceetcelde-duration ]
+  if season-name = "Ceetcelde"  [ report ceetcelde-duration ]
+  report 0                   ;; fallback
+end
 
 
 
@@ -364,7 +370,7 @@ end
 to-report find-best-nearest-patch [known-spaces my-shepherd seasons UtilityFactor]
   let viable-patches known-spaces with [current-grass >= 500 and is-fenced = false]
   if seasons = "Nduungu" [ set viable-patches viable-patches with [soil-type != "Caangol"]]
-  if [is-transhumant] of foyer-owner [
+  if [is-transhumant = true] of foyer-owner [
     set viable-patches viable-patches with [has-camps = false]
   ]
   ifelse my-shepherd = "bon" [
@@ -395,6 +401,35 @@ to-report find-best-nearest-patch [known-spaces my-shepherd seasons UtilityFacto
 end
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; herds movement reporters ;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;; Renvoie TRUE si le patch p accueille actuellement < 2 campements
+
+to-report patch-has-space? [good-patch]
+  report ( count camps-on good-patch ) < 2
+end
+
+;; Cherche le patch non-viable le plus proche de p-target qui a de la place
+;; (lorsque le best-patch est saturé)
+
+to-report nearest-with-space [p-target]
+
+  let radial [patches in-radius 1] of p-target           ;; voisins
+  let candidats radial with [
+        patch-has-space? self and                     ;; < 2 campements
+        (not is-fenced)                               ;; pas protégé
+  ]
+
+  ifelse any? candidats [
+    report min-one-of candidats [distance p-target]
+  ] [
+    report nobody
+  ]
+end
+
 to-report movement-needs [ dist ]
   ifelse dist > 6 [ report list 0.5 28 ;; Grande distance     
     ] [ ifelse dist <= 1 [ report list 0.37 20 ;; Entretien seul
@@ -405,8 +440,15 @@ to-report movement-needs [ dist ]
 end
 
 
-to-report calculate-trampling-effect [monocot-grass dicot-grass heads]
-  ;; Calcul de l'effet de piétinement (MLVstk) en fonction de la biomasse (current-grass)
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; herds degradation reporters ;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+to-report calculate-trampling-effect [monocot-grass dicot-grass heads] 
+  ;; Calcul de l'effet de piétinement (MLVstk) en fonction de la biomasse (current-grass). Diawara, 2018.
   ;; et de la proportion de dicotylédones (dicot)
 
   let monocot-effect 0.2 * exp(-0.00068 * monocot-grass)  ; Effet sur les monocotylédones
@@ -449,19 +491,20 @@ to-report patches-between [ p1 p2 ]
   report result
 end
 
+
 to-report meanKnownSpace [agents]
   ; Initialiser une variable pour stocker la somme des counts
   let _total-count 0
   ; Initialiser une variable pour stocker le nombre de moutons
-  let _number-of-sheep count agents
+  let _number-of-herds count agents
   ; Parcourir chaque mouton et compter les patches
   ask agents [
-    let patches-agentset [known-space] of self  ; Récupérer l'agentset des patches pour ce mouton
+    let patches-agentset [distant-known-space] of self  ; Récupérer l'agentset des patches pour ce mouton
     let count-patches count patches-agentset /  count patches          ; Compter le nombre de patches
     set _total-count _total-count + count-patches         ; Ajouter à la somme totale
   ]
 
   ;; Calculer la moyenne
-  ifelse _number-of-sheep = 0 [report 0]
-  [report _total-count / _number-of-sheep * 100]
+  ifelse _number-of-herds = 0 [report 0]
+  [report _total-count / _number-of-herds * 100]
 end

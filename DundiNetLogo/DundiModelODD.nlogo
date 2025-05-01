@@ -6,7 +6,6 @@ globals [
   size-x                 ; Taille horizontale du monde
   size-y                 ; Taille verticale du monde
   current-plot-id
-
   current-season         ; Saison actuelle
   last-season            ; Saison précédente
   season-counter         ; Compteur de saison
@@ -68,6 +67,7 @@ globals [
 
 
   total-UBT-created                ; Vé
+  ticks-with-transhumants
 
 ]
 
@@ -198,6 +198,7 @@ turtles-own [
   close-known-space                ; Espace connu à moins d'une journée de déplacement d'un troupeau (6km)
   distant-known-space              ; Espace connu à plus d'une journée de déplacement d'un troupeau (6km)
   daily-trip
+  is-transhumant
 
   ; Déplacement du campement
   current-home-camp                ; Campement actuel
@@ -240,7 +241,12 @@ foyers-own [
   shepherd-type                    ; Type de berger du foyer
   herder-type                      ; Caractéristique d'élevage du foyer (grand moyen petit)
   pasture-strategy                 ; Stratégies de pâturage
-  is-transhumant
+
+  planned-days
+  days-present
+  presence-satisfaction
+  global-satisfaction
+
 
   ; Surveillance de l'état du troupeau
   ; Bovins
@@ -268,6 +274,8 @@ foyers-own [
   close-exploration-count          ; Compteur d'exploration proche
   cattleNEC-satisfaction
   sheepNEC-satisfaction
+  transCattleNEC-satisfaction
+  transSheepNEC-satisfaction
 ]
 
 
@@ -321,6 +329,7 @@ tree-populations-own [
   current-fruit-stock              ; Stock de fruits
   current-leaf-stock               ; Stock de feuilles
   current-wood-stock               ; Stock de bois
+  soil-current-fruit-stock         ; Stock de fruits au sol pour germination
   max-fruit-stock                  ; Stock maximal de fruit pour la population
   max-leaf-stock                   ; Stock maximal de fruit pour la population
   max-wood-stock                   ; Stock maximal de fruit pour la population
@@ -626,12 +635,12 @@ to go
     ]
     ask cattles [set known-space [known-space] of foyer-owner]
     ask sheeps [set known-space [known-space] of foyer-owner]
-    ask patches [
-    ask tree-populations-here [set
-      germinated-seed-nb 0
-    ]
-    ]
-  ]
+
+
+    ;; remettre à zéro pour l’année suivante
+    set mst-temps-passe 0
+
+]
 
 
   ; Mise à jour quotidienne des ressources
@@ -688,7 +697,21 @@ to go
       choose-strategy-for-sheeps]
     ; Choix stratégiques pastoraux du chef de ménage
   ]
+
+  ask foyers with [is-transhumant = true] [
+    set days-present days-present + 1
+    if planned-days > 0 [
+      set presence-satisfaction (days-present / planned-days) * 100
+    ]
+    ifelse presence-satisfaction >= min-time-ratio [
+      set global-satisfaction 1   ;; content
+    ] [
+      set global-satisfaction 0   ;; mécontent
+    ]
+  ]
+
   update-known-space
+
 
   ; Mise à jour des valeurs Stats pour visualisation
   calculStat
@@ -727,6 +750,7 @@ to call-back-herds
     set corporal-condition 5             ; NEC maximum
     set protein-condition 10             ; Condition protéique maximale
     set have-left false
+
   ]
 
   ;; Retour des troupeaux de moutons
@@ -771,23 +795,29 @@ to update-known-space
   ask foyers [
     let home-patch current-home-patch
     if cattle-herd != nobody [
-      set known-space (patch-set known-space ([known-space] of cattle-herd))]
+      set known-space (patch-set known-space ([known-space] of cattle-herd))
+    ]
     if sheep-herd != nobody [
-      set known-space (patch-set known-space ([known-space] of sheep-herd))]
+      set known-space (patch-set known-space ([known-space] of sheep-herd))
+    ]
     set close-known-space known-space with [distance home-patch <= 6]
     set distant-known-space known-space who-are-not close-known-space
   ]
   ask cattles [
     let home-patch current-home-patch
     set known-space (patch-set known-space ([known-space] of foyer-owner))
-    set original-camp-known-space [close-known-space] of foyer-owner
+    if (is-transhumant = false) [
+      set original-camp-known-space [close-known-space] of foyer-owner
+    ]
     set close-known-space known-space with [distance home-patch <= 6]
     set distant-known-space known-space who-are-not close-known-space
   ]
   ask sheeps [
     let home-patch current-home-patch
     set known-space (patch-set known-space ([known-space] of foyer-owner))
-    set original-camp-known-space [close-known-space] of foyer-owner
+    if (is-transhumant = false) [
+      set original-camp-known-space [close-known-space] of foyer-owner
+    ]
     set close-known-space known-space with [distance home-patch <= 6]
     set distant-known-space known-space who-are-not close-known-space
   ]
@@ -1015,7 +1045,7 @@ CHOOSER
 visualization-mode
 visualization-mode
 "soil-type" "tree-cover" "grass-cover" "grass-quality" "known-space"
-2
+4
 
 BUTTON
 40
@@ -1065,7 +1095,7 @@ good-shepherd-percentage
 good-shepherd-percentage
 0
 100
-97.0
+0.0
 1
 1
 NIL
@@ -1080,7 +1110,7 @@ proportion-big-herders
 proportion-big-herders
 0
 100
-53.0
+46.0
 1
 1
 NIL
@@ -1195,8 +1225,8 @@ true
 true
 "" ""
 PENS
-"Moutons" 1.0 0 -11221820 true "" "plot meanDistantKnownSpace"
-"Vaches" 1.0 0 -16777216 true "" "plot meanKnownSpace cattles"
+"Moutons" 1.0 0 -11221820 true "" "plot meanDistantKnownSpaceSheeps"
+"Vaches" 1.0 0 -16777216 true "" "plot meanDistantKnownSpaceCattles"
 
 PLOT
 870
@@ -1248,9 +1278,9 @@ year-index
 11
 
 PLOT
-1115
+1480
 90
-1410
+1755
 265
 Biomasse (MS) par hectare
 NIL
@@ -1344,7 +1374,7 @@ number-of-camps
 number-of-camps
 0
 150
-1.0
+150.0
 1
 1
 NIL
@@ -1400,7 +1430,7 @@ SatisfactionMeanTreesInCaangol
 SatisfactionMeanTreesInCaangol
 50
 150
-150.0
+50.0
 1
 1
 NIL
@@ -1415,7 +1445,7 @@ SatisfactionMeanTreesInSeeno
 SatisfactionMeanTreesInSeeno
 12
 50
-50.0
+29.0
 1
 1
 NIL
@@ -1430,7 +1460,7 @@ SatisfactionMeanTreesInBaldiol
 SatisfactionMeanTreesInBaldiol
 0
 100
-100.0
+56.0
 1
 1
 NIL
@@ -1438,14 +1468,14 @@ HORIZONTAL
 
 SLIDER
 240
-885
+890
 350
-918
+923
 SatisfactionMeanTreesInSangre
 SatisfactionMeanTreesInSangre
 0
 100
-100.0
+61.0
 1
 1
 NIL
@@ -1515,7 +1545,7 @@ avg-UBT-per-camp
 avg-UBT-per-camp
 10
 100
-65.0
+70.0
 5
 1
 NIL
@@ -1541,7 +1571,7 @@ treshold-tree-satisfaction
 treshold-tree-satisfaction
 0.1
 1
-1.0
+0.5
 0.1
 1
 NIL
@@ -1566,11 +1596,11 @@ PENS
 "default" 1.0 0 -16777216 true "" "plot trees-killed"
 
 TEXTBOX
-1085
+1080
 55
-1110
-1161
-||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+1105
+1276
+|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 20
 64.0
 1
@@ -1599,17 +1629,17 @@ TEXTBOX
 1585
 270
 1600
-1160
+1280
 |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 20
 64.0
 1
 
 TEXTBOX
-2350
+2355
 55
-2375
-1160
+2380
+1280
 ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 20
 64.0
@@ -1627,9 +1657,9 @@ Indicateurs Elevage
 
 TEXTBOX
 1085
-1125
+1240
 2375
-1165
+1280
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 20
 64.0
@@ -1688,7 +1718,7 @@ TEXTBOX
 PLOT
 1120
 510
-1525
+1555
 685
 Moyennes ressources arbres
 NIL
@@ -1701,8 +1731,9 @@ true
 true
 "" ""
 PENS
-"moyenne feuilles" 1.0 0 -13840069 true "" "plot mean [current-leaf-stock] of tree-populations"
-"moyenne fruits" 1.0 0 -4699768 true "" "plot mean [current-fruit-stock] of tree-populations"
+"moyenne feuilles kg" 1.0 0 -13840069 true "" "plot mean [current-leaf-stock] of tree-populations with [tree-pop-age >= 4]"
+"moyenne fruits des arbres" 1.0 0 -5298144 true "" "plot mean [current-fruit-stock] of tree-populations with [tree-pop-age >= 4]"
+"moyenne fruits au sol" 1.0 0 -6459832 true "" "plot mean [soil-current-fruit-stock] of tree-populations with [tree-pop-age >= 4]"
 
 SLIDER
 30
@@ -1745,7 +1776,7 @@ FUtility
 FUtility
 0
 1
-1.0
+0.0
 0.1
 1
 NIL
@@ -1905,7 +1936,7 @@ TEXTBOX
 890
 500
 1050
-530
+520
 Proportion bons bergers
 12
 0.0
@@ -1935,7 +1966,7 @@ TEXTBOX
 730
 320
 745
-635
+770
 |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 12
 0.0
@@ -1963,9 +1994,9 @@ TEXTBOX
 
 TEXTBOX
 730
-615
+735
 1070
-640
+760
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 10
 0.0
@@ -1975,7 +2006,7 @@ TEXTBOX
 1055
 320
 1070
-635
+770
 |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 12
 0.0
@@ -2054,7 +2085,7 @@ TEXTBOX
 TEXTBOX
 255
 710
-765
+725
 760
 Critères de satistaction du nombre d'arbres (+ de 4 ans)\npar hectare et par type de sol
 15
@@ -2124,7 +2155,7 @@ Proportion de surface par type de sol pour laquelle le critère de satisfaction 
 TEXTBOX
 210
 930
-895
+725
 948
 -------------------------------------------------------------------------
 20
@@ -2142,29 +2173,29 @@ TEXTBOX
 1
 
 PLOT
-870
-735
-1070
-885
-plot 1
-mean grass-eaten
+1135
+90
+1480
+265
+Biomasse moyenne consommé (par les locaux)
+NIL
 NIL
 0.0
 10.0
 0.0
 10.0
 true
-false
+true
 "" ""
 PENS
-"default" 1.0 0 -16777216 true "" "plot meanSheepsGrassEaten"
-"pen-1" 1.0 0 -7500403 true "" "plot meanCattlesGrassEaten"
+"Moutons" 1.0 0 -8990512 true "" "plot meanSheepsGrassEaten"
+"Vaches" 1.0 0 -16777216 true "" "plot meanCattlesGrassEaten"
 
 PLOT
-870
-905
-1070
-1055
+810
+795
+1010
+945
 plot 2
 NIL
 NIL
@@ -2187,7 +2218,7 @@ reforestation-plots-number
 reforestation-plots-number
 0
 20
-9.0
+10.0
 1
 1
 NIL
@@ -2195,9 +2226,9 @@ HORIZONTAL
 
 SLIDER
 750
-580
+575
 885
-613
+608
 COGES-camps
 COGES-camps
 2
@@ -2230,9 +2261,9 @@ Parcelles de reforestation
 
 TEXTBOX
 890
-580
+575
 1050
-610
+605
 Nombre de campements par COGES
 12
 0.0
@@ -2240,26 +2271,41 @@ Nombre de campements par COGES
 
 SLIDER
 750
-680
-922
-713
+665
+885
+698
 influx-Ceedu
 influx-Ceedu
 0
 100
-41.0
+55.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-925
-645
-1055
-678
+750
+700
+885
+733
 influx-Nduungu
 influx-Nduungu
+0
+100
+32.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+750
+630
+885
+663
+influx-Ceetcelde
+influx-Ceetcelde
 0
 100
 58.0
@@ -2269,19 +2315,116 @@ NIL
 HORIZONTAL
 
 SLIDER
-750
-645
-922
-678
-influx-Ceetcelde
-influx-Ceetcelde
+240
+1020
+350
+1053
+min-time-ratio
+min-time-ratio
 0
 100
-47.0
+32.0
 1
 1
 NIL
 HORIZONTAL
+
+PLOT
+1955
+1110
+2220
+1240
+MST-Temps-Passé
+NIL
+NIL
+0.0
+10.0
+0.0
+1.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot mst-temps-passe"
+
+PLOT
+1955
+960
+2220
+1110
+MST NEC Transhumants
+NIL
+NIL
+0.0
+1.0
+0.0
+1.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -12345184 true "" "plot MSTTransSheep-NEC"
+"pen-1" 1.0 0 -16777216 true "" "plot MSTTransCattle-NEC"
+
+PLOT
+1955
+810
+2265
+960
+NEC Moyenne Transhumants
+NIL
+NIL
+0.0
+5.0
+0.0
+5.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot meanTransCattlesNEC"
+"pen-1" 1.0 0 -8990512 true "" "plot meanTransSheepsNEC"
+"pen-2" 1.0 0 -2674135 true "" "plot CattleNECSatifactionIndex"
+
+TEXTBOX
+730
+615
+1070
+633
+------------------------------------------------------------------------------------
+12
+0.0
+1
+
+TEXTBOX
+890
+670
+1040
+700
+Nb de transhumants arrivés en SSF
+12
+0.0
+1
+
+TEXTBOX
+890
+705
+1040
+735
+Nb de transhumants arrivés en SSC
+12
+0.0
+1
+
+TEXTBOX
+890
+635
+1020
+665
+Nb de transhumants arrivés en SP
+12
+0.0
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
