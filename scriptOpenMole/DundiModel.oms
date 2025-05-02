@@ -9,8 +9,6 @@ val numberofCamps = Val[Double]
 val decreasingFactor = Val[Double]
 val FUtility = Val[Double]
 
-val ticksWithTranshumants = Val[Double]
-
 val maxPonds4Months = Val[Double]
 val maxPonds5Months = Val[Double]
 val maxPonds6Months = Val[Double]
@@ -136,7 +134,7 @@ val MSTCaangol = Val[Double]
 
 
 val model = NetLogo6Task(
-  workDirectory / "DundiModelODD.nlogo",
+  workDirectory / "DundiNetLogo/DundiModelODD.nlogo",
     Seq("setup","while [ticks <= 3650] [go] ; condition d'arret 10 ans"),
     seed = mySeed, 
     embedWorkspace = true) set (
@@ -246,28 +244,28 @@ val model = NetLogo6Task(
     outputs += cattlesTempCamp mapped "cattlesTempCamp",
     outputs += sheepsTempCamp mapped "sheepsTempCamp",
     
-    /*
-    goodShepherdPercentage := 0.0,
-    numberofCamps := 10,
-    proportionBigHerders := 100.0,
-    proportionMediumHerders := 0.0,
-    avgUBTpercamp := 91.0,
-    decreasingFactor := 5,*/
+    
+    //goodShepherdPercentage := 0.0,
+    //numberofCamps := 20,
+    //proportionBigHerders := 100.0,
+    //proportionMediumHerders := 0.0,
+    avgUBTpercamp := 60.0,
+    decreasingFactor := 10.0,
     SheepNECSatifactionIndex := 3.0,
     CattleNECSatifactionIndex := 3.0,
-    SatisfactionMeanTreesInSeeno := 20,
-    SatisfactionMeanTreesInCaangol := 100,
-    SatisfactionMeanTreesInBaldiol := 40, 
-    SatisfactionMeanTreesInSangre := 55,
-    thresholdTreeSatisfaction := 40, 
-    minTimePresence := 30, 
-    reforestationPlots := 1, 
-    COGESCamps := 2, 
-    influxCeetcelde := 5, 
-    influxCeedu := 5, 
-    influxNduungu := 5, 
-    goodShepherdTransPercentage := 0, 
-    FUtility := 0.5, 
+    SatisfactionMeanTreesInSeeno := 20.0,
+    SatisfactionMeanTreesInCaangol := 100.0,
+    SatisfactionMeanTreesInBaldiol := 40.0, 
+    SatisfactionMeanTreesInSangre := 55.0,
+    thresholdTreeSatisfaction := 50.0, 
+    minTimePresence := 30.0, 
+    //reforestationPlots := 1, 
+    COGESCamps := 2.0, 
+    influxCeetcelde := 0.0, 
+    influxCeedu := 0.0, 
+    influxNduungu := 0.0, 
+    goodShepherdTransPercentage := 0.0, 
+    FUtility := 0.6, 
     mySeed := 42
   
   )
