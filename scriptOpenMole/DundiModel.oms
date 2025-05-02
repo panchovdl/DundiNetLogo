@@ -7,6 +7,9 @@ To do all that please refer to the OpenMOLE documentation.
 val avgUBTpercamp = Val[Double]
 val numberofCamps = Val[Double]
 val decreasingFactor = Val[Double]
+val FUtility = Val[Double]
+
+val ticksWithTranshumants = Val[Double]
 
 val maxPonds4Months = Val[Double]
 val maxPonds5Months = Val[Double]
@@ -15,8 +18,12 @@ val visualizationMode = Val[String]
 val goodShepherdPercentage = Val[Double]
 val proportionBigHerders = Val[Double]
 val proportionMediumHerders = Val[Double]
-val SheepNECSatifactionIndex = Val[Double]
-val CattleNECSatifactionIndex = Val[Double]
+val reforestationPlots = Val[Double]
+val COGESCamps = Val [Double]
+val influxCeetcelde = Val[Double]
+val influxCeedu = Val[Double]
+val influxNduungu = Val[Double]
+val goodShepherdTransPercentage = Val[Double]
 
 val totalFoyers = Val[Double]
 val totalCattles = Val[Double]
@@ -25,17 +32,31 @@ val waterStock = Val[Double]
 val currentSeason = Val[String]
 val currentYearType = Val[String]
 val yearIndex = Val[Double]
+
+val totalLocalFoyers = Val[Double]
+val totalTransFoyers = Val[Double]
+val totalTransSheeps = Val[Double]
+val totalTransCattles = Val[Double]
+
+val SheepNECSatifactionIndex = Val[Double]
+val CattleNECSatifactionIndex = Val[Double]
 val SatisfactionMeanTreesInSeeno = Val[Double]
 val SatisfactionMeanTreesInCaangol = Val[Double]
 val SatisfactionMeanTreesInBaldiol = Val[Double]
 val SatisfactionMeanTreesInSangre = Val[Double]
-val MSTSeeno = Val[Double]
-val MSTBaldiol = Val[Double]
-val MSTSangre = Val[Double]
-val MSTCaangol = Val[Double]
+val thresholdTreeSatisfaction = Val[Double]
+val minTimePresence = Val[Double]
 val mySeed = Val[Int]
 
+
+
+
 /*output*/
+  
+val sumSmallHerder = Val[Double]
+val sumMediumHerder = Val[Double]
+val sumLargeHerder = Val[Double]
+  
 val sheepsTempCamp = Val[Double]
 val cattlesTempCamp = Val[Double]
 val sheepsHaveLeft = Val[Double]
@@ -50,6 +71,8 @@ val maxCattlesLiveWeight = Val[Double]
 val minCattlesLiveWeight = Val[Double]
 val meanSheepsNEC = Val[Double]
 val meanCattlesNEC = Val[Double]
+val meanSheepsGrassEaten = Val[Double]
+val meanCattlesGrassEaten = Val[Double]
 val MSTSheepNEC = Val[Double]
 val MSTCattleNEC = Val[Double]
 
@@ -78,6 +101,22 @@ val meanFruitsConsumedSheep = Val[Double]
 val meanLeavesConsumedSheep = Val[Double]
 
 
+val transSheepsWeightGain = Val[Double]
+val transCattlesWeightGain = Val[Double]
+val meanTransCattlesLiveWeight = Val[Double]
+val maxTransCattlesLiveWeight = Val[Double]
+val minTransCattlesLiveWeight = Val[Double]
+val meanTransSheepsLiveWeight = Val[Double]
+val maxTransSheepsLiveWeight = Val[Double]
+val minTransSheepsLiveWeight = Val[Double]
+val meanTransCattlesNEC = Val[Double]
+val meanTransSheepsNEC = Val[Double]
+
+val MSTTransSheepNEC = Val[Double]
+val MSTTransCattleNEC = Val[Double]
+  
+val MSTTempsPasse = Val[Double]
+
 val totalGPCaangol = Val[Double]
 val totalGPSeeno = Val[Double]
 val totalGPBaldiol = Val[Double]
@@ -88,9 +127,12 @@ val trajSatisfactionSangre = Val[Double]
 val trajSatisfactionCaangol = Val[Double]
 val treesKilled = Val[Double]
 
-val sumSmallHerder = Val[Double]
-val sumMediumHerder = Val[Double]
-val sumLargeHerder = Val[Double]
+
+val MSTSeeno = Val[Double]
+val MSTBaldiol = Val[Double]
+val MSTSangre = Val[Double]
+val MSTCaangol = Val[Double]
+
 
 
 val model = NetLogo6Task(
@@ -110,6 +152,17 @@ val model = NetLogo6Task(
     inputs += SatisfactionMeanTreesInBaldiol mapped "SatisfactionMeanTreesInBaldiol",
     inputs += SatisfactionMeanTreesInSangre mapped "SatisfactionMeanTreesInSangre",
     inputs += decreasingFactor mapped "decreasing-factor",
+    inputs += thresholdTreeSatisfaction mapped "treshold-tree-satisfaction",
+    inputs += minTimePresence mapped "min-time-ratio",
+
+    inputs += reforestationPlots mapped "reforestation-plots-number",
+    inputs += COGESCamps mapped "COGES-camps",
+    inputs += influxCeetcelde mapped "influx-Ceetcelde",
+    inputs += influxCeedu mapped "influx-Ceedu",
+    inputs += influxNduungu mapped "influx-Nduungu",
+    inputs += goodShepherdTransPercentage mapped "good-shepherd-trans-percentage",
+    inputs += FUtility mapped "FUtility",
+
     
     // pour avoir les input en output
     outputs += goodShepherdPercentage,
@@ -124,10 +177,17 @@ val model = NetLogo6Task(
     outputs += SatisfactionMeanTreesInBaldiol,
     outputs += SatisfactionMeanTreesInSangre,
     outputs += decreasingFactor,
+    outputs += thresholdTreeSatisfaction,
+    outputs += minTimePresence,
     
     outputs += totalFoyers mapped "totalFoyers",
     outputs += totalCattles mapped "totalCattles",
     outputs += totalSheeps mapped "totalSheeps",
+    outputs += totalLocalFoyers mapped "totalLocalFoyers",
+    outputs += totalTransFoyers mapped "totalTransFoyers",
+    outputs += totalTransSheeps mapped "totalTransSheeps",
+    outputs += totalTransCattles mapped "totalTransCattles",
+    
     outputs += sheepsWeightGain mapped "sheepsWeightGain",
     outputs += cattlesWeightGain mapped "cattlesWeightGain",
     outputs += meanSheepsLiveWeight mapped "meanSheepsLiveWeight",
@@ -150,6 +210,25 @@ val model = NetLogo6Task(
     outputs += sumMediumHerder mapped "sumMediumHerder",
     outputs += sumLargeHerder mapped "sumLargeHerder",
     
+    outputs += meanSheepsGrassEaten mapped "meanSheepsGrassEaten",
+    outputs += meanCattlesGrassEaten mapped "meanCattlesGrassEaten",
+
+    outputs += transSheepsWeightGain mapped "transSheepsWeightGain",
+    outputs += transCattlesWeightGain mapped "transCattlesWeightGain",
+    outputs += meanTransCattlesLiveWeight mapped "meanTransCattlesLiveWeight", 
+    outputs += maxTransCattlesLiveWeight mapped "maxTransCattlesLiveWeight",
+    outputs += minTransCattlesLiveWeight mapped "minTransCattlesLiveWeight",
+    outputs += meanTransSheepsLiveWeight mapped "meanTransSheepsLiveWeight",
+    outputs += maxTransSheepsLiveWeight mapped "maxTransSheepsLiveWeight",
+    outputs += minTransSheepsLiveWeight mapped "minTransSheepsLiveWeight",
+    outputs += meanTransCattlesNEC mapped "meanTransCattlesNEC",
+    outputs += meanTransSheepsNEC mapped "meanTransSheepsNEC",
+
+    outputs += MSTTransSheepNEC mapped "MSTTransSheep-NEC",
+    outputs += MSTTransCattleNEC mapped "MSTTransCattle-NEC",
+  
+    outputs += MSTTempsPasse mapped "nb-satisfied-year",
+
 
     outputs += totalGPCaangol mapped "totalGPCaangol",
     outputs += totalGPSeeno mapped "totalGPSeeno",
@@ -180,7 +259,17 @@ val model = NetLogo6Task(
     SatisfactionMeanTreesInCaangol := 100,
     SatisfactionMeanTreesInBaldiol := 40, 
     SatisfactionMeanTreesInSangre := 55,
+    thresholdTreeSatisfaction := 40, 
+    minTimePresence := 30, 
+    reforestationPlots := 1, 
+    COGESCamps := 2, 
+    influxCeetcelde := 5, 
+    influxCeedu := 5, 
+    influxNduungu := 5, 
+    goodShepherdTransPercentage := 0, 
+    FUtility := 0.5, 
     mySeed := 42
+  
   )
 
 model hook display
