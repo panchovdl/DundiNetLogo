@@ -33,8 +33,6 @@ globals [
   MSTCattle-NEC
   MSTTransSheep-NEC
   MSTTransCattle-NEC
-  MSTTransFoyers-duration
-  
   
   trees-killed
   

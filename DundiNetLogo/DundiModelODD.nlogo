@@ -1094,10 +1094,10 @@ totalSheeps
 11
 
 SLIDER
-2375
-85
-2540
-118
+2425
+55
+2590
+88
 max-ponds-4-months
 max-ponds-4-months
 0
@@ -1109,10 +1109,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-2376
-123
-2536
-156
+2426
+93
+2586
+126
 max-ponds-5-months
 max-ponds-5-months
 0
@@ -1124,10 +1124,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-2376
-162
-2536
-195
+2426
+132
+2586
+165
 max-ponds-6-months
 max-ponds-6-months
 0
@@ -1139,10 +1139,10 @@ NIL
 HORIZONTAL
 
 MONITOR
-2379
-199
-2514
-244
+2429
+169
+2564
+214
 NIL
 waterStock
 17
@@ -1848,10 +1848,10 @@ PENS
 "moyenne fruits au sol" 1.0 0 -6459832 true "" "plot mean [soil-current-fruit-stock] of tree-populations with [tree-pop-age >= 4]"
 
 SLIDER
-30
-640
-200
-673
+15
+710
+185
+743
 decreasing-factor
 decreasing-factor
 0
@@ -1880,15 +1880,15 @@ NIL
 1
 
 SLIDER
-30
-675
-200
-708
+15
+745
+185
+778
 FUtility
 FUtility
 0
 1
-0.0
+0.5
 0.1
 1
 NIL
@@ -2345,7 +2345,7 @@ COGES-camps
 COGES-camps
 2
 10
-4.0
+9.0
 1
 1
 NIL
@@ -2637,6 +2637,46 @@ PENS
 "1 Y" 1.0 0 -13840069 true "" "plot meanTrees1yearsByPatch"
 "pen-8" 1.0 0 -14835848 true "" ""
 "pen-9" 1.0 0 -11221820 true "" ""
+
+TEXTBOX
+5
+656
+200
+711
+----------------------------------------------------------------SENSIBILITE--------------------------------------------------------------
+12
+0.0
+1
+
+TEXTBOX
+5
+660
+20
+825
+|||||||||||||||||||||||||||||||||
+12
+0.0
+1
+
+TEXTBOX
+185
+660
+200
+825
+|||||||||||||||||||||||||||||||||
+12
+0.0
+1
+
+TEXTBOX
+5
+785
+200
+826
+------------------------------------------------------------------------------------------------------------------------------------------------
+12
+0.0
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
