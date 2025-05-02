@@ -8,13 +8,18 @@ val evolution = PSEEvolution(
       goodShepherdPercentage in (0.0, 100.0),
       proportionBigHerders in (0.0, 49.0),
       proportionMediumHerders in (0.0, 49.0),
-      interfaceNumberOfCampI in (1.0, 130.0),
+      numberofCamps in (1.0, 130.0),
+      reforestationPlots in (1.0, 20.0),
+      influxCeedu in (0.0, 40.0),
+      influxNduungu in (0.0, 40) ,
+      goodShepherdTransPercentage in (0.0, 100.0), 
+
   ),
  
   objective = Seq(
-    MSTSheepNEC aggregate "MSTSheepNEC.percentile(25)" in(0.0 to 1.0 by 0.1), //Attention on veux dans la cadre de la viabilité que les résultats soit sur a 95%  --> seq(5)
+    MSTTempsPasse aggregate "MSTTempsPasse.percentile(25)" in(0.0 to 1.0 by 0.1), //Attention on veux dans la cadre de la viabilité que les résultats soit sur a 95%  --> seq(5)
     MSTCattleNEC aggregate "MSTCattleNEC.percentile(25)" in(0.0 to 1.0 by 0.1),
-    MSTTrees aggregate "MSTTrees.percentile(25)" in(0.0 to 1.0 by 0.1),
+    MSTBaldiol aggregate "MSTTrees.percentile(25)" in(0.0 to 1.0 by 0.1),
     ),
   // distribution = Island(10 minutes), // doit durée plus que le temps de calcul
   stochastic = Stochastic(seed = mySeed, sample = 30)
