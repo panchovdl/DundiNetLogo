@@ -19,7 +19,7 @@ val evolution = PSEEvolution(
   objective = Seq(
     MSTTempsPasse aggregate "MSTTempsPasse.percentile(25)" in(0.0 to 1.0 by 0.1), //Attention on veux dans la cadre de la viabilité que les résultats soit sur a 95%  --> seq(5)
     MSTCattleNEC aggregate "MSTCattleNEC.percentile(25)" in(0.0 to 1.0 by 0.1),
-    MSTBaldiol aggregate "MSTTrees.percentile(25)" in(0.0 to 1.0 by 0.1),
+    MSTBaldiol aggregate "MSTBaldiol.percentile(25)" in(0.0 to 1.0 by 0.1),
     ),
   // distribution = Island(10 minutes), // doit durée plus que le temps de calcul
   stochastic = Stochastic(seed = mySeed, sample = 30)
