@@ -1158,7 +1158,7 @@ CHOOSER
 visualization-mode
 visualization-mode
 "soil-type" "tree-cover" "grass-cover" "grass-quality" "known-space"
-0
+1
 
 BUTTON
 40
@@ -1487,7 +1487,7 @@ number-of-camps
 number-of-camps
 0
 150
-1.0
+125.0
 1
 1
 NIL
@@ -1558,7 +1558,7 @@ SatisfactionMeanTreesInSeeno
 SatisfactionMeanTreesInSeeno
 12
 50
-30.0
+12.0
 1
 1
 NIL
@@ -1573,7 +1573,7 @@ SatisfactionMeanTreesInBaldiol
 SatisfactionMeanTreesInBaldiol
 0
 100
-56.0
+44.0
 1
 1
 NIL
@@ -1588,7 +1588,7 @@ SatisfactionMeanTreesInSangre
 SatisfactionMeanTreesInSangre
 0
 100
-61.0
+0.0
 1
 1
 NIL
@@ -1684,7 +1684,7 @@ treshold-tree-satisfaction
 treshold-tree-satisfaction
 0.1
 1
-0.5
+0.2
 0.1
 1
 NIL
@@ -2331,7 +2331,7 @@ reforestation-plots-number
 reforestation-plots-number
 0
 20
-20.0
+5.0
 1
 1
 NIL
@@ -2406,7 +2406,7 @@ influx-Nduungu
 influx-Nduungu
 0
 100
-0.0
+5.0
 1
 1
 NIL
@@ -2628,7 +2628,6 @@ true
 true
 "" ""
 PENS
-"8 Y" 1.0 0 -16777216 true "" "plot meanTrees8yearsByPatch"
 "7 Y" 1.0 0 -7500403 true "" "plot meanTrees7yearsByPatch"
 "6 Y" 1.0 0 -2674135 true "" "plot meanTrees6yearsByPatch"
 "5 Y" 1.0 0 -955883 true "" "plot meanTrees5yearsByPatch"

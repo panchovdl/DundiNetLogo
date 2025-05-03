@@ -284,7 +284,7 @@ to update-tree-age
   ask tree-populations [
     ifelse tree-pop-age < 5 [
       set tree-pop-age tree-pop-age + 1
-      set population-size round (population-size * young-regen-rate)
+      set population-size round (population-size * young-regen-rate / 100)
       let soil-types [soil-type] of patch-here
       ; Mettre à jour les stocks maximaux pour le nouvel âge
       ifelse population-size > 0 [
@@ -454,9 +454,9 @@ to renew-tree-population
       ; Calculer les nouvelles pousses
       let new-trees 0
       ifelse dormance-needed = "yes" [
-        set new-trees floor (( (soil-current-fruit-stock / one-fruit-weight) * seed-nb-per-fruit * germination-rate) + germinated-seed-nb * min (list (germination-rate + 0.2) 1))
+        set new-trees floor (( (soil-current-fruit-stock / one-fruit-weight) * seed-nb-per-fruit * germination-rate / 100) + germinated-seed-nb * min (list ((germination-rate / 100) + 0.2) 1))
       ] [
-        set new-trees floor (( (soil-current-fruit-stock / one-fruit-weight) * seed-nb-per-fruit * germination-rate) + germinated-seed-nb * min (list (germination-rate) 1))
+        set new-trees floor (( (soil-current-fruit-stock / one-fruit-weight) * seed-nb-per-fruit * germination-rate / 100) + germinated-seed-nb * min (list (germination-rate / 100) 1))
       ]
         
       set germinated-seed-nb 0
