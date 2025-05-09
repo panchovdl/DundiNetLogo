@@ -1,11 +1,11 @@
 # Charger la bibliothèque ggplot2 pour la visualisation
 library(ggplot2)
-
+rm(list = ls())
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 source("petitParceur_openMole.R")
 
 # Lire deux jeux de données CSV contenant les résultats de simulations ou de profils
-data <- read.csv("../results/M1_results_Profile_FUt_060525.csv") ## data avec les "goodshepherd
+data <- read.csv("../results/M1_results_Profile_FUt_080525.csv") ## data avec les "goodshepherd
 data2 <- read.csv("../results/M1_results_Profile_FUt_050525.csv") ## data sans goodShepherd
 
 # Inverser les valeurs de "objective.MSTCattleNEC" dans les deux datasets (probablement pour changer le sens d'interprétation)
@@ -16,9 +16,10 @@ data2$objective.MSTCattleNEC <- data2$objective.MSTCattleNEC * -1
 # PREMIER PLOT : proportionBigHerders vs objective.MSTCattleNEC avec density + points
 # ---------------------------------------
 
-ggplot(data, aes(x = proportionBigHerders, y = objective.MSTCattleNEC, size = evolution.samples)) +
-  geom_point(color = "blue") +                          # Ajouter les points, taille selon evolution.samples
+ggplot(data, aes(x = proportionBigHerders, y = objective.MSTCattleNEC, color = FUtility, size = evolution.samples)) +
   geom_density_2d_filled(alpha = 0.5) +                  # Ajouter la densité remplie avec transparence (pour voir la concentration des points)
+  geom_smooth(colour = 'red')+
+  geom_point() +                          # Ajouter les points, taille selon evolution.samples
   # geom_hline(yintercept = )+                           # (Optionnel / commenté) possibilité d'ajouter une ligne horizontale à une valeur donnée
   labs(x = "Prop BH", y = "MST Cattle NEC",              # Étiquettes des axes et titre
        title = "With goodShepherd") +
@@ -28,10 +29,13 @@ ggplot(data, aes(x = proportionBigHerders, y = objective.MSTCattleNEC, size = ev
 # DEUXIÈME PLOT : FUtility vs objective.MSTCattleNEC avec density + points (Dataset 1)
 # ---------------------------------------
 
-ggplot(data, aes(x = FUtility, y = objective.MSTCattleNEC, size = evolution.samples)) +
-  geom_point(color = "blue") +                          # Ajouter les points
+ggplot(data, aes(x = FUtility, y = objective.MSTCattleNEC)) +
   geom_density_2d_filled(alpha = 0.5) +                  # Ajouter la densité remplie
+  geom_smooth(span = 0.5)+
   # geom_hline(yintercept = )+                           # (Optionnel) ajouter une ligne horizontale
+  ylim(c(0.96, 0.965))+
+  xlim(c(0.4, 0.75))+
+  geom_point() +                          # Ajouter les points
   labs(x = "Utility value", y = "MST Cattle NEC",        # Étiquettes des axes et titre
        title = "With goodShepherd") +
   theme_bw()                                            # Thème graphique fond blanc/noir (plus contrasté)
@@ -46,6 +50,7 @@ ggsave("../img/M1_profil_withGShepherd.png")
 ggplot(data2, aes(x = FUtility, y = objective.MSTCattleNEC, size = evolution.samples)) +
   geom_point(color = "blue") +                          # Ajouter les points
   geom_density_2d_filled(alpha = 0.5) +                  # Ajouter la densité remplie
+  geom_smooth()+
   # geom_hline(yintercept = )+                           # (Optionnel) ajouter une ligne horizontale
   labs(x = "Utility value", y = "MST Cattle NEC",        # Étiquettes des axes et titre
        title = "Without goodShepherd") +
