@@ -1,0 +1,295 @@
+import _file_.environement_explo._
+/*
+This is skeleton to plug your model into OpenMOLE. To go further you should complete it.
+Define some hook, some exploration methods, and optionally some execution environment.
+To do all that please refer to the OpenMOLE documentation.
+*/
+val avgUBTpercamp = Val[Double]
+val numberofCamps = Val[Double]
+val decreasingFactor = Val[Double]
+val FUtility = Val[Double]
+
+val maxPonds4Months = Val[Double]
+val maxPonds5Months = Val[Double]
+val maxPonds6Months = Val[Double]
+val visualizationMode = Val[String]
+val goodShepherdPercentage = Val[Double]
+val proportionBigHerders = Val[Double]
+val proportionMediumHerders = Val[Double]
+val reforestationPlots = Val[Double]
+val COGESCamps = Val [Double]
+val influxCeetcelde = Val[Double]
+val influxCeedu = Val[Double]
+val influxNduungu = Val[Double]
+val goodShepherdTransPercentage = Val[Double]
+
+val totalFoyers = Val[Double]
+val totalCattles = Val[Double]
+val totalSheeps = Val[Double]
+val waterStock = Val[Double]
+val currentSeason = Val[String]
+val currentYearType = Val[String]
+val yearIndex = Val[Double]
+
+val totalLocalFoyers = Val[Double]
+val totalTransFoyers = Val[Double]
+val totalTransSheeps = Val[Double]
+val totalTransCattles = Val[Double]
+
+val SheepNECSatifactionIndex = Val[Double]
+val CattleNECSatifactionIndex = Val[Double]
+val SatisfactionMeanTreesInSeeno = Val[Double]
+val SatisfactionMeanTreesInCaangol = Val[Double]
+val SatisfactionMeanTreesInBaldiol = Val[Double]
+val SatisfactionMeanTreesInSangre = Val[Double]
+val thresholdTreeSatisfaction = Val[Double]
+val minTimePresence = Val[Double]
+val mySeed = Val[Int]
+
+
+
+
+/*output*/
+  
+val sumSmallHerder = Val[Double]
+val sumMediumHerder = Val[Double]
+val sumLargeHerder = Val[Double]
+  
+val sheepsTempCamp = Val[Double]
+val cattlesTempCamp = Val[Double]
+val sheepsHaveLeft = Val[Double]
+val cattlesHaveLeft = Val[Double]
+val sheepsWeightGain = Val[Double]
+val cattlesWeightGain = Val[Double]
+val meanSheepsLiveWeight = Val[Double]
+val maxSheepsLiveWeight = Val[Double]
+val minSheepsLiveWeight = Val[Double]
+val meanCattlesLiveWeight = Val[Double]
+val maxCattlesLiveWeight = Val[Double]
+val minCattlesLiveWeight = Val[Double]
+val meanSheepsNEC = Val[Double]
+val meanCattlesNEC = Val[Double]
+val meanSheepsGrassEaten = Val[Double]
+val meanCattlesGrassEaten = Val[Double]
+val MSTSheepNEC = Val[Double]
+val MSTCattleNEC = Val[Double]
+
+val meanTrees8years = Val[Double]
+val meanTrees7years = Val[Double]
+val meanTrees6years = Val[Double]
+val meanTrees5years = Val[Double]
+val meanTrees4years = Val[Double]
+val meanTrees3years = Val[Double]
+val meanTrees2years = Val[Double]
+val meanTrees1years = Val[Double]
+val totalTreesOldes = Val[Double]
+val totalTreesYoung = Val[Double]
+val trajTrees = Val[Double]
+val MSTTrees = Val[Double]
+val meanTreesInCaangol = Val[Double]
+val meanTreesInSangre = Val[Double]
+val meanTreesInBaldiol = Val[Double]
+val meanTreesInSeeno = Val[Double]
+val totalGrass = Val[Double]
+val totalTrees = Val[Double]
+val meanGrass = Val[Double]
+val meanFruitsConsumedCattle = Val[Double]
+val meanLeavesConsumedCattle = Val[Double]
+val meanFruitsConsumedSheep = Val[Double]
+val meanLeavesConsumedSheep = Val[Double]
+
+
+val transSheepsWeightGain = Val[Double]
+val transCattlesWeightGain = Val[Double]
+val meanTransCattlesLiveWeight = Val[Double]
+val maxTransCattlesLiveWeight = Val[Double]
+val minTransCattlesLiveWeight = Val[Double]
+val meanTransSheepsLiveWeight = Val[Double]
+val maxTransSheepsLiveWeight = Val[Double]
+val minTransSheepsLiveWeight = Val[Double]
+val meanTransCattlesNEC = Val[Double]
+val meanTransSheepsNEC = Val[Double]
+
+val MSTTransSheepNEC = Val[Double]
+val MSTTransCattleNEC = Val[Double]
+  
+val MSTTempsPasse = Val[Double]
+
+val totalGPCaangol = Val[Double]
+val totalGPSeeno = Val[Double]
+val totalGPBaldiol = Val[Double]
+val totalGPSangre = Val[Double]
+val trajSatisfactionSeeno = Val[Double]
+val trajSatisfactionBaldiol = Val[Double]
+val trajSatisfactionSangre = Val[Double]
+val trajSatisfactionCaangol = Val[Double]
+val treesKilled = Val[Double]
+
+
+val MSTSeeno = Val[Double]
+val MSTBaldiol = Val[Double]
+val MSTSangre = Val[Double]
+val MSTCaangol = Val[Double]
+
+
+
+val model = NetLogo6Task(
+  workDirectory / "DundiNetLogo/DundiModelODD.nlogo",
+    Seq("setup","while [ticks <= 3650] [go] ; condition d'arret 10 ans"),
+    seed = mySeed, 
+    embedWorkspace = true) set (
+    inputs += goodShepherdPercentage mapped "good-shepherd-percentage",
+    inputs += proportionBigHerders mapped "proportion-big-herders",
+    inputs += proportionMediumHerders mapped "proportion-medium-herders",
+    inputs += SheepNECSatifactionIndex mapped "SheepNECSatifactionIndex",
+    inputs += CattleNECSatifactionIndex mapped "CattleNECSatifactionIndex",
+    inputs += avgUBTpercamp mapped "avg-UBT-per-camp",
+    inputs += numberofCamps mapped "number-of-camps",
+    inputs += SatisfactionMeanTreesInSeeno mapped "SatisfactionMeanTreesInSeeno",
+    inputs += SatisfactionMeanTreesInCaangol mapped "SatisfactionMeanTreesInCaangol",
+    inputs += SatisfactionMeanTreesInBaldiol mapped "SatisfactionMeanTreesInBaldiol",
+    inputs += SatisfactionMeanTreesInSangre mapped "SatisfactionMeanTreesInSangre",
+    inputs += decreasingFactor mapped "decreasing-factor",
+    inputs += thresholdTreeSatisfaction mapped "treshold-tree-satisfaction",
+    inputs += minTimePresence mapped "min-time-ratio",
+
+    inputs += reforestationPlots mapped "reforestation-plots-number",
+    inputs += COGESCamps mapped "COGES-camps",
+    inputs += influxCeetcelde mapped "influx-Ceetcelde",
+    inputs += influxCeedu mapped "influx-Ceedu",
+    inputs += influxNduungu mapped "influx-Nduungu",
+    inputs += goodShepherdTransPercentage mapped "good-shepherd-trans-percentage",
+    inputs += FUtility mapped "FUtility",
+
+    
+    // pour avoir les input en output
+    outputs += goodShepherdPercentage,
+    outputs += proportionBigHerders,
+    outputs += proportionMediumHerders,
+    outputs += SheepNECSatifactionIndex,
+    outputs += CattleNECSatifactionIndex,
+    outputs += avgUBTpercamp,
+    outputs += numberofCamps,
+    outputs += SatisfactionMeanTreesInSeeno,
+    outputs += SatisfactionMeanTreesInCaangol,
+    outputs += SatisfactionMeanTreesInBaldiol,
+    outputs += SatisfactionMeanTreesInSangre,
+    outputs += decreasingFactor,
+    outputs += thresholdTreeSatisfaction,
+    outputs += minTimePresence,
+    
+    outputs += totalFoyers mapped "totalFoyers",
+    outputs += totalCattles mapped "totalCattles",
+    outputs += totalSheeps mapped "totalSheeps",
+    outputs += totalLocalFoyers mapped "totalLocalFoyers",
+    outputs += totalTransFoyers mapped "totalTransFoyers",
+    outputs += totalTransSheeps mapped "totalTransSheeps",
+    outputs += totalTransCattles mapped "totalTransCattles",
+    
+    outputs += sheepsWeightGain mapped "sheepsWeightGain",
+    outputs += cattlesWeightGain mapped "cattlesWeightGain",
+    outputs += meanSheepsLiveWeight mapped "meanSheepsLiveWeight",
+    outputs += meanCattlesLiveWeight mapped "meanCattlesLiveWeight",
+    outputs += meanSheepsNEC mapped "meanSheepsNEC",
+    outputs += meanCattlesNEC mapped "meanCattlesNEC",
+    outputs += MSTSheepNEC mapped "MSTSheep-NEC",
+    outputs += MSTCattleNEC mapped "MSTCattle-NEC",
+    outputs += totalTreesOldes mapped "totalTreesOldes",
+    outputs += totalTreesYoung mapped "totalTreesYoung",
+    outputs += MSTTrees mapped "MST-trees",
+    outputs += totalGrass mapped "totalGrass",
+    outputs += totalTrees mapped "totalTrees",
+    outputs += meanGrass mapped "meanGrass",
+    outputs += meanFruitsConsumedCattle mapped "meanFruitsConsumedCattle",
+    outputs += meanLeavesConsumedCattle mapped "meanLeavesConsumedCattle",
+    outputs += meanFruitsConsumedSheep mapped "meanFruitsConsumedSheep",
+    outputs += meanLeavesConsumedSheep mapped "meanLeavesConsumedSheep",
+    outputs += sumSmallHerder mapped "sumSmallHerder",
+    outputs += sumMediumHerder mapped "sumMediumHerder",
+    outputs += sumLargeHerder mapped "sumLargeHerder",
+    
+    outputs += meanSheepsGrassEaten mapped "meanSheepsGrassEaten",
+    outputs += meanCattlesGrassEaten mapped "meanCattlesGrassEaten",
+
+    outputs += transSheepsWeightGain mapped "transSheepsWeightGain",
+    outputs += transCattlesWeightGain mapped "transCattlesWeightGain",
+    outputs += meanTransCattlesLiveWeight mapped "meanTransCattlesLiveWeight", 
+    outputs += maxTransCattlesLiveWeight mapped "maxTransCattlesLiveWeight",
+    outputs += minTransCattlesLiveWeight mapped "minTransCattlesLiveWeight",
+    outputs += meanTransSheepsLiveWeight mapped "meanTransSheepsLiveWeight",
+    outputs += maxTransSheepsLiveWeight mapped "maxTransSheepsLiveWeight",
+    outputs += minTransSheepsLiveWeight mapped "minTransSheepsLiveWeight",
+    outputs += meanTransCattlesNEC mapped "meanTransCattlesNEC",
+    outputs += meanTransSheepsNEC mapped "meanTransSheepsNEC",
+
+    outputs += MSTTransSheepNEC mapped "MSTTransSheep-NEC",
+    outputs += MSTTransCattleNEC mapped "MSTTransCattle-NEC",
+  
+    outputs += MSTTempsPasse mapped "nb-satisfied-year",
+
+
+    outputs += totalGPCaangol mapped "totalGPCaangol",
+    outputs += totalGPSeeno mapped "totalGPSeeno",
+    outputs += totalGPBaldiol mapped "totalGPBaldiol",
+    outputs += totalGPSangre mapped "totalGPSangre",
+    outputs += trajSatisfactionSeeno mapped "traj-satisfaction-Seeno",
+    outputs += trajSatisfactionBaldiol mapped "traj-satisfaction-Baldiol",
+    outputs += trajSatisfactionSangre mapped "traj-satisfaction-Sangre",
+    outputs += trajSatisfactionCaangol mapped "traj-satisfaction-Caangol",
+    outputs += MSTSeeno mapped "MST-Seeno",
+    outputs += MSTBaldiol mapped "MST-Baldiol",
+    outputs += MSTSangre mapped "MST-Sangre",
+    outputs += MSTCaangol mapped "MST-Caangol",
+    outputs += treesKilled mapped "trees-killed",
+    outputs += cattlesTempCamp mapped "cattlesTempCamp",
+    outputs += sheepsTempCamp mapped "sheepsTempCamp",
+    
+    
+    goodShepherdPercentage := 0.0,
+    numberofCamps := 60,
+    //proportionBigHerders := 46.0,
+    proportionMediumHerders := 0.0,
+    avgUBTpercamp := 60.0,
+    decreasingFactor := 10.0,
+    SheepNECSatifactionIndex := 3.0,
+    CattleNECSatifactionIndex := 3.0,
+    SatisfactionMeanTreesInSeeno := 20.0,
+    SatisfactionMeanTreesInCaangol := 100.0,
+    SatisfactionMeanTreesInBaldiol := 40.0, 
+    SatisfactionMeanTreesInSangre := 55.0,
+    thresholdTreeSatisfaction := 0.5, 
+    minTimePresence := 30.0, 
+    reforestationPlots := 1.0, 
+    COGESCamps := 2.0, 
+    influxCeetcelde := 0.0, 
+    influxCeedu := 0.0, 
+    influxNduungu := 0.0, 
+    goodShepherdTransPercentage := 0.0, 
+    // FUtility := 0.6, 
+    mySeed := 42
+  
+  )
+
+val profileFUt =ProfileEvolution(
+  evaluation = model,
+  objective = -MSTCattleNEC,
+  profile =  FUtility,
+  genome = Seq(
+    FUtility in (0.4, 0.8),
+    proportionBigHerders in (0.0, 46.0)
+  ),
+  termination = 2000000,
+  parallelism = 500,
+  stochastic = Stochastic(seed = mySeed, sample = 100)
+) by Island(20 minutes) hook(workDirectory / "M1_results_Profile_0GoodShep_090525")
+
+
+val dispatch =
+  DispatchEnvironment(
+    slot = Seq(
+      300 on envMiniClust
+    )
+  )
+  
+
+profileFUt on dispatch
