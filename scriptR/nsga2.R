@@ -26,7 +26,7 @@ names(df)
 # === PREMIÈRE FIGURE : Cattle NEC vs Nombre de camps ===
 ggplot(df, aes(x = objective.MSTCattleNEC, y = numberofCamps)) +
   geom_smooth() +  # Ajouter une courbe de tendance
-  geom_point(aes(colour = goodShepherdPercentage), alpha = 0.5) +  # Points colorés selon pourcentage de bons bergers
+  geom_point(alpha = 0.5) +  # Points colorés selon pourcentage de bons bergers
   geom_hline(yintercept = 105, linetype = "dotdash") +  # Ligne de référence horizontale
   labs(x = "Mean sojourn time for Cattle NEC", y = "Number of camps") +
   theme_bw() +  # Thème graphique sobre
@@ -39,9 +39,9 @@ ggsave("../img/M1_nsga2_camps_NEC.png")
 # === DEUXIÈME FIGURE : Total arbres vs Nombre de camps ===
 ggplot(df, aes(x = objective.totalTrees, y = numberofCamps)) +
   geom_smooth() +
-  geom_point(aes(colour = goodShepherdPercentage), alpha = 0.5) +
+  geom_point( alpha = 0.5) +
   geom_hline(yintercept = 105, linetype = "dotdash") +
-  labs(x = "Total trees at the end", y = "Number of camps") +
+  labs(x = "objective.totalTrees", y = "Number of camps") +
   theme_bw() +
   ylim(c(60, 120)) +
   theme(legend.position = "bottom")
