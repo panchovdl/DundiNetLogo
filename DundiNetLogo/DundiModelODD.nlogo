@@ -12,6 +12,7 @@ globals [
   year-types             ; Liste qui stocke les types d'années
   current-year-type      ; Le type d'année en cours (bonne, moyenne, mauvaise)
   total-ticks-per-year   ; Nombre total de ticks par année
+  total-ticks-simu
   year-counter           ; Compteur de ticks dans l'année
   year-index             ; Indice de l'année en cours
 
@@ -68,11 +69,6 @@ globals [
 
   total-UBT-created                ; Vé
   ticks-with-transhumants
-
-  mst-temps-passe-annee
-  serie-mst-temps-passe
-  nb-satisfied-year
-
 
 ]
 
@@ -178,6 +174,7 @@ turtles-own [
   max-live-weight                  ; Maximum de poids vif atteignable (kg)
   min-live-weight                  ; Minimum de poids vif atteignable (kg)
   weight-gain                      ; Gain ou perte de poids
+  ticks-left-year
 
   ; Alimentation spécifiques aux troupeaux
   UBT-size                         ; Proportion d'un individu en Unité de Bétail Tropical (une vache allaitante = 1)
@@ -422,11 +419,6 @@ to setup
   clear-all
   resize-world -11 11 -11 11  ; Fixer les limites du monde à -11 à 11 en x et y
   set-patch-size 22  ; Ajuster la taille des patches
-  set listValueHerdeType []
-
-  set serie-mst-temps-passe []
-  set mst-temps-passe-annee 0
-  set nb-satisfied-year 0
 
 
   ; Chargement des valeurs environnementales
@@ -483,6 +475,8 @@ end
 
 to set-initial-values
 
+  set listValueHerdeType []
+
   ; Définir les campements et l'espace disponible
   set initial-number-of-camps number-of-camps
   set space-camp-min 1
@@ -519,6 +513,17 @@ to set-initial-values
 
   ; Seuils de production des champs
   set production-residu-hectare-agriculture 1           ; kg de matière sèche par hectare
+
+  ; calculs des MST temps
+  ; Transhumants
+  set percent-satisfied-year 0
+  set mst-temps-passe-annee 0
+  set serie-mst-temps-passe []
+  ; Locaux
+  set mst-cattle-left-simu 1
+  set mst-sheep-left-simu 1
+  set serie-mst-cattle-left []
+  set serie-mst-sheep-left []
 
 end
 
@@ -654,6 +659,15 @@ to go
     renew-tree-population                         ; Au premier jour de chaque nouvelle année, crée une nouvelle population d'arbres d'un an
     assign-grass-proportions                      ; Au premier jour de chaque nouvelle année, relance la génération aléatoire des proportions en monocotylédone et dicotylédone
 
+
+
+    ; Evaluation MST transhumants
+    if influx-Ceedu > 0 or influx-Ceetcelde > 0 or influx-Nduungu > 0 [
+    evaluate-MST-Time
+    ]
+
+    evaluate-mst-have-left
+
     ; Agents (Rappel des agents et remise à jour de l'espace connu)
     call-back-herds                               ; Retour des troupeaux et mise à jour de l'espace connu
     ask foyers [
@@ -665,12 +679,9 @@ to go
     ask sheeps [set known-space [known-space] of foyer-owner]
 
 
-    ; Evaluation MST transhumants
-    if influx-Ceedu > 0 or influx-Ceetcelde > 0 or influx-Nduungu > 0 [
-    evaluate-MST-Time
-    ]
     ;; remettre à zéro pour l’année suivante
     set mst-temps-passe-annee 0
+
 
 ]
 
@@ -730,18 +741,25 @@ to go
     update-corporal-conditions head UBT-size UF-ingested MAD-ingested daily-needs-UF daily-needs-MAD max-daily-DM-ingestible-per-head preference-mono
     trample-trees
   ]
+  ask cattles with [have-left = true] [
+    set ticks-left-year ticks-left-year + 1
+  ]
+
   ask sheeps with [have-left = false] [
     move
     eat
     update-corporal-conditions head UBT-size UF-ingested MAD-ingested daily-needs-UF daily-needs-MAD max-daily-DM-ingestible-per-head preference-mono
     trample-trees
   ]
+  ask sheeps with [have-left = true] [
+    set ticks-left-year ticks-left-year + 1
+  ]
 
   ; Foyers
   ask foyers [
     if cattle-herd != nobody and [have-left] of cattle-herd = false [
       choose-strategy-for-cattles]
-    if sheep-herd != nobody and [have-left] of sheep-herd = false[
+    if sheep-herd != nobody and [have-left] of sheep-herd = false [
       choose-strategy-for-sheeps]
     ; Choix stratégiques pastoraux du chef de ménage
   ]
@@ -804,7 +822,7 @@ to evaluate-presence-satisfaction-for-transhumants
     set days-present days-present + 1
     set presence-satisfaction (days-present / planned-days) * 100
     if ( counted-satisfied? = false) and (presence-satisfaction >= min-time-ratio) [
-      set mst-temps-passe-annee mst-temps-passe-annee + 1
+      set nb-satisfied-year nb-satisfied-year + 1
       set counted-satisfied? true
     ]
   ]
@@ -817,17 +835,62 @@ end
 
 to evaluate-MST-Time
   ;; a. on stocke la valeur annuelle
-  set serie-mst-temps-passe lput mst-temps-passe-annee serie-mst-temps-passe
+
   let total-influx (influx-Ceedu + influx-Ceetcelde + influx-Nduungu)
+  set percent-satisfied-year nb-satisfied-year / total-influx
 
-  let satisfied-this-year last serie-mst-temps-passe
-  set nb-satisfied-year satisfied-this-year / total-influx
+  set serie-mst-temps-passe lput percent-satisfied-year serie-mst-temps-passe
 
+  ; Pour l'indicateur SIMU
+  set mean-mst-temps-passe sum serie-mst-temps-passe
+
+  set mst-temps-passe-simu mean-mst-temps-passe / year-index
   ;; c. on remet à zéro pour la nouvelle année
-  set mst-temps-passe-annee 0
+  set nb-satisfied-year 0
 
 end
 
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Evaluation du MST Have-left ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  ;---------------------;
+  ; Evaluation annuelle ;
+  ;---------------------;
+
+; appelez‑la exactement où vous appelez déjà evaluate-MST-Time
+to evaluate-MST-have-left
+  ;; a. moyenne du nb de ticks « dehors » par troupeau
+  let cattle-avg-left mean [ticks-left-year] of cattles
+  let sheep-avg-left mean [ticks-left-year] of sheeps
+
+  ;; b. normalisation 0‑1  → 1 = jamais dehors, 0 = tout le temps dehors
+  ifelse total-ticks-per-year > 0 [
+    set mst-cattle-left 1 - (cattle-avg-left / total-ticks-per-year)
+  ] [
+    set mst-cattle-left mst-cattle-left         ;; par sûreté si durée‑année = 0
+  ]
+
+  ifelse total-ticks-per-year > 0 [
+    set mst-sheep-left 1 - (sheep-avg-left / total-ticks-per-year)
+  ] [
+    set mst-sheep-left mst-sheep-left        ;; par sûreté si durée‑année = 0
+  ]
+
+  ; Pour l'indicateur SIMU
+  set serie-mst-cattle-left lput mst-cattle-left serie-mst-cattle-left
+  set serie-mst-sheep-left lput mst-sheep-left serie-mst-sheep-left
+
+  set mean-mst-cattle-left sum serie-mst-cattle-left
+  set mean-mst-sheep-left sum serie-mst-sheep-left
+
+  set mst-cattle-left-simu mean-mst-cattle-left / year-index
+  set mst-sheep-left-simu mean-mst-sheep-left / year-index
+
+end
 
 
 
@@ -844,7 +907,7 @@ to call-back-herds
     set corporal-condition 5             ; NEC maximum
     set protein-condition 10             ; Condition protéique maximale
     set have-left false
-
+    set ticks-left-year 0
   ]
 
   ;; Retour des troupeaux de moutons
@@ -854,6 +917,7 @@ to call-back-herds
     set corporal-condition 5             ; NEC maximum
     set protein-condition 10             ; Condition protéique maximale
     set have-left false
+    set ticks-left-year 0
   ]
 end
 
@@ -1158,7 +1222,7 @@ CHOOSER
 visualization-mode
 visualization-mode
 "soil-type" "tree-cover" "grass-cover" "grass-quality" "known-space"
-1
+0
 
 BUTTON
 40
@@ -1487,7 +1551,7 @@ number-of-camps
 number-of-camps
 0
 150
-125.0
+150.0
 1
 1
 NIL
@@ -1543,7 +1607,7 @@ SatisfactionMeanTreesInCaangol
 SatisfactionMeanTreesInCaangol
 50
 150
-50.0
+55.0
 1
 1
 NIL
@@ -1658,7 +1722,7 @@ avg-UBT-per-camp
 avg-UBT-per-camp
 10
 100
-30.0
+85.0
 5
 1
 NIL
@@ -1684,7 +1748,7 @@ treshold-tree-satisfaction
 treshold-tree-satisfaction
 0.1
 1
-0.2
+0.8
 0.1
 1
 NIL
@@ -1857,7 +1921,7 @@ decreasing-factor
 decreasing-factor
 0
 100
-41.0
+100.0
 1
 1
 NIL
@@ -2391,7 +2455,7 @@ influx-Ceedu
 influx-Ceedu
 0
 100
-0.0
+55.0
 1
 1
 NIL
@@ -2421,7 +2485,7 @@ influx-Ceetcelde
 influx-Ceetcelde
 0
 100
-0.0
+45.0
 1
 1
 NIL
@@ -2436,7 +2500,7 @@ min-time-ratio
 min-time-ratio
 0
 100
-57.0
+74.0
 1
 1
 NIL
@@ -2458,7 +2522,7 @@ true
 false
 "" ""
 PENS
-"default" 1.0 0 -16777216 true "" "plot mst-temps-passe-annee"
+"default" 1.0 0 -16777216 true "" "plot percent-satisfied-year"
 
 PLOT
 1960
@@ -2548,7 +2612,7 @@ good-shepherd-trans-percentage
 good-shepherd-trans-percentage
 0
 100
-62.0
+65.0
 1
 1
 NIL
@@ -2605,12 +2669,12 @@ NIL
 0.0
 10.0
 0.0
-10.0
+1.0
 true
 false
 "" ""
 PENS
-"default" 1.0 0 -16777216 true "" "plot nb-satisfied-year * 100"
+"default" 1.0 0 -16777216 true "" "plot mst-temps-passe-simu"
 
 PLOT
 735
@@ -2677,6 +2741,25 @@ TEXTBOX
 12
 0.0
 1
+
+PLOT
+755
+1125
+955
+1275
+plot 1
+NIL
+NIL
+0.0
+1.0
+0.0
+1.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot mst-cattle-left-simu"
+"pen-1" 1.0 0 -2674135 true "" "plot mst-sheep-left-simu"
 
 @#$#@#$#@
 ## WHAT IS IT?

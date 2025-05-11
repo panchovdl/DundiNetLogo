@@ -29,6 +29,7 @@ to create-herds-for-me
     set live-weight initial-live-weight
     set max-live-weight 350 * head 
     set min-live-weight 66 * head
+    set ticks-left-year 0
     
     ; caractéristiques visuelles
     set color grey
@@ -99,6 +100,7 @@ to create-herds-for-me
     set live-weight initial-live-weight
     set max-live-weight 80 * head
     set min-live-weight 21 * head
+    set ticks-left-year 0
     
     ; caractéristiques visuelles
     set color black

@@ -6,6 +6,24 @@ globals [
   ticks-wih-transhumants
   mst-temps-passe
   
+  nb-satisfied-year 
+  mst-temps-passe-annee
+  serie-mst-temps-passe
+  mean-mst-temps-passe
+  percent-satisfied-year
+  mst-temps-passe-simu
+  
+  mst-cattle-left
+  mst-sheep-left
+  serie-mst-cattle-left 
+  serie-mst-sheep-left 
+  mean-mst-cattle-left
+  mean-mst-sheep-left
+  mst-cattle-left-simu
+  mst-sheep-left-simu
+
+
+  
   totalLocalFoyers
   
   totalTransFoyers
