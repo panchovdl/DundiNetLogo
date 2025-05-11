@@ -368,7 +368,11 @@ end
 
 ; Trouver le meilleur patch : d'abord la qualité, ensuite la quantité, enfin la proximité
 to-report find-best-nearest-patch [known-spaces my-shepherd seasons UtilityFactor]
-  let viable-patches known-spaces with [current-grass >= 500 and is-fenced = false]
+  
+  ; sélection des patches accessibles en eau (nduungu tous, autres saisons dépend du statut et de la priorité des points d'eau)
+  ; Si compteur bu 1 let viable patch eau accessible X known-space
+  ; si compteur bu 0 let viable pach comme d'habitude
+  let viable-patches known-spaces with [current-grass >= 500 and is-fenced = false and (distance myself < 10)]
   if seasons = "Nduungu" [ set viable-patches viable-patches with [soil-type != "Caangol"]]
   if [is-transhumant = true] of foyer-owner [
     set viable-patches viable-patches with [has-camps = false]
@@ -377,7 +381,6 @@ to-report find-best-nearest-patch [known-spaces my-shepherd seasons UtilityFacto
     
     ; Sélectionner le(s) patch(es) ayant la plus haute valeur d'utilité.
     let best-patches (viable-patches with-max [ (UtilityFactor * q) + ((1 - UtilityFactor) * current-grass) ])
-    report min-one-of best-patches [distance myself]
     ifelse any? best-patches [
     ; Étape 3 : Choisir le patch le plus proche parmi ceux avec la meilleure qualité et la plus grande quantité d'herbe
     report min-one-of best-patches [distance myself]

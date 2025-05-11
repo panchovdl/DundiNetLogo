@@ -1,0 +1,62 @@
+to setup-water-points
+  ;; nettoyage
+  ask water-points [ die ]
+  
+  ;; --- 1. Forages -------------------------------------------------
+  create-specific-water-points "forage" num-forages 6 4
+  
+  ;; --- 2. Puits ---------------------------------------------------
+  create-specific-water-points "well" num-wells   5 3
+end
+
+
+to create-specific-water-points [wptype number dist1 dist2]
+  
+  let to-build number
+  
+  while [ to-build > 0 ] [
+    
+    ;; 1. chercher des camps sans point d’eau à <= dist1
+    let candidates camps with [
+          not any? water-points with [ distance myself <= dist1 ]
+    ]
+    
+    ;; 2. sinon, relâcher le critère à dist2
+    if not any? candidates [
+      set candidates camps with [
+            not any? water-points with [ distance myself <= dist2 ]
+      ]
+    ]
+    
+    ;; 3. si plus aucun camp ne convient : on s’arrête
+    if not any? candidates [
+      stop
+    ]
+    
+    ;; 4. instanciation sur un camp choisi
+    ask [patch-here] of one-of candidates [
+      sprout-water-points 1 [
+        set wp-type wptype
+        if wp-type = "forage" [
+          set shape "forage"            ;; icône disponible par défaut
+          set color grey + 3
+          set label "F"
+        ]
+        if wp-type = "well" [
+          set shape "well"
+          set color brown
+          set label "P"
+        ]
+        set size 2
+      ]
+    ]
+    
+    set to-build to-build - 1
+  ]
+end
+
+
+; le point d'eau a un patch set d'endroit qui donne l'eau (pareil pour tous types de point d'eau)
+; a chaque tour choisit les campements ayant accès selon la limite et le choix (au hasard, préférence pour les locaux, préférence pour les gens ayant au mins un troupeua avec bu 1
+; partage le patch-set avec les campements. (forage tous sauf si éteint ou tricheur, puits selon la limite)
+; 

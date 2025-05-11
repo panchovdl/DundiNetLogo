@@ -1,4 +1,4 @@
-__includes["calculStat.nls" "landUnits.nls" "camps.nls" "tree-populations.nls" "herds.nls" "crop-lands.nls" "households.nls" "seasons.nls" "reporters.nls" "loading-files.nls"]
+__includes["calculStat.nls" "landUnits.nls" "camps.nls" "tree-populations.nls" "herds.nls" "crop-lands.nls" "households.nls" "seasons.nls" "reporters.nls" "loading-files.nls" "water-points.nls"]
 extensions [csv table]; profiler]
 
 
@@ -87,6 +87,7 @@ breed [sheeps sheep]
 breed [tree-populations tree-population]
 breed [mature-tree-pops mature-tree-pop]   ; Pour visualisation
 breed [champs champ]
+breed [water-points water-point]
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Variables des cellules ;;;
@@ -158,7 +159,6 @@ patches-own [
   ;; Variables non initialisées (en cours) ;;
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-  water-point                      ; Point d'eau (booléen)
   has-pond                         ; Booléen, détermine s'il y a une mare
   water-stock                      ; Stock d'eau dans la mare
 ]
@@ -298,6 +298,7 @@ sheeps-own [
   fruits-eaten
   original-camp-known-space        ; Espace connu à moins d'une journée de déplacement du campement principal pour un troupeau
   mean-DM-ingested
+  thirsty-counter
 ]
 
 
@@ -315,6 +316,7 @@ cattles-own [
   fruits-eaten
   original-camp-known-space        ; Espace connu à moins d'une journée de déplacement du campement principal pour un troupeau
   mean-DM-ingested
+  thirsty-counter
 ]
 
 
@@ -365,13 +367,25 @@ tree-populations-own [
   fruits-MAD-per-kg-MS             ; Matière Azotée Digestible (MAD) par kg de MS des fruits
 ]
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;
   ;;;;; Agents champs ;;;;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;
 
 champs-own [
   foyer-owner                      ; Foyer du champ
   surface                          ; Surface du champ
+]
+
+
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;;;; Agents points d'eau ;;;;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+water-points-own [
+  wp-type            ;; "forage" ou "well"
+  head-number-authorized
+  selective
 ]
 
 
@@ -463,6 +477,7 @@ to setup
   setup-herds  ; Créer les troupeaux
   setup-trees  ; Créer les arbres
   setup-crop-lands   ; créer les champs
+  setup-water-points
 
   update-UF-and-MAD
   update-grass-quality
@@ -739,6 +754,13 @@ to go
 
   ; Foyers
   ask foyers [
+    if is-transhumant = true [
+      ifelse cattle-herd != nobody [
+        move-to [current-home-patch] of cattle-herd
+      ] [
+        move-to [current-home-patch] of sheep-herd]
+      set current-home-patch patch-here
+    ]
     if cattle-herd != nobody and [have-left] of cattle-herd = false [
       choose-strategy-for-cattles]
     if sheep-herd != nobody and [have-left] of sheep-herd = false[
@@ -906,11 +928,11 @@ end
 ;;;;;;;;;;;;;;;;;;;;;;;;
 
 to manage-water-points
-  ask patches with [water-point = true] [
-    set water-point false
+  ask patches with [has-pond = true] [
+    set has-pond false
   ]
   ask n-of 5 patches [
-    set water-point true
+    set has-pond true
   ]
 end
 
@@ -1158,7 +1180,7 @@ CHOOSER
 visualization-mode
 visualization-mode
 "soil-type" "tree-cover" "grass-cover" "grass-quality" "known-space"
-1
+4
 
 BUTTON
 40
@@ -1472,7 +1494,7 @@ CattleNECSatifactionIndex
 CattleNECSatifactionIndex
 0
 5
-2.0
+3.0
 1
 1
 NIL
@@ -1857,7 +1879,7 @@ decreasing-factor
 decreasing-factor
 0
 100
-41.0
+100.0
 1
 1
 NIL
@@ -2391,7 +2413,7 @@ influx-Ceedu
 influx-Ceedu
 0
 100
-0.0
+28.0
 1
 1
 NIL
@@ -2613,10 +2635,10 @@ PENS
 "default" 1.0 0 -16777216 true "" "plot nb-satisfied-year * 100"
 
 PLOT
-735
-830
-1070
-1110
+730
+995
+1065
+1275
 Populations par ages
 NIL
 NIL
@@ -2677,6 +2699,36 @@ TEXTBOX
 12
 0.0
 1
+
+SLIDER
+795
+855
+967
+888
+num-forages
+num-forages
+0
+8
+3.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+820
+930
+992
+963
+num-wells
+num-wells
+0
+30
+6.0
+1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -2857,6 +2909,13 @@ Circle -16777216 true false 113 68 74
 Polygon -10899396 true false 189 233 219 188 249 173 279 188 234 218
 Polygon -10899396 true false 180 255 150 210 105 210 75 240 135 240
 
+forage
+false
+0
+Rectangle -7500403 true true 105 105 135 300
+Polygon -7500403 true true 255 45 45 45 105 105 195 105 255 45
+Rectangle -7500403 true true 165 105 195 300
+
 house
 false
 0
@@ -2968,12 +3027,6 @@ false
 0
 Polygon -7500403 true true 150 30 15 255 285 255
 
-triangle 2
-false
-0
-Polygon -7500403 true true 150 30 15 255 285 255
-Polygon -16777216 true false 151 99 225 223 75 224
-
 truck
 false
 0
@@ -2998,6 +3051,18 @@ Polygon -10899396 true false 105 90 75 75 55 75 40 89 31 108 39 124 60 105 75 10
 Polygon -10899396 true false 132 85 134 64 107 51 108 17 150 2 192 18 192 52 169 65 172 87
 Polygon -10899396 true false 85 204 60 233 54 254 72 266 85 252 107 210
 Polygon -7500403 true true 119 75 179 75 209 101 224 135 220 225 175 261 128 261 81 224 74 135 88 99
+
+well
+false
+0
+Rectangle -13345367 true false 90 120 210 270
+Rectangle -7500403 true true 90 15 105 120
+Rectangle -7500403 true true 195 15 210 120
+Rectangle -7500403 true true 45 15 210 30
+Rectangle -7500403 true true 45 30 60 75
+Rectangle -7500403 true true 15 60 45 75
+Polygon -11221820 true false 135 60 180 60 165 105 135 105 120 60 150 60
+Line -7500403 true 150 30 150 60
 
 wheel
 false

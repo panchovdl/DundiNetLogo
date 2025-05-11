@@ -53,7 +53,6 @@ to setup-landscape
                ;     if current-season = "Ceedu" [set grass-quality "good"] ;; A garder si jamais on simplifie la règle
                ;     if current-season = "Ceetcelde" [set grass-quality "average"] ;; A garder si jamais on simplifie la règle
     ]
-    set water-point false  ; Initialement, aucun point d'eau
     set has-pond false  ; Initialement, aucune mare
     set water-stock 0  ; Initialement, aucun stock d'eau dans les mares
     set has-camps false
