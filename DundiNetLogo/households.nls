@@ -169,10 +169,9 @@ to create-transhumant-foyers [nb band]
   ;; -----------------------------------------------------------------
 
   let entry-band band with [ patch-has-space? self and is-fenced = false ]
-  let created 0
   
 
-  while [created < nb and any? entry-band and length trans-shepherd-types > 0] [
+  while [any? entry-band and length trans-shepherd-types > 0] [
 
     let target one-of entry-band
     if target = nobody [ stop ]
@@ -250,7 +249,6 @@ to create-transhumant-foyers [nb band]
       ]
     ]
 
-    set created created + 1
     set entry-band entry-band with [patch-has-space? self]   ;; mise à jour
   ]
 end
