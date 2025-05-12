@@ -1272,7 +1272,7 @@ good-shepherd-percentage
 good-shepherd-percentage
 0
 100
-0.0
+22.0
 1
 1
 NIL
@@ -1318,8 +1318,8 @@ NIL
 NIL
 0.0
 10.0
--2.0
-2.0
+-1.0
+1.0
 true
 true
 "" ""
@@ -1536,7 +1536,7 @@ CattleNECSatifactionIndex
 CattleNECSatifactionIndex
 0
 5
-2.0
+3.0
 1
 1
 NIL
@@ -1551,7 +1551,7 @@ number-of-camps
 number-of-camps
 0
 150
-150.0
+55.0
 1
 1
 NIL
@@ -1607,7 +1607,7 @@ SatisfactionMeanTreesInCaangol
 SatisfactionMeanTreesInCaangol
 50
 150
-55.0
+101.0
 1
 1
 NIL
@@ -1622,7 +1622,7 @@ SatisfactionMeanTreesInSeeno
 SatisfactionMeanTreesInSeeno
 12
 50
-12.0
+20.0
 1
 1
 NIL
@@ -1637,7 +1637,7 @@ SatisfactionMeanTreesInBaldiol
 SatisfactionMeanTreesInBaldiol
 0
 100
-44.0
+40.0
 1
 1
 NIL
@@ -1652,7 +1652,7 @@ SatisfactionMeanTreesInSangre
 SatisfactionMeanTreesInSangre
 0
 100
-0.0
+50.0
 1
 1
 NIL
@@ -1722,7 +1722,7 @@ avg-UBT-per-camp
 avg-UBT-per-camp
 10
 100
-85.0
+60.0
 5
 1
 NIL
@@ -1748,7 +1748,7 @@ treshold-tree-satisfaction
 treshold-tree-satisfaction
 0.1
 1
-0.8
+0.6
 0.1
 1
 NIL
@@ -1921,7 +1921,7 @@ decreasing-factor
 decreasing-factor
 0
 100
-100.0
+10.0
 1
 1
 NIL
@@ -2455,7 +2455,7 @@ influx-Ceedu
 influx-Ceedu
 0
 100
-55.0
+5.0
 1
 1
 NIL
@@ -2470,7 +2470,7 @@ influx-Nduungu
 influx-Nduungu
 0
 100
-5.0
+2.0
 1
 1
 NIL
@@ -2485,7 +2485,7 @@ influx-Ceetcelde
 influx-Ceetcelde
 0
 100
-45.0
+9.0
 1
 1
 NIL
@@ -2500,7 +2500,7 @@ min-time-ratio
 min-time-ratio
 0
 100
-74.0
+30.0
 1
 1
 NIL
@@ -2612,7 +2612,7 @@ good-shepherd-trans-percentage
 good-shepherd-trans-percentage
 0
 100
-65.0
+100.0
 1
 1
 NIL
