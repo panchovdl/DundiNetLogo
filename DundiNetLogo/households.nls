@@ -152,11 +152,11 @@ to create-transhumant-foyers [nb band]
   ;; -----------------------------------------------------------------
   ;; 1. calcul des parts de « bon » / « mauvais » bergers transhumants
   ;; -----------------------------------------------------------------
-  let num-good-trans round (nb * (good-shepherd-trans-percentage / 100))
-  let num-bad-trans  nb - num-good-trans
+  let num-good-trans floor (nb * (good-shepherd-trans-percentage / 100))
+  let num-bad-trans  floor (nb - num-good-trans)
   
   let trans-shepherd-types []
-  repeat num-good-trans [ set trans-shepherd-types lput "bon"     trans-shepherd-types ]
+  repeat num-good-trans [ set trans-shepherd-types lput "bon" trans-shepherd-types ]
   repeat num-bad-trans  [ set trans-shepherd-types lput "mauvais" trans-shepherd-types ]
   set trans-shepherd-types shuffle trans-shepherd-types           ;; distribution aléatoire
   
@@ -172,7 +172,7 @@ to create-transhumant-foyers [nb band]
   let created 0
   
 
-  while [created < nb and any? entry-band] [
+  while [created < nb and any? entry-band and length trans-shepherd-types > 0] [
 
     let target one-of entry-band
     if target = nobody [ stop ]
