@@ -160,9 +160,7 @@ to create-transhumant-foyers [nb band]
   repeat num-bad-trans  [ set trans-shepherd-types lput "mauvais" trans-shepherd-types ]
   set trans-shepherd-types shuffle trans-shepherd-types           ;; distribution aléatoire
   
-  ;; pointeur dans la liste
-  let shepherd-index 0
-  
+ 
   
   ;; -----------------------------------------------------------------
   ;; 2. Création des foyers
@@ -171,7 +169,7 @@ to create-transhumant-foyers [nb band]
   let entry-band band with [ patch-has-space? self and is-fenced = false ]
   
 
-  while [any? entry-band and length trans-shepherd-types > 0] [
+  while [any? entry-band and length trans-shepherd-types > 0 ] [
 
     let target one-of entry-band
     if target = nobody [ stop ]
@@ -195,8 +193,8 @@ to create-transhumant-foyers [nb band]
           
           
           ;; --- Attribution du statut de berger
-          set shepherd-type item shepherd-index trans-shepherd-types
-          set shepherd-index shepherd-index + 1
+          set shepherd-type first trans-shepherd-types
+          set trans-shepherd-types but-first trans-shepherd-types
           set counted-satisfied? false
           set planned-days length-season current-season     ;; fonction utilitaire ci-dessous
           set days-present 0
