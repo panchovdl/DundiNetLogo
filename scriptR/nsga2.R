@@ -115,3 +115,11 @@ ggsave("../img/M1_nsga2_both_objectfs.png", dpi = 300, width = 9)
 
 
 
+
+ggplot(df, aes(x = objective.totalTrees, y = objective.MSTCattleNEC)) +
+  geom_smooth() +
+  geom_point(aes(colour = med_MSTCattleLeft, size = med_sumCattlesPretionPastoLocal)) +
+  labs(colour = "Cattles Mean Sojourn Time Out", size = "Cattles by Km² by ticks")+
+  scale_color_gradient(low = "#fff7ec", high = "#e7298a")+
+  theme_bw() +
+  theme(legend.position = "bottom")
