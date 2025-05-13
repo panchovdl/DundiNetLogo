@@ -12,7 +12,7 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 source("petitParceur_openMole.R")
 
 # Charger les résultats d'une simulation sous forme de tableau
-df <- read.csv("../results/M1_results_nsga2_110525.csv", header = TRUE)
+df <- read.csv("../results/M1_results_nsga2_transhumance_120525.csv", header = TRUE)
 
 # Prendre la valeur absolue de certaines colonnes d'objectifs
 # Cela inverse leur direction car l'algorithme génétique cherche à maximiser
@@ -56,5 +56,14 @@ ggplot(df, aes(x = objective.totalTrees, y = objective.MSTCattleNEC)) +
   theme(legend.position = "bottom")
 ggsave("../img/M1_nsga2_both_objectfs.png")
 
+
+
+df$med_MSTCattleLeft  <- sapply(df$MSTCattleLeft, get.medians.from.vector)
+ggplot(df, aes(x = objective.totalTrees, y = objective.MSTCattleNEC)) +
+  geom_smooth() +
+  geom_point(aes(colour = med_MSTCattleLeft, size = numberofCamps) , alpha = 0.5) +
+  theme_bw() +
+  theme(legend.position = "bottom")
+ggsave("../img/M1_nsga2_both_objectfs.png", dpi = 300, width = 7)  
 
 
