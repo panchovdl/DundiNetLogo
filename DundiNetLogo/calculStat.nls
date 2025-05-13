@@ -126,7 +126,12 @@ globals [
   
   meanDistantKnownSpaceSheeps
   meanDistantKnownSpaceCattles
-
+  
+  pretionPastoLocal      ; En tête par patche = tete par km²
+  pretionPastoTranshuman ; En tête par patche = tete par km²
+  sumPretionPastoLocal   ; Somme des têtes par patches
+  sumpPetionPastoTranshuman ; Somme des têtes par patches
+  
 ]
 
 to calculStat
@@ -446,5 +451,11 @@ to calculStat
     set MST-Caangol traj-satisfaction-Caangol / ticks
   ]
   
+  
+  
+  set pretionPastoLocal sum [head] of cattles with[is-transhumant = FALSE] / count patches
+  set pretionPastoTranshuman sum [head] of cattles with[is-transhumant = TRUE] / count patches
+  set sumPretionPastoLocal sumPretionPastoLocal + pretionPastoLocal
+  set sumpPetionPastoTranshuman sumpPetionPastoTranshuman + pretionPastoTranshuman
   
 end
