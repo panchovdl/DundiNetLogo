@@ -76,12 +76,19 @@ ggplot(data = df )+
 a <- data.frame()
 b <- data.frame()
 med_sumCattlesPression  <- sapply(df$sumCattlesPretionPastoLocal, get.medians.from.vector)
+median(med_sumCattlesPression)  #31680.58
 type <- rep("local", length = length(med_sumCattlesPression))
 a <- as.data.frame(cbind(type, med_sumCattlesPression))
 
 med_sumCattlesPression  <- sapply(df$sumCattlesPetionPastoTranshuman, get.medians.from.vector)
+median(med_sumCattlesPression) #586.3743
 type <- rep("transhumant", length = length(med_sumCattlesPression))
 b <- as.data.frame(cbind(type, med_sumCattlesPression))
+
+# pct local + transhumant = 32266.95
+# pct local = 98.2%
+# pct tranhumant = 1.8%
+
 
 data <- remove_rownames(rbind(a, b))
 data$type <- as.factor(data$type)
@@ -90,7 +97,7 @@ data$med_sumCattlesPression <- as.numeric(data$med_sumCattlesPression)
 
 ggplot(data = data, aes(x = as.factor(type), y = med_sumCattlesPression))+
   geom_boxplot()+
-  labs(x = "Type", y = "Pression Pastorale (UBT/Km²/tours)")+
+  labs(x = "Type", y = "Pression Pastorale (UBT/Km²/tours)", title = "Pression pastorale", subtitle = "98.2% locale - 1.8% tranhumants")+
   theme_bw()
 
 ggsave("../img/pression_pastorale.png", dpi = 300, width = 5, height = 8)
