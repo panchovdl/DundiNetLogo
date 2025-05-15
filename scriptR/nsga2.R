@@ -5,6 +5,8 @@ rm(list = ls())
 library(ggplot2)  # Pour les visualisations
 library(dplyr)    # Pour la manipulation des données
 library(ggpubr)
+library(tidyverse)
+
 
 # Définir le répertoire de travail comme étant celui où se trouve ce script
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
@@ -22,6 +24,8 @@ df$objective.totalTrees <- abs(df$objective.totalTrees)
 
 # Afficher les noms des colonnes pour référence
 names(df)
+
+
 
 
 # === PREMIÈRE FIGURE : Cattle NEC vs Nombre de camps ===
@@ -60,7 +64,45 @@ ggsave("../img/M1_nsga2_both_objectfs.png")
 
 
 df$med_MSTCattleLeft  <- sapply(df$MSTCattleLeft, get.medians.from.vector)
+df$med_MSTSeepLeft  <- sapply(df$MSTSheepLeft, get.medians.from.vector)
 df$med_MSTTempsPasse  <- sapply(df$MSTTempsPasse, get.medians.from.vector)
+
+ggplot(data = df )+
+  geom_boxplot(aes(y = df$med_MSTTempsPasse, x = as.factor(1)), outliers = F)+
+  ylim(c(0.8, 1))+
+  labs(x = "", y = "Mean Sojourn Time (MST) time spend") 
+
+
+a <- data.frame()
+b <- data.frame()
+med_sumCattlesPression  <- sapply(df$sumCattlesPretionPastoLocal, get.medians.from.vector)
+type <- rep("local", length = length(med_sumCattlesPression))
+a <- as.data.frame(cbind(type, med_sumCattlesPression))
+
+med_sumCattlesPression  <- sapply(df$sumCattlesPetionPastoTranshuman, get.medians.from.vector)
+type <- rep("transhumant", length = length(med_sumCattlesPression))
+b <- as.data.frame(cbind(type, med_sumCattlesPression))
+
+data <- remove_rownames(rbind(a, b))
+data$type <- as.factor(data$type)
+data$med_sumCattlesPression <- as.numeric(data$med_sumCattlesPression)
+
+
+ggplot(data = data, aes(x = as.factor(type), y = med_sumCattlesPression))+
+  geom_boxplot()+
+  labs(x = "Type", y = "Pression Pastorale (UBT/Km²/tours)")+
+  theme_bw()
+
+ggsave("../img/pression_pastorale.png", dpi = 300, width = 5, height = 8)
+
+ggplot(data = df )+
+  geom_boxplot(aes(y = df$med_MSTCattleLeft, x = as.factor(1)), outliers = F)+
+  ylim(c(0.8, 1))
+
+ggplot(data = df )+
+  geom_boxplot(aes(y = df$med_MSTSeepLeft, x = as.factor(1)), outliers = F)+
+  ylim(c(0.8, 1))
+  
 
 
 ggplot(df, aes(x = objective.totalTrees, y = objective.MSTCattleNEC)) +
@@ -123,3 +165,31 @@ ggplot(df, aes(x = objective.totalTrees, y = objective.MSTCattleNEC)) +
   scale_color_gradient(low = "#fff7ec", high = "#e7298a")+
   theme_bw() +
   theme(legend.position = "bottom")
+
+
+
+## TEST 
+
+df <- read.csv("../results/M1_results_nsga2_delayReturn140525.csv", header = TRUE)
+
+# Prendre la valeur absolue de certaines colonnes d'objectifs
+# Cela inverse leur direction car l'algorithme génétique cherche à maximiser
+df$objective.MSTCattleNEC <- abs(df$objective.MSTCattleNEC)
+df$objective.totalTrees <- abs(df$objective.totalTrees)
+
+
+ggplot(df, aes(x = objective.totalTrees, y = objective.MSTCattleNEC)) +
+  geom_smooth() +
+  geom_point(aes(colour = retardJours, size = goodShepherdPercentage)) +
+  labs(colour = "Delay (in days)", size = "Good Shephered (%)")+
+  scale_color_gradient(low = "#fff7ec", high = "#e7298a")+
+  theme_bw() +
+  theme(legend.position = "bottom")
+
+
+
+df$med_MSTCattleLeft <- sapply(df$MSTCattleLeft, get.medians.from.vector)
+
+
+ggplot(df)+
+  geom_boxplot(aes(y = med_MSTCattleLeft), outliers = F)
