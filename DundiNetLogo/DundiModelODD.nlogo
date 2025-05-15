@@ -669,7 +669,6 @@ to go
     evaluate-mst-have-left
 
     ; Agents (Rappel des agents et remise à jour de l'espace connu)
-    call-back-herds                               ; Retour des troupeaux et mise à jour de l'espace connu
     ask foyers [
       set far-exploration-count 0                 ; Compteur d'exploration au loin
       set close-exploration-count 0               ; Compteur d'exploration proche
@@ -685,7 +684,9 @@ to go
 
 ]
 
-
+  if year-counter = Retard-jours [
+    call-back-herds                               ; Retour des troupeaux et mise à jour de l'espace connu
+  ]
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; Mises à jour quotidiennes ;;
@@ -1921,7 +1922,7 @@ decreasing-factor
 decreasing-factor
 0
 100
-10.0
+100.0
 1
 1
 NIL
@@ -2760,6 +2761,21 @@ false
 PENS
 "default" 1.0 0 -16777216 true "" "plot mst-cattle-left-simu"
 "pen-1" 1.0 0 -2674135 true "" "plot mst-sheep-left-simu"
+
+SLIDER
+15
+270
+187
+303
+retard-jours
+retard-jours
+0
+100
+19.0
+1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
