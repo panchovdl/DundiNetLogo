@@ -1,3 +1,26 @@
+# Auteur : E. Delay
+# date   : 05/06/2025
+# Objetctif : L’objectif de ce travail est de générer des paysages neutres, 
+# c’est-à-dire des structures spatiales artificielles mais contrôlées, permettant 
+#de tester un modèle à base d'agents dans différentes configurations 
+# environnementales. En particulier, cela permet d'évaluer la sensibilité du 
+#modèle à la structure du paysage
+
+# Qu'est-ce qui est fait ici ? 
+# Concrètement, le script commence par le chargement d’un raster de biomasse 
+# fourni par le CSE, puis le découpage de la zone d’intérêt à l’aide d’une boîte 
+# englobante (BBox). Ce raster est ensuite reclassé en 7 classes par la méthode 
+# de Jenks. Ensuite, une série de paysages neutres sont simulés à l’aide d’un 
+# générateur basé sur le Midpoint Displacement (nlm_mpd), en forçant des 
+# propriétés spatiales similaires à celles observées dans le raster réel. Chaque 
+# simulation est évaluée selon plusieurs métriques paysagères (agrégation, nombre 
+# de patchs, etc.),  et les meilleures sont retenues pour une utilisation 
+# ultérieure dans le modèle SMA.
+
+# TODO : définir le nombre optimal de paysages à simuler et automatiser la 
+# sauvegarde des résultats dans un format compatible avec le modèle agent
+
+
 # --- Chargement des bibliothèques ---
 library(terra)
 library(tidyverse)
