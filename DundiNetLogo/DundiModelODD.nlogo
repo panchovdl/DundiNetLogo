@@ -758,6 +758,13 @@ to go
 
   ; Foyers
   ask foyers [
+    if is-transhumant = true [
+      ifelse cattle-herd != nobody [
+        move-to [current-home-patch] of cattle-herd
+      ] [
+        move-to [current-home-patch] of sheep-herd]
+      set current-home-patch patch-here
+    ]
     if cattle-herd != nobody and [have-left] of cattle-herd = false [
       choose-strategy-for-cattles]
     if sheep-herd != nobody and [have-left] of sheep-herd = false [
