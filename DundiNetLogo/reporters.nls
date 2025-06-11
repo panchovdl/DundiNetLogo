@@ -367,37 +367,47 @@ end
 
 
 ; Trouver le meilleur patch : d'abord la qualité, ensuite la quantité, enfin la proximité
-to-report find-best-nearest-patch [known-spaces my-shepherd seasons UtilityFactor]
-  let viable-patches known-spaces with [current-grass >= 500 and is-fenced = false]
+to-report find-best-patches [known-spaces my-shepherd seasons UtilityFactor]
+
+  let viable-patches known-spaces with [current-grass >= 10 and is-fenced = false and (count camps-on self) < 2]
   if seasons = "Nduungu" [ set viable-patches viable-patches with [soil-type != "Caangol"]]
   if [is-transhumant = true] of foyer-owner [
     set viable-patches viable-patches with [has-camps = false]
   ]
-  ifelse my-shepherd = "bon" [
-    
-    ; Sélectionner le(s) patch(es) ayant la plus haute valeur d'utilité.
-    let best-patches (viable-patches with-max [ (UtilityFactor * q) + ((1 - UtilityFactor) * current-grass) ])
-    report min-one-of best-patches [distance myself]
-    ifelse any? best-patches [
-    ; Étape 3 : Choisir le patch le plus proche parmi ceux avec la meilleure qualité et la plus grande quantité d'herbe
-    report min-one-of best-patches [distance myself]
+  let n 5
+  let v count viable-patches
+  ;; nombre que vous souhaitez
+  let max-v min (list n v)             ;; k ≤ n et ≤ taille du set
+  ifelse max-v > 0 [
+    ifelse my-shepherd = "bon" [
+      
+      ; Sélectionner le(s) patch(es) ayant la plus haute valeur d'utilité.
+      let good-patches  max-n-of max-v viable-patches
+            [ (UtilityFactor * q) + ((1 - UtilityFactor) * current-grass) ]
+      report good-patches
+      ifelse any? good-patches [
+        ; Étape 3 : Choisir le patch le plus proche parmi ceux avec la meilleure qualité et la plus grande quantité d'herbe
+        report good-patches
+      ] [
+        
+        ; Étape 2 : Parmi les patches avec la meilleure qualité, sélectionner ceux avec la plus grande quantité d'herbe
+        let max-grass-patches max-n-of max-v viable-patches [current-grass]
+        
+        ; Étape 3 : Choisir le patch le plus proche parmi ceux avec la meilleure qualité et la plus grande quantité d'herbe
+        report max-grass-patches
+      ]
+    ] [
+      
+      ; Étape 2 : Parmi les patches avec la meilleure qualité, sélectionner ceux avec la plus grande quantité d'herbe
+      let max-grass-patches max-n-of max-v viable-patches [current-grass]
+      
+      ; Étape 3 : Choisir le patch le plus proche parmi ceux avec la meilleure qualité et la plus grande quantité d'herbe
+      report max-grass-patches
+      ; Si aucun patch viable n'est trouvé
+    ]
   ] [
-    
-    ; Étape 2 : Parmi les patches avec la meilleure qualité, sélectionner ceux avec la plus grande quantité d'herbe
-    let max-grass-patches viable-patches with-max [current-grass]
-    
-    ; Étape 3 : Choisir le patch le plus proche parmi ceux avec la meilleure qualité et la plus grande quantité d'herbe
-    report min-one-of max-grass-patches [distance myself]
-  ]
-] [
-  
-  ; Étape 2 : Parmi les patches avec la meilleure qualité, sélectionner ceux avec la plus grande quantité d'herbe
-  let max-grass-patches viable-patches with-max [current-grass]
-  
-  ; Étape 3 : Choisir le patch le plus proche parmi ceux avec la meilleure qualité et la plus grande quantité d'herbe
-  report min-one-of max-grass-patches [distance myself]
-  ; Si aucun patch viable n'est trouvé
-]
+    report no-patches
+      ]
 end
 
 
@@ -408,8 +418,8 @@ end
 
 ;; Renvoie TRUE si le patch p accueille actuellement < 2 campements
 
-to-report patch-has-space? [good-patch]
-  report ( count camps-on good-patch ) < 2
+to-report patch-has-space? [good-patches]
+  report (count camps-on good-patches ) < 2
 end
 
 ;; Cherche le patch non-viable le plus proche de p-target qui a de la place

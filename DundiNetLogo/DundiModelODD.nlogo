@@ -295,6 +295,7 @@ sheeps-own [
   fruits-eaten
   original-camp-known-space        ; Espace connu à moins d'une journée de déplacement du campement principal pour un troupeau
   mean-DM-ingested
+  best-patches
 ]
 
 
@@ -312,6 +313,7 @@ cattles-own [
   fruits-eaten
   original-camp-known-space        ; Espace connu à moins d'une journée de déplacement du campement principal pour un troupeau
   mean-DM-ingested
+  best-patches
 ]
 
 
@@ -758,24 +760,25 @@ to go
 
   ; Foyers
   ask foyers [
-    if is-transhumant = true [
-      ifelse cattle-herd != nobody [
-        move-to [current-home-patch] of cattle-herd
-      ] [
-        move-to [current-home-patch] of sheep-herd]
-      set current-home-patch patch-here
-    ]
-    if cattle-herd != nobody and [have-left] of cattle-herd = false [
-      choose-strategy-for-cattles]
-    if sheep-herd != nobody and [have-left] of sheep-herd = false [
-      choose-strategy-for-sheeps]
-    ; Choix stratégiques pastoraux du chef de ménage
-  ]
+    ifelse cattle-herd != nobody [
+      move-to [current-home-patch] of cattle-herd
+    ] [
+      move-to [current-home-patch] of sheep-herd]
+    set current-home-patch patch-here
+    set shape "house"
+    set size 2
+    set color white
+    set is-in
+  if cattle-herd != nobody and [have-left] of cattle-herd = false [
+    choose-strategy-for-cattles]
+  if sheep-herd != nobody and [have-left] of sheep-herd = false [
+    choose-strategy-for-sheeps]
+  ; Choix stratégiques pastoraux du chef de ménage
 
   ; Mise à jour quotidienne de l'espace connu (tous agents non environnement)
   update-known-space
 
-
+  ]
 
   ;-----------------------------------------;
   ; Evaluations quotidiennes et indicateurs ;
@@ -950,12 +953,15 @@ to update-known-space
     ]
     set close-known-space known-space with [distance home-patch <= 6]
     set distant-known-space known-space who-are-not close-known-space
+    if (is-transhumant = false) [
+    set original-camp-known-space known-space in-radius 6 of original-home-patch
+    ]
   ]
   ask cattles [
     let home-patch current-home-patch
     set known-space (patch-set known-space ([known-space] of foyer-owner))
     if (is-transhumant = false) [
-      set original-camp-known-space [close-known-space] of foyer-owner
+      set original-camp-known-space [original-camp-known-space] of foyer-owner
     ]
     set close-known-space known-space with [distance home-patch <= 6]
     set distant-known-space known-space who-are-not close-known-space
@@ -964,7 +970,7 @@ to update-known-space
     let home-patch current-home-patch
     set known-space (patch-set known-space ([known-space] of foyer-owner))
     if (is-transhumant = false) [
-      set original-camp-known-space [close-known-space] of foyer-owner
+      set original-camp-known-space [original-camp-known-space] of foyer-owner
     ]
     set close-known-space known-space with [distance home-patch <= 6]
     set distant-known-space known-space who-are-not close-known-space
@@ -1230,7 +1236,7 @@ CHOOSER
 visualization-mode
 visualization-mode
 "soil-type" "tree-cover" "grass-cover" "grass-quality" "known-space"
-0
+4
 
 BUTTON
 40
@@ -1559,7 +1565,7 @@ number-of-camps
 number-of-camps
 0
 150
-55.0
+64.0
 1
 1
 NIL
@@ -1730,7 +1736,7 @@ avg-UBT-per-camp
 avg-UBT-per-camp
 10
 100
-60.0
+25.0
 5
 1
 NIL
@@ -2463,7 +2469,7 @@ influx-Ceedu
 influx-Ceedu
 0
 100
-5.0
+63.0
 1
 1
 NIL
@@ -2493,7 +2499,7 @@ influx-Ceetcelde
 influx-Ceetcelde
 0
 100
-9.0
+38.0
 1
 1
 NIL
@@ -2778,7 +2784,7 @@ retard-jours
 retard-jours
 0
 100
-19.0
+18.0
 1
 1
 NIL

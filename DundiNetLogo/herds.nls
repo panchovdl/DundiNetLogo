@@ -33,50 +33,40 @@ end
 to go-back-home
   ; stratégie 1 : retour
   ifelse [is-transhumant] of foyer-owner [
-    let good-neighbors [neighbors4] of current-home-patch 
-    set good-neighbors good-neighbors with [is-fenced = false]
-    move-to one-of good-neighbors
+let home-patch [patch-here] of foyer-owner
+let neighbor-patches [neighbors4] of home-patch
+let potential-patches (patch-set neighbor-patches home-patch)
+let good-neighbors potential-patches with [is-fenced = false]
+
+;; Étape 5 : déplacement vers un des bons voisins ou le patch central
+if any? good-neighbors [
+  move-to one-of good-neighbors
+]
+
   ] [
-    ifelse is-in-temporary-camp [
       set current-home-patch original-home-patch
       set current-home-camp original-home-camp
       set is-in-temporary-camp false  
       let free-neigh original-camp-known-space with [is-fenced = false]
-      if any? free-neigh [
+      ifelse any? free-neigh [
         move-to one-of free-neigh
-      ] ; end if any?
-    ] [
-      let free-neigh original-camp-known-space with [is-fenced = false]
-      if any? free-neigh [
-        move-to one-of free-neigh
-      ] ; end if any?
-    ] ; end of temp-camp
+      ] [ 
+     move-to current-home-patch
+    ] ; end ifelse any?
   ] ; end ifelse trans
 end
 
 to move
   ;; 1. déterminer le meilleur patch
   move-to current-home-patch
-  let best-patch find-best-nearest-patch known-space shepherd-type current-season FUtility
   
+  set best-patches find-best-patches known-space shepherd-type current-season FUtility
   
   ;; (S'il n'y en a pas)
   
-  ifelse best-patch = nobody [
-    go-back-home
-  ] [
-    ;; 2. Vérifier s’il reste de la place sur ce patch
-    let patch-with-space patch-has-space? best-patch
-    if patch-with-space = nobody [
-      let alt nearest-with-space best-patch
-      ifelse alt != nobody [ set best-patch alt 
-      ] [
-        go-back-home
-      ] ; end ifelse alt != nobody
-    ] ; end best patch doesn't have space
+  ifelse any? best-patches [
     
-    ;; S'il y en a 
-    
+    let best-patch min-one-of best-patches [distance myself]
     set daily-trip distance best-patch
     
     ;; Cas A : le foyer est dans son campement permanent (Non transhumant)
@@ -104,7 +94,7 @@ to move
       ; Si le bon patch est à plus de 2 km du campement temporaire
       ifelse daily-trip >= 2 [
         ; Le foyer est transhumant
-        ifelse [is-transhumant = true] of foyer-owner [
+        ifelse is-transhumant = true [
           ifelse not any? camps-on (patch-set best-patch neighbors4 best-patch) [
             
             ;; Create a temporary camp
@@ -157,6 +147,9 @@ to move
       set ycor ycor + (random-float 0.9 - 0.45)
     ] ;; end ifelse daily-trip >= 2
   ] ;; fin Cas B
+  ] [    
+    go-back-home
+
 ] ;; end ifelse best-patch = nobody
   
 end

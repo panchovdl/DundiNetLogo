@@ -52,6 +52,7 @@ to setup-foyers
           set size 0.1
           set shape "person"
           set is-transhumant false
+          set is-in-temporary-camp false
           
           ; Propriétés initiales associées aux troupeaux
           set cattle-herd-count 0
@@ -349,7 +350,7 @@ to create-herds-for-me
     set shepherd-type my-shepherd-type  ; Transmettre le shepherd-type du foyer
     
     
-    ifelse [is-transhumant] of foyer-owner [
+    ifelse is-transhumant = true [
       set current-home-patch [current-home-patch] of foyer-owner
       set original-home-patch nobody
       set original-home-camp nobody
@@ -375,6 +376,7 @@ to create-herds-for-me
     set close-known-space known-space in-radius 6
     set distant-known-space known-space who-are-not close-known-space
     set have-left false
+    set best-patches no-patches
     
   ] ; end hatch-cattle
     ; Attribuer le troupeau créé à son propriétaire
@@ -418,7 +420,7 @@ to create-herds-for-me
     
     
     
-    ifelse [is-transhumant] of foyer-owner [
+    ifelse is-transhumant = true [
       set current-home-patch [current-home-patch] of foyer-owner
       set original-home-patch nobody
       set original-home-camp nobody
@@ -444,6 +446,7 @@ to create-herds-for-me
     set close-known-space known-space in-radius 6
     set distant-known-space known-space who-are-not close-known-space
     set have-left false
+    set best-patches no-patches
   ]
   ; Attribuer le troupeau créé à son propriétaire
   set sheep-herd my-sheeps
@@ -495,6 +498,7 @@ to choose-strategy-for-sheeps
         ask sheep-herd [
           do-second-strategy
         ]
+        move-to original-home-patch
       ]
     ]
   ]
