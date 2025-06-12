@@ -43,6 +43,7 @@ to setup-camps
             set wood-quantity 0
             set available-space generate-available-space
             setxy pxcor pycor
+            set foyers-hosted no-turtles
           ]
           set camp-counter camp-counter + 1
           set has-camps true

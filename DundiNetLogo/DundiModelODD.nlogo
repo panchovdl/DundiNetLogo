@@ -222,6 +222,7 @@ camps-own [
   is-temporary                     ; Booléen indiquant si le camp est temporaire
   wood-needs                       ; Besoins en bois
   wood-quantity                    ; Quantité de bois dans le campement
+  foyers-hosted
 ]
 
 
@@ -457,6 +458,7 @@ to setup
   setup-herds  ; Créer les troupeaux
   setup-trees  ; Créer les arbres
   setup-crop-lands   ; créer les champs
+  ask camps with [not any? foyers-hosted] [die]
 
   update-UF-and-MAD
   update-grass-quality
@@ -768,7 +770,6 @@ to go
     set shape "house"
     set size 2
     set color white
-    set is-in
   if cattle-herd != nobody and [have-left] of cattle-herd = false [
     choose-strategy-for-cattles]
   if sheep-herd != nobody and [have-left] of sheep-herd = false [
@@ -953,15 +954,14 @@ to update-known-space
     ]
     set close-known-space known-space with [distance home-patch <= 6]
     set distant-known-space known-space who-are-not close-known-space
-    if (is-transhumant = false) [
-    set original-camp-known-space known-space in-radius 6 of original-home-patch
-    ]
   ]
   ask cattles [
     let home-patch current-home-patch
+
     set known-space (patch-set known-space ([known-space] of foyer-owner))
     if (is-transhumant = false) [
-      set original-camp-known-space [original-camp-known-space] of foyer-owner
+      let original-camp-home-patch original-home-patch
+      set original-camp-known-space known-space with [distance original-camp-home-patch <= 6]
     ]
     set close-known-space known-space with [distance home-patch <= 6]
     set distant-known-space known-space who-are-not close-known-space
@@ -970,7 +970,8 @@ to update-known-space
     let home-patch current-home-patch
     set known-space (patch-set known-space ([known-space] of foyer-owner))
     if (is-transhumant = false) [
-      set original-camp-known-space [original-camp-known-space] of foyer-owner
+      let original-camp-home-patch original-home-patch
+      set original-camp-known-space known-space with [distance original-camp-home-patch <= 6]
     ]
     set close-known-space known-space with [distance home-patch <= 6]
     set distant-known-space known-space who-are-not close-known-space
@@ -1236,7 +1237,7 @@ CHOOSER
 visualization-mode
 visualization-mode
 "soil-type" "tree-cover" "grass-cover" "grass-quality" "known-space"
-4
+2
 
 BUTTON
 40
