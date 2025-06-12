@@ -1,8 +1,9 @@
 __includes["calculStat.nls" "landUnits.nls" "camps.nls" "tree-populations.nls" "herds.nls" "crop-lands.nls" "households.nls" "seasons.nls" "reporters.nls" "loading-files.nls"]
-extensions [csv table]; profiler]
+extensions [csv table profiler]
 
 
 globals [
+
   size-x                 ; Taille horizontale du monde
   size-y                 ; Taille verticale du monde
   current-plot-id
@@ -57,7 +58,7 @@ globals [
   space-camp-standard-deviation    ; Écart-type de l'espace des campements
   space-camp-mean                  ; Moyenne de l'espace des campements
   reforestation-plots-nb           ; Nombre de parcelles de reforestation
-
+  radius-close                     ; Valeur de la distance maximal pour tre considr comme proche du campement (in update-known-space)
   caangol-surface                  ; Nombre de km² de Caangol
   seeno-surface                    ; Nombre de km² de Seeno
   sangre-surface                   ; Nombre de km² de Sangre
@@ -207,6 +208,7 @@ turtles-own [
   current-home-patch               ; Patch du campement actuel
   original-home-camp               ; Campement permanent
   original-home-patch              ; Patch du campement permanent
+  prev-home-patch
   is-in-temporary-camp             ; Booléen indiquant à l'agent s'il est dans son campement permanent ou sur un temporaire
   reforestation-plot               ; Parcelle de reforestation
 ]
@@ -514,6 +516,7 @@ to set-initial-values
   set seuil-moyen-UF 0.45
   set seuil-bon-MAD 53
   set seuil-moyen-MAD 25
+  set radius-close 6
 
   ; Seuils de production des champs
   set production-residu-hectare-agriculture 1           ; kg de matière sèche par hectare
@@ -614,8 +617,8 @@ end
 ;;;;;;;;;;;;;;;;;;;;
 
 to go
-  ;  profiler:reset
- ;  profiler:start
+    profiler:reset
+   profiler:start
 
 
 
@@ -808,8 +811,8 @@ to go
   tick
 
 
-   ; profiler:stop
-    ;print profiler:report
+    profiler:stop
+    print profiler:report
 end
 
 
@@ -954,39 +957,50 @@ end
 ;;;;;;;;;;;;;;;;;;;;;;;;
 
 to update-known-space
+  ;; --- Foyers ---
   ask foyers [
-    let home-patch current-home-patch
+    let new-space nobody
     if cattle-herd != nobody [
-      set known-space (patch-set known-space ([known-space] of cattle-herd))
+      set new-space ([known-space] of cattle-herd) with [not member? self [known-space] of myself]
     ]
     if sheep-herd != nobody [
-      set known-space (patch-set known-space ([known-space] of sheep-herd))
+      set new-space ([known-space] of sheep-herd) with [not member? self [known-space] of myself]
     ]
-    set close-known-space known-space with [distance home-patch <= 6]
-    set distant-known-space known-space who-are-not close-known-space
-  ]
-  ask cattles [
-    let home-patch current-home-patch
-
-    set known-space (patch-set known-space ([known-space] of foyer-owner))
-    if (is-transhumant = false) [
-      let original-camp-home-patch original-home-patch
-      set original-camp-known-space known-space with [distance original-camp-home-patch <= 6]
+    ;; Nouveaux patches = ceux que le foyer n’a pas déjà
+    if any? new-space [
+      set known-space (patch-set known-space new-space)
     ]
-    set close-known-space known-space with [distance home-patch <= 6]
-    set distant-known-space known-space who-are-not close-known-space
-  ]
-  ask sheeps [
-    let home-patch current-home-patch
-    set known-space (patch-set known-space ([known-space] of foyer-owner))
-    if (is-transhumant = false) [
-      let original-camp-home-patch original-home-patch
-      set original-camp-known-space known-space with [distance original-camp-home-patch <= 6]
-    ]
-    set close-known-space known-space with [distance home-patch <= 6]
+    set close-known-space known-space with [distance myself <= radius-close]
     set distant-known-space known-space who-are-not close-known-space
   ]
 
+  ;; --- Troupeaux ---
+  update-herd-known-space cattles
+  update-herd-known-space sheeps
+end
+
+to update-herd-known-space [herd]
+  ask herd [
+    let home-patch current-home-patch
+    let new-space nobody
+    set new-space ([known-space] of foyer-owner) with [not member? self [known-space] of myself]
+    ;; Nouveaux patches = ceux que le foyer n’a pas déjà
+    if any? new-space [
+      set known-space (patch-set known-space new-space)
+    ]
+    if is-transhumant = false [
+      ifelse current-home-patch != prev-home-patch [
+        let original-camp-home-patch original-home-patch
+        set original-camp-known-space known-space with [distance original-camp-home-patch <= radius-close]
+      ] [
+        set original-camp-known-space known-space with [distance home-patch <= radius-close]
+      ]
+    ]
+    set close-known-space known-space with [distance home-patch <= radius-close]
+    set distant-known-space known-space who-are-not close-known-space
+
+    set prev-home-patch current-home-patch
+  ]
 end
 
 
@@ -1312,7 +1326,7 @@ proportion-big-herders
 proportion-big-herders
 0
 100
-1.0
+70.0
 1
 1
 NIL
@@ -1576,7 +1590,7 @@ number-of-camps
 number-of-camps
 0
 150
-64.0
+150.0
 1
 1
 NIL
@@ -1747,7 +1761,7 @@ avg-UBT-per-camp
 avg-UBT-per-camp
 10
 100
-10.0
+40.0
 5
 1
 NIL
