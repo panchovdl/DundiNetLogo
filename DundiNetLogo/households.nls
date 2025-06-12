@@ -182,7 +182,7 @@ to create-transhumant-foyers [nb band]
         set is-temporary true
         set shape "house"
         set color grey + 2
-        set size 0.5
+        set size 0.1
         setxy pxcor pycor
         set foyers-hosted no-turtles
 
@@ -237,9 +237,9 @@ to create-transhumant-foyers [nb band]
           
           
           ;; autres paramètres par défaut
-          set color brown
-          set size 0.1
-          set shape "person"
+          set shape "lander"
+          set size 0.8
+          set color red
 
           ;; connais son voisinage immédiat
           set known-space patches in-radius 3

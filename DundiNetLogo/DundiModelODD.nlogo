@@ -451,14 +451,14 @@ to setup
   setup-landscape  ; Créer les unités de paysage
   setup-water-patches ; Créer les mares
   setup-camps  ; Créer les campements
-  setup-reforestation-plots
-  assign-camps-to-reforestation-plots
 
   setup-foyers ; Créer les foyers
   setup-herds  ; Créer les troupeaux
   setup-trees  ; Créer les arbres
   setup-crop-lands   ; créer les champs
   ask camps with [not any? foyers-hosted] [die]
+  setup-reforestation-plots
+  assign-camps-to-reforestation-plots
 
   update-UF-and-MAD
   update-grass-quality
@@ -767,9 +767,19 @@ to go
     ] [
       move-to [current-home-patch] of sheep-herd]
     set current-home-patch patch-here
-    set shape "house"
-    set size 2
-    set color white
+    if is-transhumant = false [
+      ifelse current-home-patch != original-home-patch [
+        set shape "lander"
+        set size 0.8
+        set color red + 2
+        set is-in-temporary-camp true
+      ] [
+        set color brown
+        set size 0.1
+        set shape "person"
+        set is-in-temporary-camp false
+      ]
+    ]
   if cattle-herd != nobody and [have-left] of cattle-herd = false [
     choose-strategy-for-cattles]
   if sheep-herd != nobody and [have-left] of sheep-herd = false [
@@ -1287,7 +1297,7 @@ good-shepherd-percentage
 good-shepherd-percentage
 0
 100
-22.0
+97.0
 1
 1
 NIL
@@ -1302,7 +1312,7 @@ proportion-big-herders
 proportion-big-herders
 0
 100
-46.0
+1.0
 1
 1
 NIL
@@ -1517,7 +1527,7 @@ SheepNECSatifactionIndex
 SheepNECSatifactionIndex
 0
 5
-3.0
+4.0
 1
 1
 NIL
@@ -1551,7 +1561,7 @@ CattleNECSatifactionIndex
 CattleNECSatifactionIndex
 0
 5
-3.0
+4.0
 1
 1
 NIL
@@ -1737,7 +1747,7 @@ avg-UBT-per-camp
 avg-UBT-per-camp
 10
 100
-25.0
+10.0
 5
 1
 NIL
@@ -1910,8 +1920,8 @@ TEXTBOX
 PLOT
 1120
 510
-1555
-685
+1583
+686
 Moyennes ressources arbres
 NIL
 NIL
@@ -2979,7 +2989,7 @@ Polygon -7500403 true true 15 120 150 15 285 120
 Line -16777216 false 30 120 270 120
 
 lander
-true
+false
 0
 Polygon -7500403 true true 45 75 150 30 255 75 285 225 240 225 240 195 210 195 210 225 165 225 165 195 135 195 135 225 90 225 90 195 60 195 60 225 15 225 45 75
 

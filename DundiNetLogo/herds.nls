@@ -95,8 +95,7 @@ to move
       ifelse daily-trip >= 2 [
         ; Le foyer est transhumant
         ifelse is-transhumant = true [
-          ifelse not any? camps-on (patch-set best-patch neighbors4 best-patch) [
-            
+          ifelse not any? foyers-on best-patch and not any? camps-on best-patch [
             ;; Create a temporary camp
             set current-home-patch best-patch
             move-to best-patch
@@ -367,7 +366,7 @@ to consume-tree-resources [patch-of-grass-eaten remaining-needs] ;; contexte tro
   let good-trees []
   ;; Déterminer les arbres ciblés en fonction du type de troupeau
   if shepherd-type = "bon" [
-    set consumption-treshold 0.1
+    set consumption-treshold 0.1 ; portion du stock maximal que le berger va prélever dans la population d'arbres
     ;; Priorité aux types "nutritive" et "fruity"
     set good-trees mature-trees with [ tree-type = "nutritive" or tree-type = "fruity" ]
     if not any? good-trees [

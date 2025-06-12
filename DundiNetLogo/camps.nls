@@ -104,7 +104,7 @@ to assign-camps-to-reforestation-plots
       ;; 5) Assigner la parcelle
       ask chosen-camps [
         set reforestation-plot parcel-patches   ;; On stocke tous les patches de la parcelle
-        set color red
+        set color green + 1
       ]
     ]
   ]
