@@ -961,10 +961,10 @@ to update-known-space
   ask foyers [
     let new-space nobody
     if cattle-herd != nobody [
-      set new-space ([known-space] of cattle-herd) with [not member? self [known-space] of myself]
+      set new-space (patch-set new-space (([known-space] of cattle-herd) with [not member? self [known-space] of myself]))
     ]
     if sheep-herd != nobody [
-      set new-space ([known-space] of sheep-herd) with [not member? self [known-space] of myself]
+      set new-space (patch-set new-space (([known-space] of sheep-herd) with [not member? self [known-space] of myself]))
     ]
     ;; Nouveaux patches = ceux que le foyer n’a pas déjà
     if any? new-space [
@@ -1326,7 +1326,7 @@ proportion-big-herders
 proportion-big-herders
 0
 100
-70.0
+0.0
 1
 1
 NIL
