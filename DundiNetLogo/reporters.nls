@@ -29,21 +29,25 @@ to-report growth-fruit-logistic [current-fruit max-fruit status season]
   ifelse  max-fruit <= 0.0001 [
     report 0  ; Pas de croissance si max-fruit est zéro
   ] [
-    if status = "chute" [
-      
-      set r -0.1
-    ]
-    if status = "au sol" [
+    ifelse status = "au sol" [
       report (- current-fruit)
+    ] [
+      if status = "chute" [
+        ifelse current-fruit >= 0.8 * max-fruit [
+          set r -1
+        ] [
+          set r -0.05
+        ]
+      ]
+      if status = "croissance" or status = "dispo" [
+        set r 0.02
+      ]
+      let growth r * (precision current-fruit 1) * (precision ((max-fruit - current-fruit) / max-fruit) 1)
+      if abs(growth) > 1e15 [
+        report 0
+      ]
+      report growth
     ]
-    if status = "croissance" or status = "dispo" [
-      set r 0.05
-    ]
-    let growth r * (precision current-fruit 1) * (precision ((max-fruit - current-fruit) / max-fruit) 1)
-    if abs(growth) > 1e15 [
-      report 0
-    ]
-    report growth
   ]
 end
 
@@ -54,13 +58,21 @@ to-report growth-leaf-logistic [current-leaves max-leaves status season]
     report 0  ; Pas de croissance si max-leaves est zéro
   ] [
     if status = "chute"  [
-      set r -0.1
+      ifelse current-leaves >= 0.7 * max-leaves [
+        set r -0.5 
+      ] [
+        set r -0.01
+      ]
     ]
-    if status = "sol" [
-      set r -0.1
+    if status = "sol" [ 
+      ifelse current-leaves >= 0.8 * max-leaves [
+        set r -0.8 
+      ] [
+        set r -0.1
+      ]
     ]
     if status = "croissance" or status = "dispo" [
-      set r 0.1
+      set r 0.02
     ]
     let growth r * (precision current-leaves 1) * (precision ((max-leaves - current-leaves) / max-leaves) 1)
     if abs(growth) > 1e15 [
@@ -269,14 +281,14 @@ to-report calculate-wood-ratio
   ]
 end
 
-to-report calculate-tree-icon-size [populations]
+to-report calculate-tree-icon-size [tree-pop]
   ;; Définir les valeurs minimales et maximales pour le mapping
   let minPopulation 0
   let maxPopulation 8000  ;; Ajustez cette valeur en fonction de vos données réelles
   let minSize 0.1
   let maxSize 1.5
   ;; Assurer que population est dans les limites
-  let adjusted-population max list minPopulation (min list populations maxPopulation)
+  let adjusted-population max list minPopulation (min list tree-pop maxPopulation)
   report minSize + ((adjusted-population - minPopulation) / (maxPopulation - minPopulation)) * (maxSize - minSize)
 end
 

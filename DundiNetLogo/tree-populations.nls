@@ -255,20 +255,8 @@ to setup-trees ; Valeurs d'initialisation (âge minimum des arbres découverts)
         ]
       ]
     ]
-    let mature-tree-populations tree-populations-here with [tree-pop-age >= 8]
-    if any? mature-tree-populations [
-      let total-population sum [population-size] of mature-tree-populations
-      ;; Créer une tortue pour représenter les arbres matures
-      sprout-mature-tree-pops 1 [
-        set shape "tree"
-        set color green
-        set size calculate-tree-icon-size total-population  ;; Taille proportionnelle à la population
-                                                            ;; Positionner la tortue au centre du patch avec un décalage aléatoire
-        set xcor xcor + (random-float 0.9 - 0.45)
-        set ycor ycor + (random-float 0.9 - 0.45)
-      ]
-    ]
   ]
+update-tree-visualisation
 
 end
 
@@ -602,10 +590,10 @@ to grow-tree-resources
     if current-fruit-stock <= 0 [set current-fruit-stock 1 ]
     
     if soil-current-fruit-stock > 1 [
-      set soil-current-fruit-stock soil-current-fruit-stock  - 0.01 * (precision soil-current-fruit-stock 1)
+      set soil-current-fruit-stock soil-current-fruit-stock  - 0.001 * (precision soil-current-fruit-stock 1)
     ]
     if germinated-seed-nb > 1 [
-      set germinated-seed-nb round germinated-seed-nb - (0.01 * germinated-seed-nb)
+      set germinated-seed-nb round germinated-seed-nb - (0.001 * germinated-seed-nb)
     ]
     set fruit-nb min (list (current-fruit-stock / one-fruit-weight) max-fruit-nb)
     set seed-nb fruit-nb * seed-nb-per-fruit

@@ -82,7 +82,9 @@ breed [foyers foyer]
 breed [cattles cattle]
 breed [sheeps sheep]
 breed [tree-populations tree-population]
-breed [mature-tree-pops mature-tree-pop]   ; Pour visualisation
+breed [mature-tree-nutritive-pops mature-tree-nutritive-pop]   ; Pour visualisation
+breed [mature-tree-less-nutritive-pops mature-less-nutritive-tree-pop]   ; Pour visualisation
+breed [mature-tree-fruity-pops mature-tree-fruity-pop]   ; Pour visualisation
 breed [champs champ]
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -763,6 +765,9 @@ to go
     set ticks-left-year ticks-left-year + 1
   ]
 
+  ; Mise à jour quotidienne de l'espace connu (tous agents non environnement)
+  update-known-space
+
   ; Foyers
   ask foyers [
     ifelse cattle-herd != nobody [
@@ -788,9 +793,6 @@ to go
   if sheep-herd != nobody and [have-left] of sheep-herd = false [
     choose-strategy-for-sheeps]
   ; Choix stratégiques pastoraux du chef de ménage
-
-  ; Mise à jour quotidienne de l'espace connu (tous agents non environnement)
-  update-known-space
 
   ]
 
@@ -1086,16 +1088,41 @@ end
 ; Visualisation des arbres
 to update-tree-visualisation
   ;; Supprimer les anciennes icônes
-  ask mature-tree-pops [ die ]
+  ask mature-tree-nutritive-pops [ die ]
+  ask mature-tree-less-nutritive-pops [ die ]
+  ask mature-tree-fruity-pops [ die ]
   ;; Créer de nouvelles icônes pour les arbres matures
   ask patches [
     let mature-tree-populations tree-populations-here with [tree-pop-age >= 8]
-    if any? mature-tree-populations [
-      let total-population sum [population-size] of mature-tree-populations
-      sprout-mature-tree-pops 1 [
+    let mature-tree-nutritive-populations tree-populations-here with [(tree-pop-age >= 8) and (tree-type = "nutritive")]
+    if any? mature-tree-nutritive-populations [
+      let total-nutritive-population sum [population-size] of mature-tree-nutritive-populations
+      sprout-mature-tree-nutritive-pops 1 [
         set shape "tree"
         set color green
-        set size calculate-tree-icon-size total-population
+        set size calculate-tree-icon-size total-nutritive-population
+        set xcor xcor + (random-float 0.9 - 0.45)
+        set ycor ycor + (random-float 0.9 - 0.45)
+      ]
+    ]
+    let mature-tree-less-nutritive-populations tree-populations-here with [(tree-pop-age >= 8) and (tree-type = "lessNutritive")]
+    if any? mature-tree-less-nutritive-populations [
+      let total-less-nutritive-population sum [population-size] of mature-tree-less-nutritive-populations
+      sprout-mature-tree-less-nutritive-pops 1 [
+        set shape "tree-less"
+        set color green
+        set size calculate-tree-icon-size total-less-nutritive-population
+        set xcor xcor + (random-float 0.9 - 0.45)
+        set ycor ycor + (random-float 0.9 - 0.45)
+      ]
+    ]
+    let mature-tree-fruity-populations tree-populations-here with [(tree-pop-age >= 8) and (tree-type = "fruity")]
+    if any? mature-tree-fruity-populations [
+      let total-fruity-population sum [population-size] of mature-tree-fruity-populations
+      sprout-mature-tree-fruity-pops 1 [
+        set shape "tree-fruit"
+        set color green
+        set size calculate-tree-icon-size total-fruity-population
         set xcor xcor + (random-float 0.9 - 0.45)
         set ycor ycor + (random-float 0.9 - 0.45)
       ]
@@ -1261,7 +1288,7 @@ CHOOSER
 visualization-mode
 visualization-mode
 "soil-type" "tree-cover" "grass-cover" "grass-quality" "known-space"
-2
+0
 
 BUTTON
 40
@@ -1341,7 +1368,7 @@ proportion-medium-herders
 proportion-medium-herders
 0
 100
-0.0
+10.0
 1
 1
 NIL
@@ -1588,9 +1615,9 @@ SLIDER
 373
 number-of-camps
 number-of-camps
-0
+1
 150
-150.0
+1.0
 1
 1
 NIL
@@ -1934,7 +1961,7 @@ TEXTBOX
 PLOT
 1120
 510
-1583
+1570
 686
 Moyennes ressources arbres
 NIL
@@ -1960,7 +1987,7 @@ decreasing-factor
 decreasing-factor
 0
 100
-100.0
+0.0
 1
 1
 NIL
@@ -2494,7 +2521,7 @@ influx-Ceedu
 influx-Ceedu
 0
 100
-63.0
+0.0
 1
 1
 NIL
@@ -2509,7 +2536,7 @@ influx-Nduungu
 influx-Nduungu
 0
 100
-2.0
+0.0
 1
 1
 NIL
@@ -2524,7 +2551,7 @@ influx-Ceetcelde
 influx-Ceetcelde
 0
 100
-38.0
+0.0
 1
 1
 NIL
@@ -2809,7 +2836,7 @@ retard-jours
 retard-jours
 0
 100
-18.0
+2.0
 1
 1
 NIL
@@ -3099,6 +3126,61 @@ Circle -7500403 true true 65 21 108
 Circle -7500403 true true 116 41 127
 Circle -7500403 true true 45 90 120
 Circle -7500403 true true 104 74 152
+
+tree-fruit
+false
+0
+Circle -7500403 true true 118 3 94
+Rectangle -6459832 true false 120 195 180 300
+Circle -7500403 true true 65 21 108
+Circle -7500403 true true 116 41 127
+Circle -7500403 true true 45 90 120
+Circle -7500403 true true 104 74 152
+Circle -2674135 true false 135 150 30
+Circle -2674135 true false 195 165 30
+Circle -2674135 true false 75 120 30
+Circle -2674135 true false 60 180 30
+Circle -2674135 true false 90 45 30
+Circle -2674135 true false 165 45 30
+Circle -2674135 true false 195 105 30
+Circle -2674135 true false 135 90 30
+
+tree-less
+false
+0
+Circle -7500403 true true 90 135 60
+Circle -7500403 true true 165 105 60
+Circle -7500403 true true 135 120 60
+Circle -7500403 true true 225 120 60
+Circle -7500403 true true 25 105 70
+Circle -7500403 true true 125 55 80
+Rectangle -6459832 true false 135 165 165 300
+Circle -7500403 true true 118 44 32
+Rectangle -6459832 true false 165 165 255 180
+Rectangle -6459832 true false 60 165 135 180
+Rectangle -6459832 true false 60 105 75 165
+Rectangle -6459832 true false 15 150 60 165
+Rectangle -6459832 true false 120 105 135 165
+Rectangle -6459832 true false 240 105 255 165
+Rectangle -6459832 true false 240 165 285 180
+Rectangle -6459832 true false 180 105 195 165
+Rectangle -6459832 true false 240 105 300 120
+Rectangle -6459832 true false 180 90 225 105
+Circle -7500403 true true 210 90 30
+Circle -7500403 true true 165 60 60
+Circle -7500403 true true 135 30 60
+Circle -7500403 true true 90 60 60
+Circle -7500403 true true 60 90 60
+Circle -7500403 true true 35 70 50
+Circle -7500403 true true 15 90 30
+Circle -7500403 true true 0 135 30
+Circle -7500403 true true 225 90 60
+Circle -7500403 true true 15 120 30
+Circle -7500403 true true 210 105 30
+Circle -7500403 true true 210 150 30
+Circle -7500403 true true 270 105 30
+Circle -7500403 true true 270 150 30
+Circle -7500403 true true 90 120 60
 
 triangle
 false
