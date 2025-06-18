@@ -306,8 +306,8 @@ to calculStat
         ]
       ]
     ]
-    set MSTSheep-NEC (mean[sheepNEC-satisfaction] of foyers with [is-transhumant = false]) / ticks
-    set MSTCattle-NEC (mean[cattleNEC-satisfaction] of foyers with [is-transhumant = false]) / ticks
+    set MSTSheep-NEC (mean [sheepNEC-satisfaction] of foyers with [is-transhumant = false]) / ticks
+    set MSTCattle-NEC (mean [cattleNEC-satisfaction] of foyers with [is-transhumant = false]) / ticks
   ]
   
   

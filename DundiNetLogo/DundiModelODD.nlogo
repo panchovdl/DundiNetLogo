@@ -1,5 +1,5 @@
 __includes["calculStat.nls" "landUnits.nls" "camps.nls" "tree-populations.nls" "herds.nls" "crop-lands.nls" "households.nls" "seasons.nls" "reporters.nls" "loading-files.nls"]
-extensions [csv table profiler]
+extensions [csv table]; profiler]
 
 
 globals [
@@ -26,6 +26,7 @@ globals [
   max-trees              ; pour visualisation
 
   ; Tables qui enregistrent les valeurs des arbres en fonction de différents paramètres (type, age, sol et saison)
+
   tree-age-table ; table: (tree-type, age) -> [max-fruits max-leaves max-woods sensitivities]
   tree-nutrition-table ; table associative: (tree-type, soil, season) -> [UF MAD]
   tree-germination-table
@@ -44,7 +45,7 @@ globals [
   seuil-bon-MAD          ; Seuil MAD pour une herbe de bonne qualité
   seuil-moyen-MAD        ; Seuil MAD pour une herbe de qualité moyenne
 
-  K-Baldiol              ; seuil max d'herbe pour les différents types de sols
+  K-Baldiol              ; Seuils maximum d'herbe pour les différents types de sols
   K-Caangol
   K-Sangre
   K-Seeno
@@ -68,8 +69,8 @@ globals [
   sum-UBT                          ; Total d'UBT dan la simulation
 
 
-  total-UBT-created                ; Vé
-  ticks-with-transhumants
+  total-UBT-created                ; Variable de vérification du nombre d'UBT créé pendant la procédure de création pour
+  ticks-with-transhumants          ; Compteur de jours où il y a des éleveurs transhumants dans la zone
 
 ]
 
@@ -82,15 +83,15 @@ breed [foyers foyer]
 breed [cattles cattle]
 breed [sheeps sheep]
 breed [tree-populations tree-population]
-breed [mature-tree-nutritive-pops mature-tree-nutritive-pop]   ; Pour visualisation
+breed [mature-tree-nutritive-pops mature-tree-nutritive-pop]             ; Pour visualisation
 breed [mature-tree-less-nutritive-pops mature-less-nutritive-tree-pop]   ; Pour visualisation
-breed [mature-tree-fruity-pops mature-tree-fruity-pop]   ; Pour visualisation
+breed [mature-tree-fruity-pops mature-tree-fruity-pop]                   ; Pour visualisation
 breed [champs champ]
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Variables des cellules ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 
 patches-own [
 
@@ -171,20 +172,19 @@ turtles-own [
 
   ; Etat corporel des troupeaux
   corporal-condition               ; État de santé de l'agent - en valeur de NEC (Note d'Etat Corporel)
-  protein-condition                ; Condition protéique
   initial-live-weight              ; poids vif à l'initialisation (kg)
   live-weight                      ; poids vif actuel (kg)
   max-live-weight                  ; Maximum de poids vif atteignable (kg)
   min-live-weight                  ; Minimum de poids vif atteignable (kg)
   weight-gain                      ; Gain ou perte de poids
-  ticks-left-year
+  ticks-left-year                  ; Nombre de jours que le troupeau a quitté la zone sur l'année
 
   ; Alimentation spécifiques aux troupeaux
   UBT-size                         ; Proportion d'un individu en Unité de Bétail Tropical (une vache allaitante = 1)
   head                             ; Nombre d'individus
   max-daily-DM-ingestible-per-head ; Quantité maximale de MS qu'un individu peut consommer par jour
-  daily-needs-DM
-  desired-DM-intake
+  daily-needs-DM                   ; Quantité maximale de MS que l'agent troupeau peut consommer par jour
+  desired-DM-intake                ; Quantité de MS que le troupeau veut consommer en fonction de la qualité du fourrage
   daily-min-UF-needed-head         ; Quantité minimum d'Unité Fourragère à l'entretien d'un UBT
   daily-needs-UF                   ; Quantité minimum d'Unité Fourragère à l'entretien du troupeau
   daily-min-MAD-needed-head        ; Quantité minimum de Matière Azotée Digestible à l'entretien d'un UBT;
@@ -192,9 +192,9 @@ turtles-own [
   DM-ingested                      ; Quantité totale d'herbe ingérée (kg de MS)
   UF-ingested                      ; UF totales ingérées
   MAD-ingested                     ; MAD totales ingérées
-  total-UF-ingested-from-trees
-  total-MAD-ingested-from-trees
-  total-DM-ingested-from-trees
+  total-UF-ingested-from-trees     ; UF totales consommées sur les arbres
+  total-MAD-ingested-from-trees    ; MAD totales consommées sur les arbres
+  total-DM-ingested-from-trees     ; MS totales consommées sur les arbres
   daily-water-consumption          ; Consommation d'eau quotidienne
   preference-mono                  ; Préférence pour les Graminées
 
@@ -202,15 +202,15 @@ turtles-own [
   known-space                      ; Tout l'espace connu par les individus
   close-known-space                ; Espace connu à moins d'une journée de déplacement d'un troupeau (6km)
   distant-known-space              ; Espace connu à plus d'une journée de déplacement d'un troupeau (6km)
-  daily-trip
-  is-transhumant
+  daily-trip                       ; Distance parcourue dans la journée
+  is-transhumant                   ; Booléen qui définit si le foyer et ses troupeaux associés sont transhumants
 
   ; Déplacement du campement
   current-home-camp                ; Campement actuel
   current-home-patch               ; Patch du campement actuel
   original-home-camp               ; Campement permanent
   original-home-patch              ; Patch du campement permanent
-  prev-home-patch
+  prev-home-patch                  ; Patch du campement de la veille
   is-in-temporary-camp             ; Booléen indiquant à l'agent s'il est dans son campement permanent ou sur un temporaire
   reforestation-plot               ; Parcelle de reforestation
 ]
@@ -226,7 +226,7 @@ camps-own [
   is-temporary                     ; Booléen indiquant si le camp est temporaire
   wood-needs                       ; Besoins en bois
   wood-quantity                    ; Quantité de bois dans le campement
-  foyers-hosted
+  foyers-hosted                    ; Nombre de foyers qui composent le campement
 ]
 
 
@@ -240,28 +240,27 @@ foyers-own [
 
   ; Gestion du troupeau
   cattle-herd                      ; Troupeau de bovins associé
-  cattle-herd-size                 ; Taille du troupeau de bovins associé
-  cattle-herd-count
+  cattle-herd-size                 ; Taille du troupeau de bovins associé ("grand", "moyen", "petit")
+  cattle-herd-count                ; Valeur numérique de la taille du troupeau en fonction du cattle-herd-size (aléatoire dans une intervalle)
   sheep-herd                       ; Troupeau de moutons associé
   sheep-herd-size                  ; Taille du troupeau d'ovins associé
-  sheep-herd-count
+  sheep-herd-count                 ; Valeur numérique de la taille du troupeau en fonction du sheep-herd-size (aléatoire dans une intervalle)
   shepherd-type                    ; Type de berger du foyer
   herder-type                      ; Caractéristique d'élevage du foyer (grand moyen petit)
-  pasture-strategy                 ; Stratégies de pâturage
 
-  planned-days
-  days-present
-  presence-satisfaction
-  counted-satisfied?
+  planned-days                     ; Nombre de jours de présence attendus
+  days-present                     ; Nombre de jours de présence effective
+  presence-satisfaction            ; Seuil de satisfaction de présence des transhumants dans la zone
+  counted-satisfied?               ; Compteur du nombre de foyers satisfaits du temps de présence dans l'année
 
 
   ; Surveillance de l'état du troupeau
-  ; Bovins
-  cattle-low-threshold-cc          ; limite basse NEC
-  cattle-low-threshold-pc          ; limite basse MAD
-  cattle-high-threshold-cc         ; limite haute NEC
-  cattle-high-threshold-pc         ; limite haute MAD
-                                   ; Ovins
+                          ; Bovins
+  cattle-low-threshold-cc          ; Limite basse NEC
+  cattle-low-threshold-pc          ; Limite basse MAD
+  cattle-high-threshold-cc         ; Limite haute NEC
+  cattle-high-threshold-pc         ; Limite haute MAD
+                          ; Ovins
   sheep-low-threshold-cc           ; limite basse NEC
   sheep-low-threshold-pc           ; limite basse MAD
   sheep-high-threshold-cc          ; limite haute NEC
@@ -279,10 +278,10 @@ foyers-own [
   friends                          ; Amis de l'agent
   far-exploration-count            ; Compteur d'exploration au loin
   close-exploration-count          ; Compteur d'exploration proche
-  cattleNEC-satisfaction
-  sheepNEC-satisfaction
-  transCattleNEC-satisfaction
-  transSheepNEC-satisfaction
+  cattleNEC-satisfaction           ; Evaluation de la satisfaction de l'éleveur sur la condition corporelle de son troupeau (Bovin)
+  sheepNEC-satisfaction            ; Evaluation de la satisfaction de l'éleveur sur la condition corporelle de son troupeau (Ovin)
+  transCattleNEC-satisfaction      ; [Transhumant] Evaluation de la satisfaction de l'éleveur sur la condition corporelle de son troupeau (Bovin)
+  transSheepNEC-satisfaction       ; [Transhumant] Evaluation de la satisfaction de l'éleveur sur la condition corporelle de son troupeau (Ovin)
 ]
 
 
@@ -294,13 +293,12 @@ foyers-own [
 sheeps-own [
   foyer-owner                      ; Foyer du troupeau
   shepherd-type                    ; Caractéristique d'élevage du foyer (grand moyen petit)
-  pasture-strategy                 ; Stratégies de pâturage
   have-left                        ; Indique si le troupeau est parti vers le sud ou hors de la zone de l'UP
-  leaves-eaten
-  fruits-eaten
+  leaves-eaten                     ; Quantité en kg de MS de feuilles consommées dans la journée
+  fruits-eaten                     ; Quantité en kg de MS de fruits consommés dans la journée
   original-camp-known-space        ; Espace connu à moins d'une journée de déplacement du campement principal pour un troupeau
-  mean-DM-ingested
-  best-patches
+  mean-DM-ingested                 ; Moyenne de MS ingérée par individu dans le troupeau
+  best-patches                     ; Collection des 3 meilleurs patches d'herbe de la journée
 ]
 
 
@@ -312,13 +310,12 @@ sheeps-own [
 cattles-own [
   foyer-owner                      ; Foyer du troupeau
   shepherd-type                    ; Caractéristique d'élevage du foyer (grand moyen petit)
-  pasture-strategy                 ; Stratégies de pâturage
   have-left                        ; Indique si le troupeau est parti vers le sud ou hors de la zone de l'UP
-  leaves-eaten
-  fruits-eaten
+  leaves-eaten                     ; Quantité en kg de MS de feuilles consommées dans la journée
+  fruits-eaten                     ; Quantité en kg de MS de fruits consommés dans la journée
   original-camp-known-space        ; Espace connu à moins d'une journée de déplacement du campement principal pour un troupeau
-  mean-DM-ingested
-  best-patches
+  mean-DM-ingested                 ; Moyenne de MS ingérée par individu dans le troupeau
+  best-patches                     ; Collection des 3 meilleurs patches d'herbe de la journée
 ]
 
 
@@ -343,12 +340,12 @@ tree-populations-own [
   max-leaf-stock                   ; Stock maximal de fruit pour la population
   max-wood-stock                   ; Stock maximal de fruit pour la population
   wood-ratio                       ; Ratio entre le stock actuel et le stock maximal de bois
-  max-fruit-nb
-  max-seed-nb
+  max-fruit-nb                     ; Limite maximale du nombre de fruits par population (selon type, age)
+  max-seed-nb                      ; Limite maximale du nombre de graines par population (selon type, age)
   fruit-nb                         ; Nombre de fruits
   seed-nb                          ; Nombre de graines
-  leaves-percent-accessible               ; pourcentage de ressources accessible (déterminé selon la taille et la phénologie spécifique à l'arbre)
-  fruits-percent-accessible
+  leaves-percent-accessible        ; pourcentage de ressources en feuilles accessible (déterminé selon la taille, la phénologie spécifique à l'arbre et de la saison)
+  fruits-percent-accessible        ; pourcentage de ressources en fruits accessible (déterminé selon la taille, la phénologie spécifique à l'arbre et de la saison)
   germinated-seed-nb               ; Nombre de graines passées par le tractus digestif des chèvres
 
   germination-rate                 ; Taux de germination
@@ -424,26 +421,26 @@ end
 
 to setup
   clear-all
-  resize-world -11 11 -11 11  ; Fixer les limites du monde à -11 à 11 en x et y
-  set-patch-size 22  ; Ajuster la taille des patches
+  resize-world -11 11 -11 11                      ; Fixer les limites du monde à -11 à 11 en x et y
+  set-patch-size 22                               ; Ajuster la taille des patches
 
 
   ; Chargement des valeurs environnementales
   load-environment "environment_vel.txt"
-  set current-season "Nduungu"  ; Initialiser à la première saison
-  set last-season "none"  ;; Initialiser last-season
-  set season-counter 0  ; Compteur de saison initialisé à 0
+  set current-season "Nduungu"                    ; Initialiser à la première saison
+  set last-season "none"                          ; Initialiser last-season
+  set season-counter 0                            ; Compteur de saison initialisé à 0
 
 
   ;;; Chargement des variables temporelles
   load-climate-variables "year-type.txt"
-  set year-index 0  ; Indice de l'année en cours
-  set year-counter 0  ; Compteur de ticks dans l'année
+  set year-index 0                                ; Indice de l'année en cours
+  set year-counter 0                              ; Compteur de ticks dans l'année
 
 
-  ; Chargement des valeurs spécifiques aux ressouces pastorales
-  load-tree-age-data "tree_info.csv" ; valeurs pour les ages
-  load-tree-nutrition-data "tree_nutrition.csv" ; valeurs pour les qualités nutritives selon type d'arbre, saison, type de sol
+  ; Chargement des valeurs spécifiques aux populations ligneuses
+  load-tree-age-data "tree_info.csv"                ; valeurs pour les âges
+  load-tree-nutrition-data "tree_nutrition.csv"     ; valeurs pour les qualités nutritives selon type d'arbre, saison, type de sol
   load-tree-germination-data "germination_rate.csv" ; valeurs pour les valeurs de régénération selon type d'arbre et type de sol
 
   ; Initialiser les durées des saisons
@@ -451,29 +448,29 @@ to setup
   set-season-durations
   set-initial-values
 
-  ; Lancer l'environnement
-  setup-landscape  ; Créer les unités de paysage
-  setup-water-patches ; Créer les mares
-  setup-camps  ; Créer les campements
+  ; Lancer l'environnement et les agents
+  setup-landscape                                 ; Créer les unités de paysage
+  setup-water-patches                             ; Créer les mares
+  setup-camps                                     ; Créer les campements
 
-  setup-foyers ; Créer les foyers
-  setup-herds  ; Créer les troupeaux
-  setup-trees  ; Créer les arbres
-  setup-crop-lands   ; créer les champs
+  setup-foyers                                    ; Créer les foyers
+  setup-herds                                     ; Créer les troupeaux
+  setup-trees                                     ; Créer les arbres
+  setup-crop-lands                                ; Créer les champs
   ask camps with [not any? foyers-hosted] [die]
-  setup-reforestation-plots
-  assign-camps-to-reforestation-plots
+  setup-reforestation-plots                       ; Créer les parcelles de reforestation
+  assign-camps-to-reforestation-plots             ; Assigner les campements aux parcelles (COGES)
 
-  update-UF-and-MAD
-  update-grass-quality
+  update-UF-and-MAD                               ; Mise à jour des valeurs nutritionnelles
+  update-grass-quality                            ; Mise à jour de la qualité de l'herbe
 
-  set max-grass max [K] of patches ; pour visualisation
+  set max-grass max [K] of patches                ; pour visualisation
   set max-trees max [tree-cover] of patches
 
 
   ;Visualiser l'environnement
   reset-ticks
-  calculStat
+  calculStat                                      ; Calculs statistiques globaux pour exploration de modèle
   update-visualization
   ;display-labels
 
@@ -619,8 +616,8 @@ end
 ;;;;;;;;;;;;;;;;;;;;
 
 to go
-    profiler:reset
-   profiler:start
+;    profiler:reset
+;   profiler:start
 
 
 
@@ -635,9 +632,10 @@ to go
 
   ; Mise à jour saisonnière
   if current-season != last-season [
-    update-UF-and-MAD                 ; Mettre à jour les valeurs de MAD et UF pour le tapis herbacé
-    update-tree-nutritional-values    ; Mettre à jour les valeurs de MAD et UF pour les arbres
-    set last-season current-season    ; Permet au counter d'identifier quand la saison change
+    generate-transhumance
+    update-UF-and-MAD                             ; Mettre à jour les valeurs de MAD et UF pour le tapis herbacé
+    update-tree-nutritional-values                ; Mettre à jour les valeurs de MAD et UF pour les arbres
+    set last-season current-season                ; Permet au counter d'identifier quand la saison change
     update-tree-visualisation
   ]
 
@@ -674,24 +672,12 @@ to go
     if influx-Ceedu > 0 or influx-Ceetcelde > 0 or influx-Nduungu > 0 [
     evaluate-MST-Time
     ]
-
     evaluate-mst-have-left
-
-    ; Agents (Rappel des agents et remise à jour de l'espace connu)
-    ask foyers [
-      set far-exploration-count 0                 ; Compteur d'exploration au loin
-      set close-exploration-count 0               ; Compteur d'exploration proche
-      set known-space patches in-radius 3         ; Remise à 0
-    ]
-    ask cattles [set known-space [known-space] of foyer-owner]
-    ask sheeps [set known-space [known-space] of foyer-owner]
-
 
     ;; remettre à zéro pour l’année suivante
     set mst-temps-passe-annee 0
 
-
-]
+] ; fin renouvellement annuel
 
   if year-counter = Retard-jours [
     call-back-herds                               ; Retour des troupeaux et mise à jour de l'espace connu
@@ -703,42 +689,11 @@ to go
 
   ; Mise à jour quotidienne des ressources
   grow-grass
-  update-grass-quality              ; Indiquer la qualité de l'herbe
+  update-grass-quality                            ; Indiquer la qualité de l'herbe
   grow-tree-resources
 
   if mean [current-leaf-stock] of tree-populations < 0 [
     show-tree-populations-info]
-
-  ;-------------------------;
-  ; Remise à 0 consommation ;
-  ;-------------------------;
-
-  if count cattles > 0 [
-    ask cattles [
-      set DM-ingested 0
-      set UF-ingested 0
-      set MAD-ingested 0
-      set total-UF-ingested-from-trees 0
-      set total-MAD-ingested-from-trees 0
-      set total-DM-ingested-from-trees 0
-      set fruits-eaten 0
-      set leaves-eaten 0
-    ] ; end ask cattles
-  ] ; end count cattles
-  if count sheeps > 0 [
-    ask sheeps [
-      set DM-ingested 0
-      set UF-ingested 0
-      set MAD-ingested 0
-      set total-UF-ingested-from-trees 0
-      set total-MAD-ingested-from-trees 0
-      set total-DM-ingested-from-trees 0
-      set fruits-eaten 0
-      set leaves-eaten 0
-    ]
-  ]
-
-
 
   ;--------------------;
   ; Actions des agents ;
@@ -813,8 +768,8 @@ to go
   tick
 
 
-    profiler:stop
-    print profiler:report
+;    profiler:stop
+;    print profiler:report
 end
 
 
@@ -890,11 +845,11 @@ end
 
 ; appelez‑la exactement où vous appelez déjà evaluate-MST-Time
 to evaluate-MST-have-left
-  ;; a. moyenne du nb de ticks « dehors » par troupeau
+  ;; moyenne du nb de ticks « dehors » par troupeau
   let cattle-avg-left mean [ticks-left-year] of cattles
   let sheep-avg-left mean [ticks-left-year] of sheeps
 
-  ;; b. normalisation 0‑1  → 1 = jamais dehors, 0 = tout le temps dehors
+  ;; normalisation 0‑1  → 1 = jamais dehors, 0 = tout le temps dehors
   ifelse total-ticks-per-year > 0 [
     set mst-cattle-left 1 - (cattle-avg-left / total-ticks-per-year)
   ] [
@@ -932,7 +887,6 @@ to call-back-herds
     show-turtle
     set live-weight initial-live-weight  ; Réinitialiser le poids vif
     set corporal-condition 5             ; NEC maximum
-    set protein-condition 10             ; Condition protéique maximale
     set have-left false
     set ticks-left-year 0
   ]
@@ -942,7 +896,6 @@ to call-back-herds
     show-turtle
     set live-weight initial-live-weight  ; Réinitialiser le poids vif
     set corporal-condition 5             ; NEC maximum
-    set protein-condition 10             ; Condition protéique maximale
     set have-left false
     set ticks-left-year 0
   ]
@@ -950,15 +903,16 @@ end
 
 
 
-;  to color-trees  ;; patch procedure
-;  set pcolor scale-color (green - 1) trees 0 (2 * max-grass-height)
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; MAJ espace connu ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;
 
 to update-known-space
+
+  if year-counter <= 0 [
+    renew-known-space
+  ]
   ;; --- Foyers ---
   ask foyers [
     let new-space nobody
@@ -1003,6 +957,21 @@ to update-herd-known-space [herd]
 
     set prev-home-patch current-home-patch
   ]
+end
+
+
+
+to renew-known-space
+
+  ; Agents (Rappel des agents et remise à jour de l'espace connu)
+  ask foyers [
+    set far-exploration-count 0                 ; Compteur d'exploration au loin
+    set close-exploration-count 0               ; Compteur d'exploration proche
+    set known-space patches in-radius 3         ; Remise à 0
+  ]
+  ask cattles [set known-space [known-space] of foyer-owner]
+  ask sheeps [set known-space [known-space] of foyer-owner]
+
 end
 
 
@@ -1288,7 +1257,7 @@ CHOOSER
 visualization-mode
 visualization-mode
 "soil-type" "tree-cover" "grass-cover" "grass-quality" "known-space"
-0
+4
 
 BUTTON
 40
@@ -1568,7 +1537,7 @@ SheepNECSatifactionIndex
 SheepNECSatifactionIndex
 0
 5
-4.0
+5.0
 1
 1
 NIL
@@ -2521,7 +2490,7 @@ influx-Ceedu
 influx-Ceedu
 0
 100
-0.0
+19.0
 1
 1
 NIL
@@ -2536,7 +2505,7 @@ influx-Nduungu
 influx-Nduungu
 0
 100
-0.0
+19.0
 1
 1
 NIL
@@ -2551,7 +2520,7 @@ influx-Ceetcelde
 influx-Ceetcelde
 0
 100
-0.0
+19.0
 1
 1
 NIL
@@ -2836,7 +2805,7 @@ retard-jours
 retard-jours
 0
 100
-2.0
+17.0
 1
 1
 NIL

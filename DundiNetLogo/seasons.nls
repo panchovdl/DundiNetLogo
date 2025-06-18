@@ -46,6 +46,27 @@ to update-season
   
 end
 
+to generate-transhumance
+   if current-season = "Dabbuunde" or current-season = "Nduungu" [
+    ask foyers with [is-transhumant = true] [
+      ask cattle-herd [ die ]
+      ask sheep-herd [ die ]
+      die
+    ]
+    ask camps with [is-temporary] [ die ]
+  ]
+    if current-season = "Ceedu" [
+    create-transhumant-foyers influx-Ceedu (patches with [pycor >= max-pycor - 2])
+  ]
+  if current-season = "Ceetcelde"[
+    create-transhumant-foyers influx-Ceetcelde (patches with [pycor >= max-pycor - 2])
+  ]
+  if current-season = "Nduungu"  [
+    create-transhumant-foyers influx-Nduungu (patches with [ pycor <= (min-pycor + 2) ])
+    ; Mise à jour de l'année
+  ]
+  
+end 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Mise à jour des durées de saison en fonction du type d'année ;;;

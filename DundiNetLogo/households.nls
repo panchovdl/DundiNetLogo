@@ -193,7 +193,6 @@ to create-transhumant-foyers [nb band]
           set is-transhumant     true
           set herder-type         "moyen"
           set is-in-temporary-camp true
-          set pasture-strategy "directed"
           
           
           ;; --- Attribution du statut de berger
@@ -312,7 +311,6 @@ end
 
 to create-herds-for-me 
   
-  let my-pasture-strategy pasture-strategy
   let my-shepherd-type shepherd-type  ; Récupérer le shepherd-type du foyer
   let my-cattle-count cattle-herd-count
   let my-sheep-count sheep-herd-count
@@ -325,7 +323,6 @@ to create-herds-for-me
     if head = 0 [ die ]
     set UBT-size 1
     set corporal-condition 5
-    set protein-condition 10
     set initial-live-weight 250 * UBT-size * head
     set live-weight initial-live-weight
     set max-live-weight 350 * head 
@@ -350,7 +347,6 @@ to create-herds-for-me
     set foyer-owner myself
     set my-cattles self  ; Stocker la tortue dans une variable temporaire
     set is-transhumant [is-transhumant] of foyer-owner
-    set pasture-strategy my-pasture-strategy  ; Transmettre la stratégie de pâturage
     set shepherd-type my-shepherd-type  ; Transmettre le shepherd-type du foyer
     
     
@@ -397,7 +393,6 @@ to create-herds-for-me
     if head = 0 [ die ]
     set UBT-size 0.16
     set corporal-condition 5
-    set protein-condition 10
     set initial-live-weight 250 * UBT-size * head
     set live-weight initial-live-weight
     set max-live-weight 80 * head
@@ -419,7 +414,6 @@ to create-herds-for-me
     ; relations avec soi et les reste (propriétaire, environnement)
     set foyer-owner myself
     set my-sheeps self  ; Stocker la tortue dans une variable temporaire
-    set pasture-strategy my-pasture-strategy  ; Transmettre la stratégie de pâturage
     set shepherd-type my-shepherd-type  ; Transmettre le shepherd-type du foyer
     
     

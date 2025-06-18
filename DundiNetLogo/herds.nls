@@ -232,6 +232,17 @@ end
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 to eat
+  
+  ; Remise à 0 des valeurs de consommation
+  set DM-ingested 0
+  set UF-ingested 0
+  set MAD-ingested 0
+  set total-UF-ingested-from-trees 0
+  set total-MAD-ingested-from-trees 0
+  set total-DM-ingested-from-trees 0
+  set fruits-eaten 0
+  set leaves-eaten 0
+  
   ; Calculer les besoins énergétiques (UF) et protéiques (MAD) qui peut évoluer à chaque step en fonction du nombre de tête dans le troupeau
   let base movement-needs daily-trip      ;; UF et MAD pour 1 UBT
   set daily-min-UF-needed-head  (item 0 base) * max-daily-DM-ingestible-per-head ; Quantité minimum d'Unité Fourragère à l'entretien d'un UBT (avec ou sans grand déplacement)
