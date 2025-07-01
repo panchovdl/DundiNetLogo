@@ -11,36 +11,21 @@ to update-season
     set current-season "Dabbuunde"
     set season-counter 0
     stock-residu-cultures         ; Début du dabbuunde : recolte des cultures et stock des residus
-    ask foyers with [is-transhumant = true] [
-      ask cattle-herd [ die ]
-      ask sheep-herd [ die ]
-      die
-    ]
-    ask camps with [is-temporary] [ die ]
   ]
   
   if current-season = "Dabbuunde" and season-counter >= dabbuunde-duration [
     set current-season "Ceedu"
     set season-counter 0
-    create-transhumant-foyers influx-Ceedu (patches with [pycor >= max-pycor - 2])
   ]
   
   if current-season = "Ceedu" and season-counter >= ceedu-duration [
     set current-season "Ceetcelde"
     set season-counter 0
-    create-transhumant-foyers influx-Ceetcelde (patches with [pycor >= max-pycor - 2])
   ]
   
   if current-season = "Ceetcelde" and season-counter >= ceetcelde-duration [
     set current-season "Nduungu"
     set season-counter 0
-    ask foyers with [is-transhumant = true] [
-      ask cattle-herd [ die ]
-      ask sheep-herd [ die ]
-      die
-    ]
-    ask camps with [is-temporary] [ die ]
-    create-transhumant-foyers influx-Nduungu (patches with [ pycor <= (min-pycor + 2) ])
     ; Mise à jour de l'année
   ]
   

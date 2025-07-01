@@ -275,7 +275,7 @@ foyers-own [
   surface-agriculture              ; surface cultivée par le foyer
 
  ; Relations
-  friends                          ; Amis de l'agent
+  ;friends                          ; Amis de l'agent
   far-exploration-count            ; Compteur d'exploration au loin
   close-exploration-count          ; Compteur d'exploration proche
   cattleNEC-satisfaction           ; Evaluation de la satisfaction de l'éleveur sur la condition corporelle de son troupeau (Bovin)
@@ -720,36 +720,19 @@ to go
     set ticks-left-year ticks-left-year + 1
   ]
 
-  ; Mise à jour quotidienne de l'espace connu (tous agents non environnement)
-  update-known-space
 
   ; Foyers
   ask foyers [
-    ifelse cattle-herd != nobody [
-      move-to [current-home-patch] of cattle-herd
-    ] [
-      move-to [current-home-patch] of sheep-herd]
-    set current-home-patch patch-here
-    if is-transhumant = false [
-      ifelse current-home-patch != original-home-patch [
-        set shape "lander"
-        set size 0.8
-        set color red + 2
-        set is-in-temporary-camp true
-      ] [
-        set color brown
-        set size 0.1
-        set shape "person"
-        set is-in-temporary-camp false
-      ]
-    ]
-  if cattle-herd != nobody and [have-left] of cattle-herd = false [
-    choose-strategy-for-cattles]
-  if sheep-herd != nobody and [have-left] of sheep-herd = false [
-    choose-strategy-for-sheeps]
-  ; Choix stratégiques pastoraux du chef de ménage
-
+    join-herd
+    ; Choix stratégiques pastoraux du chef de ménage
+    if cattle-herd != nobody and [have-left] of cattle-herd = false [
+      choose-strategy-for-cattles]
+    if sheep-herd != nobody and [have-left] of sheep-herd = false [
+      choose-strategy-for-sheeps]
   ]
+
+  ; Mise à jour quotidienne de l'espace connu (tous agents non environnement)
+  update-known-space
 
   ;-----------------------------------------;
   ; Evaluations quotidiennes et indicateurs ;
@@ -1257,7 +1240,7 @@ CHOOSER
 visualization-mode
 visualization-mode
 "soil-type" "tree-cover" "grass-cover" "grass-quality" "known-space"
-4
+0
 
 BUTTON
 40
@@ -1571,7 +1554,7 @@ CattleNECSatifactionIndex
 CattleNECSatifactionIndex
 0
 5
-4.0
+5.0
 1
 1
 NIL
@@ -1586,7 +1569,7 @@ number-of-camps
 number-of-camps
 1
 150
-1.0
+89.0
 1
 1
 NIL
@@ -1956,7 +1939,7 @@ decreasing-factor
 decreasing-factor
 0
 100
-0.0
+100.0
 1
 1
 NIL
@@ -2798,14 +2781,14 @@ PENS
 
 SLIDER
 15
-270
+260
 187
-303
+293
 retard-jours
 retard-jours
 0
 100
-17.0
+45.0
 1
 1
 NIL

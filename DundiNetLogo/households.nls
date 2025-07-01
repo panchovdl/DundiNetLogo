@@ -456,6 +456,30 @@ end
 ;;; Choix des stratégies du chef de campement ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+to join-herd
+  
+    ifelse cattle-herd != nobody [
+      move-to [current-home-patch] of cattle-herd
+    ] [
+      move-to [current-home-patch] of sheep-herd]
+    set current-home-patch patch-here
+    if is-transhumant = false [
+      ifelse current-home-patch != original-home-patch [
+        set shape "lander"
+        set size 0.8
+        set color red + 2
+        set is-in-temporary-camp true
+      ] [
+        set color brown
+        set size 0.1
+        set shape "person"
+        set is-in-temporary-camp false
+      ]
+    ]
+end
+
+
+
 to choose-strategy-for-cattles
   ;; Récupérer les conditions corporelles des troupeaux de bovins
   let cattle-cc  [corporal-condition] of cattle-herd
@@ -490,7 +514,7 @@ to choose-strategy-for-sheeps
   if sheep-cc <= sheep-low-threshold-cc [
     ;; Masquer et déplacer le troupeau de moutons
     if [have-left] of sheep-herd = FALSE [
-      ifelse is-transhumant [
+      ifelse is-transhumant = true [
         do-transhumant-strategy
       ] [
         ask sheep-herd [
@@ -510,7 +534,7 @@ end
 to do-first-strategy
 
   ;; Store the foyer's variables in local variables
-  let home-patch current-home-patch
+    let home-patch current-home-patch
   let my-known-space known-space
   ;; Find patches within 12 units of home-patch and not in known-space
   let close-undiscovered-patches patches with [

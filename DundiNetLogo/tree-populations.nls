@@ -590,7 +590,7 @@ to grow-tree-resources
     if current-fruit-stock <= 0 [set current-fruit-stock 1 ]
     
     if soil-current-fruit-stock > 1 [
-      set soil-current-fruit-stock soil-current-fruit-stock  - 0.001 * (precision soil-current-fruit-stock 1)
+      set soil-current-fruit-stock soil-current-fruit-stock  - 0.005 * (precision soil-current-fruit-stock 1)
     ]
     if germinated-seed-nb > 1 [
       set germinated-seed-nb round germinated-seed-nb - (0.001 * germinated-seed-nb)

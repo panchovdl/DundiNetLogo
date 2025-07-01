@@ -380,9 +380,9 @@ end
 
 
 ; Trouver le meilleur patch : d'abord la qualité, ensuite la quantité, enfin la proximité
-to-report find-best-patches [known-spaces my-shepherd seasons UtilityFactor]
+to-report find-best-patches [known-spaces my-shepherd seasons UtilityFactor current-home]
 
-  let viable-patches known-spaces with [current-grass >= 10 and is-fenced = false and (count camps-on self) < 2]
+  let viable-patches known-spaces with [current-grass >= 10 and is-fenced = false and (count camps-on self) < 2 and distance current-home < 12 ]
   if seasons = "Nduungu" [ set viable-patches viable-patches with [soil-type != "Caangol"]]
   if [is-transhumant = true] of foyer-owner [
     set viable-patches viable-patches with [has-camps = false]

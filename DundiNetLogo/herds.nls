@@ -60,7 +60,7 @@ to move
   ;; 1. déterminer le meilleur patch
   move-to current-home-patch
   
-  set best-patches find-best-patches known-space shepherd-type current-season FUtility
+  set best-patches find-best-patches known-space shepherd-type current-season FUtility current-home-patch
   
   ;; (S'il n'y en a pas)
   
@@ -74,20 +74,23 @@ to move
     if not is-in-temporary-camp [
       ifelse daily-trip >= 6 [
         ;; créer / déplacer campement ⇐ uniquement si le patch choisi est encore disponible
-        if patch-has-space? best-patch [
+        ifelse patch-has-space? best-patch [
           set current-home-patch best-patch
           set is-in-temporary-camp true
           move-to current-home-patch
           ;; étendre l’espace connu
           let nearby-patches [patches in-radius 2] of current-home-patch
           set known-space (patch-set known-space nearby-patches)
+        ] [
+          ;; pas de place -> simple déplacement
+          move-to best-patch
         ]
       ] [
         ;; best-patch < 6 → simple déplacement
         move-to best-patch
-    ] ; Fin ifelse
-  ] ;; fin Cas A
-  
+      ] ; Fin ifelse
+    ] ;; fin Cas A
+    
     
     ;; 5. Cas B : le foyer est déjà dans un campement temporaire OU transhumant
     if is-in-temporary-camp [
@@ -103,53 +106,53 @@ to move
             let nearby-patches [patches in-radius 2] of current-home-patch
             set known-space (patch-set known-space nearby-patches)
           ] [
-          move-to best-patch
-        ] ; end ifelse patch-has-space
-          
-        ; Si le foyer N'EST PAS transhumant
-      ] [
-          ; Si le best patch est dans la zone connue de son propre campement
-        ifelse member? best-patch original-camp-known-space [
-          
-          ;; Move to the best patch
-          move-to best-patch
-          set current-home-patch original-home-patch
-          set is-in-temporary-camp false
-          set xcor xcor + (random-float 0.9 - 0.45)
-          set ycor ycor + (random-float 0.9 - 0.45)
-          
-        ] [
-          ; Si le best patch N'EST PAS dans la zone connue de son propre campement
-          ifelse patch-has-space? best-patch [
-            
-            ;; Create a temporary camp
-            set current-home-patch best-patch
-            set is-in-temporary-camp true
-            move-to current-home-patch
-            set xcor xcor + (random-float 0.9 - 0.45)
-            set ycor ycor + (random-float 0.9 - 0.45)
-            
-            ;; Add patches within a radius of 2 cells around the camp to known-space
-            let nearby-patches [patches in-radius 2] of current-home-patch
-            set known-space (patch-set known-space nearby-patches)
-          ] [
             move-to best-patch
+          ] ; end ifelse patch-has-space
+          
+          ; Si le foyer N'EST PAS transhumant
+        ] [
+          ; Si le best patch est dans la zone connue de son propre campement
+          ifelse member? best-patch original-camp-known-space [
+            
+            ;; Move to the best patch
+            move-to best-patch
+            set current-home-patch original-home-patch
+            set is-in-temporary-camp false
             set xcor xcor + (random-float 0.9 - 0.45)
             set ycor ycor + (random-float 0.9 - 0.45)
-          ] ; end ifelse patch-has-space
-        ] ; end ifelse member
-      ] ; end ifelse transhumant
-    ] [
-      ;; best-patch à < 2 patches : juste y aller
-      move-to best-patch
-      set xcor xcor + (random-float 0.9 - 0.45)
-      set ycor ycor + (random-float 0.9 - 0.45)
-    ] ;; end ifelse daily-trip >= 2
-  ] ;; fin Cas B
+            
+          ] [
+            ; Si le best patch N'EST PAS dans la zone connue de son propre campement
+            ifelse patch-has-space? best-patch [
+              
+              ;; Create a temporary camp
+              set current-home-patch best-patch
+              set is-in-temporary-camp true
+              move-to current-home-patch
+              set xcor xcor + (random-float 0.9 - 0.45)
+              set ycor ycor + (random-float 0.9 - 0.45)
+              
+              ;; Add patches within a radius of 2 cells around the camp to known-space
+              let nearby-patches [patches in-radius 2] of current-home-patch
+              set known-space (patch-set known-space nearby-patches)
+            ] [
+              move-to best-patch
+              set xcor xcor + (random-float 0.9 - 0.45)
+              set ycor ycor + (random-float 0.9 - 0.45)
+            ] ; end ifelse patch-has-space
+          ] ; end ifelse member
+        ] ; end ifelse transhumant
+      ] [
+        ;; best-patch à < 2 patches : juste y aller
+        move-to best-patch
+        set xcor xcor + (random-float 0.9 - 0.45)
+        set ycor ycor + (random-float 0.9 - 0.45)
+      ] ;; end ifelse daily-trip >= 2
+    ] ;; fin Cas B
   ] [    
     go-back-home
-
-] ;; end ifelse best-patch = nobody
+    
+  ] ;; end ifelse best-patches = nobody
   
 end
 
@@ -158,18 +161,18 @@ end
 
 ;  move-to current-home-patch
 ;  set daily-trip 0
-  
-  ;; Find the best patch within known space
+
+;; Find the best patch within known space
 ;  let best-patch find-best-nearest-patch known-space shepherd-type current-season FUtility
 ;  let my-known-space known-space
 ;  ifelse best-patch != nobody [
-    ;; Calculate the distance between the best patch and the current home patch
+;; Calculate the distance between the best patch and the current home patch
 ;    set daily-trip distance best-patch
-    
-    ;; If the best patch is more than 6 units away from the current home patch
+
+;; If the best patch is more than 6 units away from the current home patch
 ;    ifelse daily-trip >= 6 [
 
-      ;; Check if the herd is not already in a temporary camp
+;; Check if the herd is not already in a temporary camp
 ;      ifelse not is-in-temporary-camp [
 
         ;; Create a temporary camp if not already in one
@@ -242,7 +245,6 @@ to eat
   set total-DM-ingested-from-trees 0
   set fruits-eaten 0
   set leaves-eaten 0
-  
   ; Calculer les besoins énergétiques (UF) et protéiques (MAD) qui peut évoluer à chaque step en fonction du nombre de tête dans le troupeau
   let base movement-needs daily-trip      ;; UF et MAD pour 1 UBT
   set daily-min-UF-needed-head  (item 0 base) * max-daily-DM-ingestible-per-head ; Quantité minimum d'Unité Fourragère à l'entretien d'un UBT (avec ou sans grand déplacement)
@@ -268,7 +270,6 @@ to eat
       set preference-mono 0.3
     ]
   ]
-  ; Stratégie alimentaire 1 - Evaluation fourrage herbacé disponible
   ; Calculer l'UF/kg MS moyen du fourrage disponible
   let monocot-prop ([current-monocot-grass] of patch-here / [current-grass] of patch-here)
   let average-UF-per-kg-MS ([monocot-UF-per-kg-MS] of patch-here * monocot-prop) + ([dicot-UF-per-kg-MS] of patch-here * (1 - monocot-prop))
@@ -288,14 +289,8 @@ to eat
   set desired-DM-intake min list desired-DM-intake daily-needs-DM
   ]
   
-  ; Stratégie alimentaire 2 - Evaluation fourrage total disponible (herbacée et ligneux
-  ; 
-  
-  
   ; Consommer l'herbe
   consume-grass patch-here desired-DM-intake p preference-mono
-
-  
   
  ; Définition du ratio maximal de ligneux consommable sur la ration totale journalière d'un UBT
   let max-tree-ratio 0.3  ;; Valeur par défaut pour bovins
