@@ -1,9 +1,10 @@
 __includes["calculStat.nls" "landUnits.nls" "camps.nls" "tree-populations.nls" "herds.nls" "crop-lands.nls" "households.nls" "seasons.nls" "reporters.nls" "loading-files.nls"]
-extensions [csv table]; profiler]
+extensions [csv table GIS]; profiler]
 
 
 globals [
-
+  soilGrid                   ;stock gis soil db
+  treeGrid               ; stock trees soil DB
   size-x                 ; Taille horizontale du monde
   size-y                 ; Taille verticale du monde
   current-plot-id
@@ -430,7 +431,7 @@ to setup
   set current-season "Nduungu"                    ; Initialiser à la première saison
   set last-season "none"                          ; Initialiser last-season
   set season-counter 0                            ; Compteur de saison initialisé à 0
-
+  load-gis
 
   ;;; Chargement des variables temporelles
   load-climate-variables "year-type.txt"
@@ -476,6 +477,16 @@ to setup
 
 end
 
+to load-gis
+  set soilGrid gis:load-dataset "data/soils.shp"
+  set treeGrid  gis:load-dataset "data/trees.shp"
+  ;;fait le lien entre le système de coordonnée netlogo et celui des données
+  gis:set-world-envelope gis:envelope-of soilGrid ;; par défaut
+
+  ;show gis:property-names soil
+  gis:apply-coverage soilGrid "NOM_PUULAR" soil-type
+  gis:apply-coverage treeGrid "CT" tree-cover
+end
 
 
 to set-initial-values
