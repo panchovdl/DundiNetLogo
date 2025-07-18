@@ -145,9 +145,9 @@ to setup-trees ; Valeurs d'initialisation (âge minimum des arbres découverts)
               set germination-rate item 0 germination-rates
               set young-regen-rate item 1 germination-rates
               set dormance-needed item 2 germination-rates
-              set one-fruit-weight item 3 germination-rates / 1000
+              set one-fruit-weight item 3 germination-rates
               set seed-nb-per-fruit item 4 germination-rates
-              set one-seed-weight item 5 germination-rates / 1000
+              set one-seed-weight item 5 germination-rates
               set ratio-consumable item 6 germination-rates
               
               set leaves-status item 0 nutritional-values
