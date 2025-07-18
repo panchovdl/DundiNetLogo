@@ -135,9 +135,9 @@ to setup-trees ; Valeurs d'initialisation (âge minimum des arbres découverts)
           
             ifelse population-size != 0 [
               
-              set max-fruit-stock init-patch-max-fruit-stock / 1000
-              set max-leaf-stock init-patch-max-leaf-stock / 1000
-              set max-wood-stock init-patch-max-wood-stock / 1000
+              set max-fruit-stock init-patch-max-fruit-stock
+              set max-leaf-stock init-patch-max-leaf-stock
+              set max-wood-stock init-patch-max-wood-stock
               set leaves-percent-accessible init-patch-accessible
               set fruits-percent-accessible init-patch-accessible
               set max-fruit-nb init-patch-fruits-nb
