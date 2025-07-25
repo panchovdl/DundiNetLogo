@@ -363,7 +363,6 @@ to create-herds-for-me
       set current-home-patch original-home-patch
       set current-home-camp original-home-camp
       set is-in-temporary-camp false
-      set reforestation-plot [reforestation-plot] of myself
       set original-camp-known-space [close-known-space] of foyer-owner
     ]
 

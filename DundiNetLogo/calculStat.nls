@@ -210,22 +210,22 @@ to calculStat
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   
   ifelse count cattles with [have-left = false and is-transhumant = false] > 0 [
-    set meanFruitsConsumedCattle mean [fruits-eaten] of cattles with [have-left = false and is-transhumant = false]
+    set meanFruitsConsumedCattle (mean [fruits-eaten] of cattles with [have-left = false and is-transhumant = false]) / (mean [head] of cattles with [have-left = false and is-transhumant = false])
   ] [
     set meanFruitsConsumedCattle 0
   ]
   ifelse count cattles with [have-left = false and is-transhumant = false] > 0  [
-    set meanLeavesConsumedCattle mean [leaves-eaten] of cattles with [have-left = false and is-transhumant = false]
+    set meanLeavesConsumedCattle (mean [leaves-eaten] of cattles with [have-left = false and is-transhumant = false]) / (mean [head] of cattles with [have-left = false and is-transhumant = false])
   ] [
     set meanLeavesConsumedCattle 0
   ]
   ifelse count sheeps with [have-left = false and is-transhumant = false] > 0  [
-    set meanFruitsConsumedSheep mean [fruits-eaten] of sheeps with [have-left = false and is-transhumant = false]
+    set meanFruitsConsumedSheep (mean [fruits-eaten] of sheeps with [have-left = false and is-transhumant = false]) / (mean [head] of sheeps with [have-left = false and is-transhumant = false])
   ] [
     set meanFruitsConsumedSheep 0
   ]
   ifelse count sheeps with [have-left = false and is-transhumant = false] > 0  [
-    set meanLeavesConsumedSheep mean [leaves-eaten] of sheeps with [have-left = false and is-transhumant = false]
+    set meanLeavesConsumedSheep (mean [leaves-eaten] of sheeps with [have-left = false and is-transhumant = false]) / (mean [head] of sheeps with [have-left = false and is-transhumant = false])
   ] [
     set meanLeavesConsumedSheep 0
   ]  
