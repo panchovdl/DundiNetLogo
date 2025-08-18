@@ -496,12 +496,12 @@ to-report patches-between [ p1 p2 ]
   let y1 [ pycor ] of p1
   let x2 [ pxcor ] of p2
   let y2 [ pycor ] of p2
-
+  
   let distancex x2 - x1
   let distancey y2 - y1
   
   let n max (list abs distancex abs distancey)
-  if n > 0 [
+  ifelse n > 0 [
     let xinc distancex / n
     let yinc distancey / n
     let x x1
@@ -513,6 +513,8 @@ to-report patches-between [ p1 p2 ]
       set result (patch-set result patch round x round y)
     ]
     report result
+  ] [
+    report no-patches
   ]
 end
 
