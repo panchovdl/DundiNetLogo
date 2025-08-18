@@ -499,19 +499,21 @@ to-report patches-between [ p1 p2 ]
 
   let distancex x2 - x1
   let distancey y2 - y1
-
+  
   let n max (list abs distancex abs distancey)
-  let xinc distancex / n
-  let yinc distancey / n
-  let x x1
-  let y y1
-  let result patch-set patch x1 y1
-  repeat n [
-    set x x + xinc
-    set y y + yinc
-    set result (patch-set result patch round x round y)
+  if n > 0 [
+    let xinc distancex / n
+    let yinc distancey / n
+    let x x1
+    let y y1
+    let result patch-set patch x1 y1
+    repeat n [
+      set x x + xinc
+      set y y + yinc
+      set result (patch-set result patch round x round y)
+    ]
+    report result
   ]
-  report result
 end
 
 

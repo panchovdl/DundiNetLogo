@@ -33,25 +33,25 @@ end
 to go-back-home
   ; stratégie 1 : retour
   ifelse [is-transhumant] of foyer-owner [
-let home-patch [patch-here] of foyer-owner
-let neighbor-patches [neighbors4] of home-patch
-let potential-patches (patch-set neighbor-patches home-patch)
-let good-neighbors potential-patches with [is-fenced = false]
-
-;; Étape 5 : déplacement vers un des bons voisins ou le patch central
-if any? good-neighbors [
-  move-to one-of good-neighbors
-]
-
+    let home-patch [patch-here] of foyer-owner
+    let neighbor-patches [neighbors4] of home-patch
+    let potential-patches (patch-set neighbor-patches home-patch)
+    let good-neighbors potential-patches with [is-fenced = false]
+    
+    ;; Étape 5 : déplacement vers un des bons voisins ou le patch central
+    if any? good-neighbors [
+      move-to one-of good-neighbors
+    ]
+    
   ] [
-      set current-home-patch original-home-patch
-      set current-home-camp original-home-camp
-      set is-in-temporary-camp false  
-      let free-neigh original-camp-known-space with [is-fenced = false]
-      ifelse any? free-neigh [
-        move-to one-of free-neigh
-      ] [ 
-     move-to current-home-patch
+    set current-home-patch original-home-patch
+    set current-home-camp original-home-camp
+    set is-in-temporary-camp false  
+    let free-neigh original-camp-known-space with [is-fenced = false]
+    ifelse any? free-neigh [
+      move-to one-of free-neigh
+    ] [ 
+      move-to current-home-patch
     ] ; end ifelse any?
   ] ; end ifelse trans
 end
@@ -74,20 +74,16 @@ to move
     if not is-in-temporary-camp [
       ifelse daily-trip >= 6 [
         ;; créer / déplacer campement ⇐ uniquement si le patch choisi est encore disponible
-        ifelse patch-has-space? best-patch [
-          set current-home-patch best-patch
-          set is-in-temporary-camp true
-          move-to current-home-patch
-          ;; étendre l’espace connu
-          let nearby-patches [patches in-radius 2] of current-home-patch
-          set known-space (patch-set known-space nearby-patches)
-        ] [
-          ;; pas de place -> simple déplacement
-          move-to best-patch
-        ]
+        set current-home-patch best-patch
+        set is-in-temporary-camp true
+        move-to current-home-patch
+        ;; étendre l’espace connu
+        let nearby-patches [patches in-radius 2] of current-home-patch
+        set known-space (patch-set known-space nearby-patches)
       ] [
         ;; best-patch < 6 → simple déplacement
         move-to best-patch
+        set daily-trip daily-trip * 2
       ] ; Fin ifelse
     ] ;; fin Cas A
     
@@ -107,6 +103,7 @@ to move
             set known-space (patch-set known-space nearby-patches)
           ] [
             move-to best-patch
+            set daily-trip daily-trip * 2
           ] ; end ifelse patch-has-space
           
           ; Si le foyer N'EST PAS transhumant
@@ -137,6 +134,7 @@ to move
               set known-space (patch-set known-space nearby-patches)
             ] [
               move-to best-patch
+              set daily-trip daily-trip * 2
               set xcor xcor + (random-float 0.9 - 0.45)
               set ycor ycor + (random-float 0.9 - 0.45)
             ] ; end ifelse patch-has-space
@@ -145,6 +143,7 @@ to move
       ] [
         ;; best-patch à < 2 patches : juste y aller
         move-to best-patch
+        set daily-trip daily-trip * 2
         set xcor xcor + (random-float 0.9 - 0.45)
         set ycor ycor + (random-float 0.9 - 0.45)
       ] ;; end ifelse daily-trip >= 2

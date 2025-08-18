@@ -960,7 +960,6 @@ to renew-known-space
   ; Agents (Rappel des agents et remise à jour de l'espace connu)
   ask foyers [
     set far-exploration-count 0                 ; Compteur d'exploration au loin
-    set close-exploration-count 0               ; Compteur d'exploration proche
     set known-space patches in-radius 3         ; Remise à 0
   ]
   ask cattles [set known-space [known-space] of foyer-owner]
@@ -1251,7 +1250,7 @@ CHOOSER
 visualization-mode
 visualization-mode
 "soil-type" "tree-cover" "grass-cover" "grass-quality" "known-space"
-0
+4
 
 BUTTON
 40
@@ -1580,7 +1579,7 @@ number-of-camps
 number-of-camps
 1
 150
-89.0
+110.0
 1
 1
 NIL
@@ -1751,7 +1750,7 @@ avg-UBT-per-camp
 avg-UBT-per-camp
 10
 100
-40.0
+60.0
 5
 1
 NIL
@@ -1950,7 +1949,7 @@ decreasing-factor
 decreasing-factor
 0
 100
-100.0
+0.0
 1
 1
 NIL
@@ -2499,7 +2498,7 @@ influx-Nduungu
 influx-Nduungu
 0
 100
-19.0
+12.0
 1
 1
 NIL

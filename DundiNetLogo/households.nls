@@ -497,6 +497,7 @@ to choose-strategy-for-cattles
         ask cattle-herd [
           do-second-strategy
         ]
+        move-to original-home-patch
       ]
     ]
   ]
@@ -533,7 +534,7 @@ end
 to do-first-strategy
 
   ;; Store the foyer's variables in local variables
-    let home-patch current-home-patch
+  let home-patch current-home-patch
   let my-known-space known-space
   ;; Find patches within 12 units of home-patch and not in known-space
   let close-undiscovered-patches patches with [
@@ -584,8 +585,9 @@ end
 ; Abandonner la zone
 to do-second-strategy
 
-    move-to original-home-patch          ; Déplacer au campement principal
-    set have-left true
-    set is-in-temporary-camp false
-    hide-turtle
+  move-to original-home-patch          ; Déplacer au campement principal
+  set current-home-patch original-home-patch
+  set have-left true
+  set is-in-temporary-camp false
+  hide-turtle
 end
