@@ -690,7 +690,7 @@ to go
 
 ] ; fin renouvellement annuel
 
-  if year-counter = Retard-jours [
+  if year-counter >= retard-jours [
     call-back-herds                               ; Retour des troupeaux et mise à jour de l'espace connu
   ]
 
