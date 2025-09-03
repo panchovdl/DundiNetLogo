@@ -690,7 +690,7 @@ to go
 
 ] ; fin renouvellement annuel
 
-  if year-counter >= retard-jours [
+  if year-counter = retard-jours [
     call-back-herds                               ; Retour des troupeaux et mise à jour de l'espace connu
   ]
 
@@ -1250,7 +1250,7 @@ CHOOSER
 visualization-mode
 visualization-mode
 "soil-type" "tree-cover" "grass-cover" "grass-quality" "known-space"
-4
+2
 
 BUTTON
 40
@@ -1300,7 +1300,7 @@ good-shepherd-percentage
 good-shepherd-percentage
 0
 100
-97.0
+100.0
 1
 1
 NIL
@@ -1315,7 +1315,7 @@ proportion-big-herders
 proportion-big-herders
 0
 100
-0.0
+48.0
 1
 1
 NIL
@@ -1330,7 +1330,7 @@ proportion-medium-herders
 proportion-medium-herders
 0
 100
-10.0
+0.0
 1
 1
 NIL
@@ -1487,7 +1487,7 @@ PLOT
 90
 1755
 265
-Biomasse (MS) par hectare
+Biomasse (Kg MS) par hectare
 NIL
 NIL
 0.0
@@ -1530,7 +1530,7 @@ SheepNECSatifactionIndex
 SheepNECSatifactionIndex
 0
 5
-5.0
+3.0
 1
 1
 NIL
@@ -1564,7 +1564,7 @@ CattleNECSatifactionIndex
 CattleNECSatifactionIndex
 0
 5
-5.0
+3.0
 1
 1
 NIL
@@ -1579,7 +1579,7 @@ number-of-camps
 number-of-camps
 1
 150
-110.0
+92.0
 1
 1
 NIL
@@ -1949,7 +1949,7 @@ decreasing-factor
 decreasing-factor
 0
 100
-0.0
+20.0
 1
 1
 NIL
@@ -1981,7 +1981,7 @@ FUtility
 FUtility
 0
 1
-0.5
+0.4
 0.1
 1
 NIL
@@ -2483,7 +2483,7 @@ influx-Ceedu
 influx-Ceedu
 0
 100
-19.0
+0.0
 1
 1
 NIL
@@ -2498,7 +2498,7 @@ influx-Nduungu
 influx-Nduungu
 0
 100
-12.0
+0.0
 1
 1
 NIL
@@ -2513,7 +2513,7 @@ influx-Ceetcelde
 influx-Ceetcelde
 0
 100
-19.0
+0.0
 1
 1
 NIL
@@ -2798,7 +2798,7 @@ retard-jours
 retard-jours
 0
 100
-45.0
+0.0
 1
 1
 NIL

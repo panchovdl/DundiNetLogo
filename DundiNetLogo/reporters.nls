@@ -382,7 +382,7 @@ end
 ; Trouver le meilleur patch : d'abord la qualité, ensuite la quantité, enfin la proximité
 to-report find-best-patches [known-spaces my-shepherd seasons UtilityFactor current-home]
 
-  let viable-patches known-spaces with [current-grass >= 10 and is-fenced = false and (count camps-on self) < 2 and distance current-home < 12 ]
+  let viable-patches known-spaces with [current-grass > 100 and is-fenced = false and (count camps-on self) < 2 and distance current-home < 12 ]
   if seasons = "Nduungu" [ set viable-patches viable-patches with [soil-type != "Caangol"]]
   if [is-transhumant = true] of foyer-owner [
     set viable-patches viable-patches with [has-camps = false]
@@ -454,8 +454,8 @@ to-report nearest-with-space [p-target]
 end
 
 to-report movement-needs [ dist ]
-  ifelse dist > 6 [ report list 0.5 28 ;; Grande distance     
-    ] [ ifelse dist <= 1 [ report list 0.37 20 ;; Entretien seul
+  ifelse dist > 15 [ report list 0.5 28 ;; Grande distance     
+    ] [ ifelse dist <= 7 [ report list 0.37 20 ;; Entretien seul
     ] [ report list 0.43 24 ; Petite distance
     ]
   ]

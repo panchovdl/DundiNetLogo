@@ -15,7 +15,7 @@ to recalcul-herd-parameters
   set max-live-weight 350 * head * UBT-size
   set min-live-weight 66 * head * UBT-size
 
-  set max-daily-DM-ingestible-per-head 7.2 * UBT-size
+  set max-daily-DM-ingestible-per-head 6.25 * UBT-size
   set daily-min-UF-needed-head 0.45 * max-daily-DM-ingestible-per-head
   set daily-min-MAD-needed-head 25  * max-daily-DM-ingestible-per-head
   set daily-water-consumption 22 * head * UBT-size
@@ -244,16 +244,16 @@ to eat
   set total-DM-ingested-from-trees 0
   set fruits-eaten 0
   set leaves-eaten 0
+  set desired-DM-intake 0
+
   ; Calculer les besoins énergétiques (UF) et protéiques (MAD) qui peut évoluer à chaque step en fonction du nombre de tête dans le troupeau
   let base movement-needs daily-trip      ;; UF et MAD pour 1 UBT
-  set daily-min-UF-needed-head  (item 0 base) * max-daily-DM-ingestible-per-head ; Quantité minimum d'Unité Fourragère à l'entretien d'un UBT (avec ou sans grand déplacement)
-  set daily-min-MAD-needed-head (item 1 base) * max-daily-DM-ingestible-per-head ; Quantité minimum de Matière Azotée Digestible à l'entretien d'un UBT (avec ou sans grand déplacement)
+  set daily-min-UF-needed-head  (item 0 base) * max-daily-DM-ingestible-per-head ; Quantité minimum d'Unité Fourragère à l'entretien d'une tete (avec ou sans grand déplacement)
+  set daily-min-MAD-needed-head (item 1 base) * max-daily-DM-ingestible-per-head ; Quantité minimum de Matière Azotée Digestible à l'entretien d'une tete (avec ou sans grand déplacement)
   
   set daily-needs-UF daily-min-UF-needed-head * head
   set daily-needs-MAD daily-min-MAD-needed-head * head
   set daily-needs-DM max-daily-DM-ingestible-per-head * head
-  set desired-DM-intake 0
-
   ; Déterminer la préférence pour les monocotylédones
   ifelse current-season = "Nduungu" [
     ; En Nduungu, préférence de 80% pour les monocotylédones
@@ -298,9 +298,9 @@ to eat
   ]
 
   ; Calculer le reste de MS à consommer en fonction de la consommation journalière maximale et la quantité voulue à consommer par le troupeau
- let remaining-DM-to-consume (desired-DM-intake - DM-ingested)
+ let remaining-DM-to-consume (daily-needs-DM - DM-ingested)
 
-  let tree-resources-to-consume min (list remaining-DM-to-consume (desired-DM-intake * max-tree-ratio))
+  let tree-resources-to-consume min (list remaining-DM-to-consume (daily-needs-DM * max-tree-ratio))
 
   if remaining-DM-to-consume > 0 [
     consume-tree-resources patch-here tree-resources-to-consume
