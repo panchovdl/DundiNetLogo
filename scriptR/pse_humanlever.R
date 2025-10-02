@@ -1,4 +1,4 @@
-library(tidyverse)
+library(ggplot2)
 library(gridExtra)
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
@@ -37,7 +37,7 @@ b <- ggplot(data = data.df)+
     size = "Sim. sample",
     colour = "Prop. de moyens éleveurs",
     shape = "Classe de bon berger")+  
-  scale_colour_gradient(low = "white", high = "black")+
+  #scale_colour_gradient(low = "white", high = "black")+
   ylim(0,150)+
   geom_hline(aes(yintercept = 9), linetype="dotted") +  #9  #resultat 74
   geom_hline(aes(yintercept = 65), linetype="dotted") +  #moyen
