@@ -220,19 +220,16 @@ to grow-grass  ; - Version 2.2.
     ; Croissance logistique pour les dicotylédones
     set new-dicot-grass current-dicot-grass + r_grass * current-dicot-grass * multiplier * (K * (1 - p) - current-dicot-grass) / (K * (1 - p))
 
-
+    ; Mettre a jour le stock de monocotylédones
     set current-monocot-grass min (list new-mono-grass (K * p))
+    if current-monocot-grass <= 0 [ set current-monocot-grass 1 ]
+    
+    ; Mettre à jour le stock de dicotylédones
     set current-dicot-grass min (list new-dicot-grass (K * (1 - p)))
+    if current-dicot-grass <= 0 [ set current-dicot-grass 1]
+    
     ; Mettre à jour le stock total d'herbe
     set current-grass current-monocot-grass + current-dicot-grass
-
-    ;  let new-current-grass current-grass + r * current-grass * (K - current-grass) / K
-    ;  set current-grass min (list new-current-grass K)
-
-
-    ; Assurer que les valeurs restent positives
-    if current-monocot-grass <= 0 [ set current-monocot-grass 1 ]
-    if current-dicot-grass <= 0 [ set current-dicot-grass 1]
     if current-grass <= 0 [ set current-grass 1 ]
   ]
 end

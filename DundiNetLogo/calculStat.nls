@@ -151,16 +151,16 @@ to calculStat
   
   ; Population moyenne par classe d'ages
   
-  set meanTrees8yearsByPatch sum [population-size] of tree-populations with [tree-pop-age >= 8] / count patches
-  set meanTrees7yearsByPatch sum [population-size] of tree-populations with [tree-pop-age = 7] / count patches
-  set meanTrees6yearsByPatch sum [population-size] of tree-populations with [tree-pop-age = 6] / count patches
-  set meanTrees5yearsByPatch sum [population-size] of tree-populations with [tree-pop-age = 5] / count patches
-  set meanTrees4yearsByPatch sum [population-size] of tree-populations with [tree-pop-age = 4] / count patches
-  set meanTrees3yearsByPatch sum [population-size] of tree-populations with [tree-pop-age = 3] / count patches
-  set meanTrees2yearsByPatch sum [population-size] of tree-populations with [tree-pop-age = 2] / count patches
-  set meanTrees1yearsByPatch sum [population-size] of tree-populations with [tree-pop-age = 1] / count patches
-  set meanTreesOldesByPatch sum [population-size] of tree-populations with [tree-pop-age > 4] / count patches
-  set meanTreesYoungsByPatch sum [population-size] of tree-populations with [tree-pop-age <= 4] / count patches
+  set meanTrees8yearsByPatch (sum [population-size] of tree-populations with [tree-pop-age >= 8] / count patches) / 100
+  set meanTrees7yearsByPatch (sum [population-size] of tree-populations with [tree-pop-age = 7] / count patches) / 100
+  set meanTrees6yearsByPatch (sum [population-size] of tree-populations with [tree-pop-age = 6] / count patches) / 100
+  set meanTrees5yearsByPatch (sum [population-size] of tree-populations with [tree-pop-age = 5] / count patches) / 100
+  set meanTrees4yearsByPatch (sum [population-size] of tree-populations with [tree-pop-age = 4] / count patches) / 100
+  set meanTrees3yearsByPatch (sum [population-size] of tree-populations with [tree-pop-age = 3] / count patches) / 100
+  set meanTrees2yearsByPatch (sum [population-size] of tree-populations with [tree-pop-age = 2] / count patches) / 100
+  set meanTrees1yearsByPatch (sum [population-size] of tree-populations with [tree-pop-age = 1] / count patches) / 100
+  set meanTreesOldesByPatch (sum [population-size] of tree-populations with [tree-pop-age > 4] / count patches) / 100
+  set meanTreesYoungsByPatch (sum [population-size] of tree-populations with [tree-pop-age <= 4] / count patches) / 100
   
   
   ; Variables d'accès à l'eau
@@ -210,22 +210,22 @@ to calculStat
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   
   ifelse count cattles with [have-left = false and is-transhumant = false] > 0 [
-    set meanFruitsConsumedCattle (mean [fruits-eaten] of cattles with [have-left = false and is-transhumant = false]) / (mean [head] of cattles with [have-left = false and is-transhumant = false])
+    set meanFruitsConsumedCattle (sum [fruits-eaten] of cattles with [have-left = false and is-transhumant = false]) / (sum [head] of cattles with [have-left = false and is-transhumant = false])
   ] [
     set meanFruitsConsumedCattle 0
   ]
   ifelse count cattles with [have-left = false and is-transhumant = false] > 0  [
-    set meanLeavesConsumedCattle (mean [leaves-eaten] of cattles with [have-left = false and is-transhumant = false]) / (mean [head] of cattles with [have-left = false and is-transhumant = false])
+    set meanLeavesConsumedCattle (sum [leaves-eaten] of cattles with [have-left = false and is-transhumant = false]) / (sum [head] of cattles with [have-left = false and is-transhumant = false])
   ] [
     set meanLeavesConsumedCattle 0
   ]
   ifelse count sheeps with [have-left = false and is-transhumant = false] > 0  [
-    set meanFruitsConsumedSheep (mean [fruits-eaten] of sheeps with [have-left = false and is-transhumant = false]) / (mean [head] of sheeps with [have-left = false and is-transhumant = false])
+    set meanFruitsConsumedSheep (sum [fruits-eaten] of sheeps with [have-left = false and is-transhumant = false]) / (sum [head] of sheeps with [have-left = false and is-transhumant = false])
   ] [
     set meanFruitsConsumedSheep 0
   ]
   ifelse count sheeps with [have-left = false and is-transhumant = false] > 0  [
-    set meanLeavesConsumedSheep (mean [leaves-eaten] of sheeps with [have-left = false and is-transhumant = false]) / (mean [head] of sheeps with [have-left = false and is-transhumant = false])
+    set meanLeavesConsumedSheep (sum [leaves-eaten] of sheeps with [have-left = false and is-transhumant = false]) / (sum [head] of sheeps with [have-left = false and is-transhumant = false])
   ] [
     set meanLeavesConsumedSheep 0
   ]  

@@ -9,7 +9,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Ouverture des fichiers pour l'environnement spatial du modèle ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 to load-environment [filename]
   file-open filename
   while [not file-at-end?] [
@@ -58,6 +57,7 @@ to load-tree-age-data [filename]
   ; Lire les données ligne par ligne
   while [not file-at-end?] [
     let line csv:from-row file-read-line
+    show line
     ; Convertir les éléments en types appropriés
     let soil-types item 0 line
     let trees-type item 1 line        ; "nutritive", "lessNutritive", "fruity"
