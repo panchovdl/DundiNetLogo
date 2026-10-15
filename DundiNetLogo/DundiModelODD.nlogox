@@ -1,0 +1,2535 @@
+<?xml version="1.0" encoding="utf-8"?>
+<model version="NetLogo 7.0.4" snapToGrid="true">
+  <code><![CDATA[__includes["calculStat.nls" "landUnits.nls" "camps.nls" "tree-populations.nls" "herds.nls" "crop-lands.nls" "households.nls" "seasons.nls" "reporters.nls" "loading-files.nls"]
+extensions [csv table GIS profiler]
+
+
+globals [
+  soilGrid                   ;stock gis soil db
+  treeGrid               ; stock trees soil DB
+  size-x                 ; Taille horizontale du monde
+  size-y                 ; Taille verticale du monde
+  current-plot-id
+  current-season         ; Saison actuelle
+  last-season            ; Saison précédente
+  season-counter         ; Compteur de saison
+  year-types             ; Liste qui stocke les types d'années
+  current-year-type      ; Le type d'année en cours (bonne, moyenne, mauvaise)
+  total-ticks-per-year   ; Nombre total de ticks par année
+  total-ticks-simu
+  year-counter           ; Compteur de ticks dans l'année
+  year-index             ; Indice de l'année en cours
+
+  nduungu-duration       ; Nombre de ticks pour la saison des pluies
+  dabbuunde-duration     ; Nombre de ticks pour la saison sèche froide
+  ceedu-duration         ; Nombre de ticks pour la saison sèche chaude
+  ceetcelde-duration     ; Nombre de ticks pour la période de soudure
+
+  max-grass              ; pour visualisation
+  max-trees              ; pour visualisation
+
+  ; Tables qui enregistrent les valeurs des arbres en fonction de différents paramètres (type, age, sol et saison)
+
+  tree-age-table ; table: (tree-type, age) -> [max-fruits max-leaves max-woods sensitivities]
+  tree-nutrition-table ; table associative: (tree-type, soil, season) -> [UF MAD]
+  tree-germination-table
+
+  pB                     ; Proportion de grands éleveurs (troupeaux de grande taille) dans la population
+  pM                     ; Proportion d'éleveurs moyens (troupeaux de taille moyenne) dans la population
+  pS                     ; Proportion de petits éleveurs (troupeaux de petite taille) dans la population
+
+  UBT_grand              ; Nombre d'UBT pour un grand troupeau
+  UBT_moyen              ; Nombre d'UBT pour un troupeau moyen
+  UBT_petit              ; Nombre d'UBT pour un petit troupeau
+
+
+  seuil-bon-UF           ; Seuil UF pour une herbe de bonne qualité
+  seuil-moyen-UF         ; Seuil UF pour une herbe de qualité moyenne
+  seuil-bon-MAD          ; Seuil MAD pour une herbe de bonne qualité
+  seuil-moyen-MAD        ; Seuil MAD pour une herbe de qualité moyenne
+
+  K-Baldiol              ; Seuils maximum d'herbe pour les différents types de sols
+  K-Caangol
+  K-Sangre
+  K-Seeno
+
+  production-residu-hectare-agriculture   ; production à l'hectare en tonne de résidu de culture
+
+
+  initial-number-of-camps          ; Nombre de campements permanents installés à l'initialisation du modèle
+  space-camp-min                   ; Espace minimum disponible pour les foyers dans les campements permanents
+  space-camp-max                   ; Espace maximum disponible pour les foyers dans les campements permanents
+  space-camp-standard-deviation    ; Écart-type de l'espace des campements
+  space-camp-mean                  ; Moyenne de l'espace des campements
+  reforestation-plots-nb           ; Nombre de parcelles de reforestation
+  radius-close                     ; Valeur de la distance maximal pour tre considr comme proche du campement (in update-known-space)
+  caangol-surface                  ; Nombre de km² de Caangol
+  seeno-surface                    ; Nombre de km² de Seeno
+  sangre-surface                   ; Nombre de km² de Sangre
+  baldiol-surface                  ; Nombre de km² de Baldiol
+
+  listValueHerdeType               ; Pour visualiser dans l'interface
+  sum-UBT                          ; Total d'UBT dan la simulation
+
+
+  total-UBT-created                ; Variable de vérification du nombre d'UBT créé pendant la procédure de création pour
+  ticks-with-transhumants          ; Compteur de jours où il y a des éleveurs transhumants dans la zone
+
+]
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Breeding and characterization ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+breed [camps camp]
+breed [foyers foyer]
+breed [cattles cattle]
+breed [sheeps sheep]
+breed [tree-populations tree-population]
+breed [mature-tree-nutritive-pops mature-tree-nutritive-pop]             ; Pour visualisation
+breed [mature-tree-less-nutritive-pops mature-less-nutritive-tree-pop]   ; Pour visualisation
+breed [mature-tree-fruity-pops mature-tree-fruity-pop]                   ; Pour visualisation
+breed [champs champ]
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Variables des cellules ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+patches-own [
+
+
+  ; Variables d'initialisation  et de temps
+
+  soil-type                        ; Type de sol et de paysage
+  init-camp-pref                   ; Préférence pour l'installation des campements (1 ou 2)
+  has-camps                        ; Identifie si le patch a un campement
+
+  ; Variables pour le tapis herbacée
+
+  current-grass                    ; Couverture d'herbe en kg
+  K                                ; Montant maximum d'herbe
+  K-max                            ; Montant maximum d'herbe
+  patch-sensitivity                ; Sensibilité à la dégradation
+ ;degradation-level                ; Niveau de dégradation
+
+  grass-quality                    ; Qualité actuelle de l'herbe
+  q                                ; Ratio de qualité
+  p                                ; Proportion de monocotylédone
+  current-monocot-grass            ; Stock d'herbe des monocotylédones en kg
+  current-dicot-grass              ; Stock d'herbe des dicotylédones en kg
+
+  monocot-UF-per-kg-MS             ; UF/kg MS pour les monocotylédones
+  monocot-MAD-per-kg-MS            ; MAD/kg MS pour les monocotylédones
+  dicot-UF-per-kg-MS               ; UF/kg MS pour les dicotylédones
+  dicot-MAD-per-kg-MS              ; MAD/kg MS pour les dicotylédones
+
+
+  ; Variables d'initialisation des populations ligneuses
+
+  tree-cover                       ; Couverture d'arbres
+  max-tree-cover                   ; maximum d'arbres atteignable par cellule (pour visualisation)
+  max-tree-number                   ; Maximum d'individus atteignable sur un km² (définit selon le type de sol)
+  num-nutritious                   ; Nombre d'arbres appréciés par le bétail en fonction du tree-cover
+  num-less-nutritious              ; Nombre d'arbres peu / pas apprécié par le bétail en fonction du tree-cover
+  num-fruity                       ; Nombre d'arbres fruitiers (jujubier, baobab, balanites) par le bétail en fonction du tree-cover
+
+
+  ; passage intermédiaire des données du fichier tree_infos pour les transférer à chaque population
+  intermediate-patch-pop-size
+  intermediate-patch-tree-age
+  intermediate-patch-tree-type
+
+  init-patch-max-fruit-stock
+  init-patch-max-leaf-stock
+  init-patch-max-wood-stock
+  init-patch-accessible
+  init-patch-fruits-nb
+  init-patch-seeds-nb
+
+
+
+
+  ; Variables des parcelles de reforestation
+
+  is-fenced                        ; Cellule protégée (parcelle de reforestation)
+  plot-id                          ; Assignation d'un ID si c'est une parcelle de reforestation
+
+
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Variables non initialisées (en cours) ;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  water-point                      ; Point d'eau (booléen)
+  has-pond                         ; Booléen, détermine s'il y a une mare
+  water-stock                      ; Stock d'eau dans la mare
+]
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;; Ensemble des agents ;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+turtles-own [
+
+  ; Etat corporel des troupeaux
+  corporal-condition               ; État de santé de l'agent - en valeur de NEC (Note d'Etat Corporel)
+  initial-live-weight              ; poids vif à l'initialisation (kg)
+  live-weight                      ; poids vif actuel (kg)
+  max-live-weight                  ; Maximum de poids vif atteignable (kg)
+  min-live-weight                  ; Minimum de poids vif atteignable (kg)
+  weight-gain                      ; Gain ou perte de poids
+  ticks-left-year                  ; Nombre de jours que le troupeau a quitté la zone sur l'année
+
+  ; Alimentation spécifiques aux troupeaux
+  UBT-size                         ; Proportion d'un individu en Unité de Bétail Tropical (une vache allaitante = 1)
+  head                             ; Nombre d'individus
+  max-daily-DM-ingestible-per-head ; Quantité maximale de MS qu'un individu peut consommer par jour
+  daily-needs-DM                   ; Quantité maximale de MS que l'agent troupeau peut consommer par jour
+  desired-DM-intake                ; Quantité de MS que le troupeau veut consommer en fonction de la qualité du fourrage
+  daily-min-UF-needed-head         ; Quantité minimum d'Unité Fourragère à l'entretien d'un UBT
+  daily-needs-UF                   ; Quantité minimum d'Unité Fourragère à l'entretien du troupeau
+  daily-min-MAD-needed-head        ; Quantité minimum de Matière Azotée Digestible à l'entretien d'un UBT;
+  daily-needs-MAD                  ; Quantité minimum de Matière Azotée Digestible à l'entretien du troupeau
+  DM-ingested                      ; Quantité totale d'herbe ingérée (kg de MS)
+  UF-ingested                      ; UF totales ingérées
+  MAD-ingested                     ; MAD totales ingérées
+  total-UF-ingested-from-trees     ; UF totales consommées sur les arbres
+  total-MAD-ingested-from-trees    ; MAD totales consommées sur les arbres
+  total-DM-ingested-from-trees     ; MS totales consommées sur les arbres
+  daily-water-consumption          ; Consommation d'eau quotidienne
+  preference-mono                  ; Préférence pour les Graminées
+
+  ; Caractéristiques des foyers partagé aux troupeaux (Utilisé autant par les troupeaux que les foyers)
+  known-space                      ; Tout l'espace connu par les individus
+  close-known-space                ; Espace connu à moins d'une journée de déplacement d'un troupeau (6km)
+  distant-known-space              ; Espace connu à plus d'une journée de déplacement d'un troupeau (6km)
+  daily-trip                       ; Distance parcourue dans la journée
+  is-transhumant                   ; Booléen qui définit si le foyer et ses troupeaux associés sont transhumants
+
+  ; Déplacement du campement
+  current-home-camp                ; Campement actuel
+  current-home-patch               ; Patch du campement actuel
+  original-home-camp               ; Campement permanent
+  original-home-patch              ; Patch du campement permanent
+  prev-home-patch                  ; Patch du campement de la veille
+  is-in-temporary-camp             ; Booléen indiquant à l'agent s'il est dans son campement permanent ou sur un temporaire
+  reforestation-plot               ; Parcelle de reforestation
+]
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;; Agents Campements ;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+camps-own [
+  available-space                  ; Nombre de foyers associés
+  is-temporary                     ; Booléen indiquant si le camp est temporaire
+  wood-needs                       ; Besoins en bois
+  wood-quantity                    ; Quantité de bois dans le campement
+  foyers-hosted                    ; Nombre de foyers qui composent le campement
+]
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;; Agents Foyers ;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;
+
+foyers-own [
+
+
+  ; Gestion du troupeau
+  cattle-herd                      ; Troupeau de bovins associé
+  cattle-herd-size                 ; Taille du troupeau de bovins associé ("grand", "moyen", "petit")
+  cattle-herd-count                ; Valeur numérique de la taille du troupeau en fonction du cattle-herd-size (aléatoire dans une intervalle)
+  sheep-herd                       ; Troupeau de moutons associé
+  sheep-herd-size                  ; Taille du troupeau d'ovins associé
+  sheep-herd-count                 ; Valeur numérique de la taille du troupeau en fonction du sheep-herd-size (aléatoire dans une intervalle)
+  shepherd-type                    ; Type de berger du foyer
+  herder-type                      ; Caractéristique d'élevage du foyer (grand moyen petit)
+
+  planned-days                     ; Nombre de jours de présence attendus
+  days-present                     ; Nombre de jours de présence effective
+  presence-satisfaction            ; Seuil de satisfaction de présence des transhumants dans la zone
+  counted-satisfied?               ; Compteur du nombre de foyers satisfaits du temps de présence dans l'année
+
+
+  ; Surveillance de l'état du troupeau
+                          ; Bovins
+  cattle-low-threshold-cc          ; Limite basse NEC
+  cattle-low-threshold-pc          ; Limite basse MAD
+  cattle-high-threshold-cc         ; Limite haute NEC
+  cattle-high-threshold-pc         ; Limite haute MAD
+                          ; Ovins
+  sheep-low-threshold-cc           ; limite basse NEC
+  sheep-low-threshold-pc           ; limite basse MAD
+  sheep-high-threshold-cc          ; limite haute NEC
+  sheep-high-threshold-pc          ; limite haute MAD
+
+
+  ; Pratiques sylvicoles
+  owned-trees-pop                  ; Population d'arbres associée
+
+ ; Pratiques agriculture
+  stock-residu                     ; residu de paille d'agriculture
+  surface-agriculture              ; surface cultivée par le foyer
+
+ ; Relations
+  ;friends                          ; Amis de l'agent
+  far-exploration-count            ; Compteur d'exploration au loin
+  close-exploration-count          ; Compteur d'exploration proche
+  cattleNEC-satisfaction           ; Evaluation de la satisfaction de l'éleveur sur la condition corporelle de son troupeau (Bovin)
+  sheepNEC-satisfaction            ; Evaluation de la satisfaction de l'éleveur sur la condition corporelle de son troupeau (Ovin)
+  transCattleNEC-satisfaction      ; [Transhumant] Evaluation de la satisfaction de l'éleveur sur la condition corporelle de son troupeau (Bovin)
+  transSheepNEC-satisfaction       ; [Transhumant] Evaluation de la satisfaction de l'éleveur sur la condition corporelle de son troupeau (Ovin)
+]
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;; Agents troupeau de petits ruminants ;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+sheeps-own [
+  foyer-owner                      ; Foyer du troupeau
+  shepherd-type                    ; Caractéristique d'élevage du foyer (grand moyen petit)
+  have-left                        ; Indique si le troupeau est parti vers le sud ou hors de la zone de l'UP
+  leaves-eaten                     ; Quantité en kg de MS de feuilles consommées dans la journée
+  fruits-eaten                     ; Quantité en kg de MS de fruits consommés dans la journée
+  original-camp-known-space        ; Espace connu à moins d'une journée de déplacement du campement principal pour un troupeau
+  mean-DM-ingested                 ; Moyenne de MS ingérée par individu dans le troupeau
+  best-patches                     ; Collection des 3 meilleurs patches d'herbe de la journée
+]
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;; Agents troupeau de bovins ;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+cattles-own [
+  foyer-owner                      ; Foyer du troupeau
+  shepherd-type                    ; Caractéristique d'élevage du foyer (grand moyen petit)
+  have-left                        ; Indique si le troupeau est parti vers le sud ou hors de la zone de l'UP
+  leaves-eaten                     ; Quantité en kg de MS de feuilles consommées dans la journée
+  fruits-eaten                     ; Quantité en kg de MS de fruits consommés dans la journée
+  original-camp-known-space        ; Espace connu à moins d'une journée de déplacement du campement principal pour un troupeau
+  mean-DM-ingested                 ; Moyenne de MS ingérée par individu dans le troupeau
+  best-patches                     ; Collection des 3 meilleurs patches d'herbe de la journée
+]
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;; Agents populations d'arbres ;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+tree-populations-own [
+
+  ; Caractéristiques des populations d'arbres
+  tree-type                        ; "nutritive", "less-nutritive", "fruit"
+  tree-pop-age                     ; Âge de la population (1 à 8)
+  population-size                  ; Nombre d'arbres dans cette population
+
+  ; Relatif à la quantité de ressources
+  current-fruit-stock              ; Stock de fruits
+  current-leaf-stock               ; Stock de feuilles
+  current-wood-stock               ; Stock de bois
+  soil-current-fruit-stock         ; Stock de fruits au sol pour germination
+  max-fruit-stock                  ; Stock maximal de fruit pour la population
+  max-leaf-stock                   ; Stock maximal de fruit pour la population
+  max-wood-stock                   ; Stock maximal de fruit pour la population
+  wood-ratio                       ; Ratio entre le stock actuel et le stock maximal de bois
+  max-fruit-nb                     ; Limite maximale du nombre de fruits par population (selon type, age)
+  max-seed-nb                      ; Limite maximale du nombre de graines par population (selon type, age)
+  fruit-nb                         ; Nombre de fruits
+  seed-nb                          ; Nombre de graines
+  leaves-percent-accessible        ; pourcentage de ressources en feuilles accessible (déterminé selon la taille, la phénologie spécifique à l'arbre et de la saison)
+  fruits-percent-accessible        ; pourcentage de ressources en fruits accessible (déterminé selon la taille, la phénologie spécifique à l'arbre et de la saison)
+  germinated-seed-nb               ; Nombre de graines passées par le tractus digestif des chèvres
+
+  germination-rate                 ; Taux de germination
+  young-regen-rate                 ; Taux de régénération des jeunes plants (jusqu'à 4 ans)
+  dormance-needed                  ; Besoin des graines de passer par le tractus digestif des chèvres (simulé en laboratoire par le passage à l'acide)
+  one-fruit-weight                 ; Poids d'un fruit
+  one-seed-weight                  ; Poids d'une graine
+  seed-nb-per-fruit                ; Nomrbe de graines par fruit
+  ratio-consumable                 ; Part consommable dans un fruit
+
+
+  ; Relatif à l'énergie et la valeur de matière azotée dans les feuilles et feuilles
+  leaves-status                    ; Statut phénologique des feuilles (Chute, au sol, disponible)
+  leaves-UF-per-kg-MS              ; Valeur fourragère (UF) par kg de MS des feuilles
+  leaves-MAD-per-kg-MS             ; Matière Azotée Digestible (MAD) par kg de MS des feuilles
+  fruits-status                    ; Statut phénologique des fruits (Chute, au sol, croissance, disponible)
+  fruits-UF-per-kg-MS              ; Valeur fourragère (UF) par kg de MS des fruits
+  fruits-MAD-per-kg-MS             ; Matière Azotée Digestible (MAD) par kg de MS des fruits
+]
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;;;; Agents champs ;;;;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+champs-own [
+  foyer-owner                      ; Foyer du champ
+  surface                          ; Surface du champ
+]
+
+
+
+to show-tree-populations-info      ; Procédure pour afficher les populations d'arbres
+                                   ; Compter le nombre total de populations d'arbres
+  let total-populations count tree-populations
+  show (word "Nombre total de populations d'arbres : " total-populations)
+
+  ; Vérifier si le nombre total est bien de 24
+  ifelse total-populations = 24 [
+    show "Le modèle a correctement 24 populations d'arbres."
+  ] [
+    show (word "ATTENTION : Le modèle n'a que " total-populations " populations d'arbres.")
+  ]
+
+  ; Parcourir chaque patch contenant des populations d'arbres
+  ask patches with [any? tree-populations-here] [
+    ; Compter le nombre de populations d'arbres sur ce patch
+    let pop-count count tree-populations-here
+    ; Afficher les informations pour ce patch
+    show (word "Patch (" pxcor ", " pycor "): " pop-count " populations.")
+
+    ; Itérer sur chaque population d'arbres et afficher les détails
+    ask tree-populations-here with [current-leaf-stock < 0 or current-fruit-stock < 0] [
+      show (word "  Type d'arbre: " tree-type
+        ", Âge: " tree-pop-age
+        ", Taille de la population: " population-size
+        ", Stock max de bois" max-wood-stock
+        ", Stock actuel de bois" current-wood-stock
+        ", Stock max de fruits" max-fruit-stock
+        ", Stock actuel de fruits" current-fruit-stock
+        ", Stock max de feuilles" max-leaf-stock
+        ", Stock actuel de feuilles" current-leaf-stock)
+    ]
+  ]
+end
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Initialisation du monde et des agents ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+to setup
+  clear-all
+  resize-world -11 11 -11 11                      ; Fixer les limites du monde à -11 à 11 en x et y
+  set-patch-size 22                               ; Ajuster la taille des patches
+
+
+  ; Chargement des valeurs environnementales
+  load-environment "environment_vel.txt"
+  set current-season "Nduungu"                    ; Initialiser à la première saison
+  set last-season "none"                          ; Initialiser last-season
+  set season-counter 0                            ; Compteur de saison initialisé à 0
+  load-gis
+
+  ;;; Chargement des variables temporelles
+  load-climate-variables "year-type.txt"
+  set year-index 0                                ; Indice de l'année en cours
+  set year-counter 0                              ; Compteur de ticks dans l'année
+
+
+  ; Chargement des valeurs spécifiques aux populations ligneuses
+  load-tree-age-data "tree_info.csv"                ; valeurs pour les âges
+  load-tree-nutrition-data "tree_nutrition.csv"     ; valeurs pour les qualités nutritives selon type d'arbre, saison, type de sol
+  load-tree-germination-data "germination_rate.csv" ; valeurs pour les valeurs de régénération selon type d'arbre et type de sol
+
+  ; Initialiser les durées des saisons
+  update-year-type
+  set-season-durations
+  set-initial-values
+
+  ; Lancer l'environnement et les agents
+  setup-landscape                                 ; Créer les unités de paysage
+  setup-water-patches                             ; Créer les mares
+  setup-camps                                     ; Créer les campements
+
+  setup-foyers                                    ; Créer les foyers
+  setup-herds                                     ; Créer les troupeaux
+  setup-trees                                     ; Créer les arbres
+  setup-crop-lands                                ; Créer les champs
+  ask camps with [not any? foyers-hosted] [die]
+  setup-reforestation-plots                       ; Créer les parcelles de reforestation
+  assign-camps-to-reforestation-plots             ; Assigner les campements aux parcelles (COGES)
+
+  update-UF-and-MAD                               ; Mise à jour des valeurs nutritionnelles
+  update-grass-quality                            ; Mise à jour de la qualité de l'herbe
+
+  set max-grass max [K] of patches                ; pour visualisation
+  set max-trees max [tree-cover] of patches
+
+
+  ;Visualiser l'environnement
+  reset-ticks
+  calculStat                                      ; Calculs statistiques globaux pour exploration de modèle
+  update-visualization
+  ;display-labels
+
+end
+
+to load-gis
+  set soilGrid gis:load-dataset "data/soils.shp"
+  set treeGrid  gis:load-dataset "data/trees.shp"
+  ;;fait le lien entre le système de coordonnée netlogo et celui des données
+  gis:set-world-envelope gis:envelope-of soilGrid ;; par défaut
+
+  ;show gis:property-names soil
+  gis:apply-coverage soilGrid "NOM_PUULAR" soil-type
+  gis:apply-coverage treeGrid "CT" tree-cover
+end
+
+
+to set-initial-values
+
+  set listValueHerdeType []
+
+  ; Définir les campements et l'espace disponible
+  set initial-number-of-camps number-of-camps
+  set space-camp-min 1
+  set space-camp-max 100
+  set space-camp-standard-deviation 20
+  set space-camp-mean (space-camp-min + space-camp-max) / 2
+  set reforestation-plots-nb reforestation-plots-number
+
+  ; Définir les proportions des types d'éleveurs
+  set pB proportion-big-herders / 100
+  set pM proportion-medium-herders / 100
+  set pS (100 - (proportion-big-herders + proportion-medium-herders)) / 100
+
+  ; Définir la taille des troupeaux en UBT
+  set total-UBT-created 0
+  set UBT_grand 100
+  set UBT_moyen 50
+  set UBT_petit 10
+
+  ; Ici, on calcule sum-UBT à partir du avg-UBT-per-camp (slider dans la
+  set sum-UBT (initial-number-of-camps * avg-UBT-per-camp)
+
+  ; Définir les seuil max d'herbe par type de sol kg MS / km²
+  set K-Baldiol 120000
+  set K-Caangol 300000 * 0.9
+  set K-Sangre 80000 * 0.7
+  set K-Seeno 200000 * 0.9
+
+  ; Définir les seuils
+  set seuil-bon-UF 0.6    ; Qualité de l'herbe - à ajuster selon les données du manuel de Boudet (1975)
+  set seuil-moyen-UF 0.45
+  set seuil-bon-MAD 53
+  set seuil-moyen-MAD 25
+  set radius-close 6
+
+  ; Seuils de production des champs
+  set production-residu-hectare-agriculture 1           ; kg de matière sèche par hectare
+
+  ; calculs des MST temps
+  ; Transhumants
+  set percent-satisfied-year 0
+  set mst-temps-passe-annee 0
+  set serie-mst-temps-passe []
+  ; Locaux
+  set mst-cattle-left-simu 1
+  set mst-sheep-left-simu 1
+  set serie-mst-cattle-left []
+  set serie-mst-sheep-left []
+
+end
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Initialisation des patches avec mare ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+to setup-water-patches
+  let eligible-patches patches with [init-camp-pref >= 2]
+
+  let ponds-4-months-count 0
+  let ponds-5-months-count 0
+  let ponds-6-months-count 0
+
+  while [any? eligible-patches and (ponds-4-months-count < max-ponds-4-months or ponds-5-months-count < max-ponds-5-months or ponds-6-months-count < max-ponds-6-months)] [
+    let water-patch one-of eligible-patches
+    ask water-patch [
+      set has-pond true
+      set pcolor blue
+      ifelse ponds-4-months-count < max-ponds-4-months [
+        set water-stock 1000
+        set ponds-4-months-count ponds-4-months-count + 1
+      ] [
+        ifelse ponds-5-months-count < max-ponds-5-months [
+          set water-stock 2000
+          set ponds-5-months-count ponds-5-months-count + 1
+        ] [
+          set water-stock 3000
+          set ponds-6-months-count ponds-6-months-count + 1
+        ]
+      ]
+    ]
+  ]
+  set eligible-patches patches with [init-camp-pref >= 2 and not any? patches in-radius 5 with [has-pond]]
+
+end
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Visualisation ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+to update-visualization
+  if visualization-mode = "soil-type" [
+    ask patches [
+      if soil-type = "Baldiol" [set pcolor green - 1.2]
+      if soil-type = "Caangol" [set pcolor grey + 3]
+      if soil-type = "Sangre" [set pcolor red]
+      if soil-type = "Seeno" [set pcolor yellow]
+      if soil-type = "" [set pcolor grey]
+    ]
+  ]
+  if visualization-mode = "tree-cover" [
+    ask patches [
+      set pcolor scale-color green tree-cover max-trees 0
+    ]
+  ]
+  if visualization-mode = "grass-cover" [
+    ask patches [
+      set pcolor scale-color yellow current-grass max-grass 0
+    ]
+  ]
+  if visualization-mode = "grass-quality" [
+    display-grass-quality
+  ]
+
+  if visualization-mode = "known-space" [
+    display-knownSpace
+  ]
+  ask patches [
+    if is-fenced = true [set pcolor orange]]
+
+end
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Stepping ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+
+;;;;;;;;;;;;;;;;;;;;
+;;; Step général ;;;
+;;;;;;;;;;;;;;;;;;;;
+
+to go
+;    profiler:reset
+;   profiler:start
+
+
+
+  ; Mise à jour du modèle général et temporalité
+  update-season
+
+
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Mises à jour saisonnières ;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  ; Mise à jour saisonnière
+  if current-season != last-season [
+    generate-transhumance
+    update-UF-and-MAD                             ; Mettre à jour les valeurs de MAD et UF pour le tapis herbacé
+    update-tree-nutritional-values                ; Mettre à jour les valeurs de MAD et UF pour les arbres
+    set last-season current-season                ; Permet au counter d'identifier quand la saison change
+    update-tree-visualisation
+  ]
+
+
+
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Mises à jour annuelles ;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+  if year-counter >= total-ticks-per-year [
+
+    ask patches with [current-grass < 100] [
+      set current-monocot-grass 50
+      set current-dicot-grass 50
+      set current-grass current-monocot-grass + current-dicot-grass
+    ]
+
+
+    ; Scheduler
+    set year-counter 0                            ; Au premier jour de chaque nouvelle année, remet le compteur d'année à 0
+    update-year-type                              ; Au premier jour de chaque nouvelle année, redéfinit si l'année sera bonne, moyenne, mauvaise
+    set-season-durations                          ; Au premier jour de chaque nouvelle année et en fonction de l'année, redéfinit les durées pour chacune des siaosn pour l'année en cours
+
+    ; Environnement
+    update-tree-age                               ; Au premier jour de chaque nouvelle année, fait grandir les populations d'arbres d'un an
+    renew-tree-population                         ; Au premier jour de chaque nouvelle année, crée une nouvelle population d'arbres d'un an
+    assign-grass-proportions                      ; Au premier jour de chaque nouvelle année, relance la génération aléatoire des proportions en monocotylédone et dicotylédone
+
+
+
+    ; Evaluation MST transhumants
+    if influx-Ceedu > 0 or influx-Ceetcelde > 0 or influx-Nduungu > 0 [
+    evaluate-MST-Time
+    ]
+    evaluate-mst-have-left
+
+    ;; remettre à zéro pour l’année suivante
+    set mst-temps-passe-annee 0
+
+] ; fin renouvellement annuel
+
+  if year-counter = retard-jours [
+    call-back-herds                               ; Retour des troupeaux et mise à jour de l'espace connu
+  ]
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; Mises à jour quotidiennes ;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  ; Mise à jour quotidienne des ressources
+  grow-grass
+  update-grass-quality                            ; Indiquer la qualité de l'herbe
+  grow-tree-resources
+
+  if mean [current-leaf-stock] of tree-populations < 0 [
+    show-tree-populations-info]
+
+  ;--------------------;
+  ; Actions des agents ;
+  ;--------------------;
+
+  ; Troupeau
+  ask cattles with [have-left = false] [
+    move
+    eat
+    update-corporal-conditions head UBT-size UF-ingested MAD-ingested daily-needs-UF daily-needs-MAD max-daily-DM-ingestible-per-head preference-mono
+    trample-trees
+  ]
+  ask cattles with [have-left = true] [
+    set ticks-left-year ticks-left-year + 1
+  ]
+
+  ask sheeps with [have-left = false] [
+    move
+    eat
+    update-corporal-conditions head UBT-size UF-ingested MAD-ingested daily-needs-UF daily-needs-MAD max-daily-DM-ingestible-per-head preference-mono
+    trample-trees
+  ]
+  ask sheeps with [have-left = true] [
+    set ticks-left-year ticks-left-year + 1
+  ]
+
+
+  ; Foyers
+  ask foyers [
+    join-herd
+    ; Choix stratégiques pastoraux du chef de ménage
+    if cattle-herd != nobody and [have-left] of cattle-herd = false [
+      choose-strategy-for-cattles]
+    if sheep-herd != nobody and [have-left] of sheep-herd = false [
+      choose-strategy-for-sheeps]
+  ]
+
+  ; Mise à jour quotidienne de l'espace connu (tous agents non environnement)
+  update-known-space
+
+  ;-----------------------------------------;
+  ; Evaluations quotidiennes et indicateurs ;
+  ;-----------------------------------------;
+
+  ; Evaluation des transhumants sur leur satisfaction de temps de présence effectif
+  evaluate-presence-satisfaction-for-transhumants
+
+  ; Mise à jour des valeurs Stats pour visualisation
+  calculStat
+
+  ; Visuel
+  update-visualization
+  update-plot
+
+  tick
+
+
+;    profiler:stop
+;    print profiler:report
+end
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Mise à jour des types d'années ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+to update-year-type
+  ; Vérifier qu'on ne dépasse pas la liste
+  set year-index year-index + 1
+  if year-index >= 20 [
+    set year-index 1 ]
+  ; Obtenir le type d'année
+  set current-year-type item year-index year-types
+end
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Evaluation de la satisfaction en temps de présence par les transhumants ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+
+  ;------------------------;
+  ; Evaluation quotidienne ;
+  ;------------------------;
+
+to evaluate-presence-satisfaction-for-transhumants
+  ;; --------- a. calcul de la satisfaction annuelle ----------
+  ask foyers with [is-transhumant = true] [
+    set days-present days-present + 1
+    set presence-satisfaction (days-present / planned-days) * 100
+    if ( counted-satisfied? = false) and (presence-satisfaction >= min-time-ratio) [
+      set nb-satisfied-year nb-satisfied-year + 1
+      set counted-satisfied? true
+    ]
+  ]
+end
+
+
+  ;---------------------;
+  ; Evaluation annuelle ;
+  ;---------------------;
+
+to evaluate-MST-Time
+  ;; a. on stocke la valeur annuelle
+
+  let total-influx (influx-Ceedu + influx-Ceetcelde + influx-Nduungu)
+  set percent-satisfied-year nb-satisfied-year / total-influx
+
+  set serie-mst-temps-passe lput percent-satisfied-year serie-mst-temps-passe
+
+  ; Pour l'indicateur SIMU
+  set mean-mst-temps-passe sum serie-mst-temps-passe
+
+  set mst-temps-passe-simu mean-mst-temps-passe / year-index
+  ;; c. on remet à zéro pour la nouvelle année
+  set nb-satisfied-year 0
+
+end
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Evaluation du MST Have-left ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  ;---------------------;
+  ; Evaluation annuelle ;
+  ;---------------------;
+
+; appelez‑la exactement où vous appelez déjà evaluate-MST-Time
+to evaluate-MST-have-left
+  ;; moyenne du nb de ticks « dehors » par troupeau
+  let cattle-avg-left mean [ticks-left-year] of cattles
+  let sheep-avg-left mean [ticks-left-year] of sheeps
+
+  ;; normalisation 0‑1  → 1 = jamais dehors, 0 = tout le temps dehors
+  ifelse total-ticks-per-year > 0 [
+    set mst-cattle-left 1 - (cattle-avg-left / total-ticks-per-year)
+  ] [
+    set mst-cattle-left mst-cattle-left         ;; par sûreté si durée‑année = 0
+  ]
+
+  ifelse total-ticks-per-year > 0 [
+    set mst-sheep-left 1 - (sheep-avg-left / total-ticks-per-year)
+  ] [
+    set mst-sheep-left mst-sheep-left        ;; par sûreté si durée‑année = 0
+  ]
+
+  ; Pour l'indicateur SIMU
+  set serie-mst-cattle-left lput mst-cattle-left serie-mst-cattle-left
+  set serie-mst-sheep-left lput mst-sheep-left serie-mst-sheep-left
+
+  set mean-mst-cattle-left sum serie-mst-cattle-left
+  set mean-mst-sheep-left sum serie-mst-sheep-left
+
+  set mst-cattle-left-simu mean-mst-cattle-left / year-index
+  set mst-sheep-left-simu mean-mst-sheep-left / year-index
+
+end
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Retour des troupeaux ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+to call-back-herds
+  ;; Retour des troupeaux de bovins
+  ask cattles with [have-left = true] [
+    show-turtle
+    set live-weight initial-live-weight  ; Réinitialiser le poids vif
+    set corporal-condition 5             ; NEC maximum
+    set have-left false
+    set ticks-left-year 0
+  ]
+
+  ;; Retour des troupeaux de moutons
+  ask sheeps with [have-left = true] [
+    show-turtle
+    set live-weight initial-live-weight  ; Réinitialiser le poids vif
+    set corporal-condition 5             ; NEC maximum
+    set have-left false
+    set ticks-left-year 0
+  ]
+end
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;
+;;; MAJ espace connu ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;
+
+to update-known-space
+
+  if year-counter <= 0 [
+    renew-known-space
+  ]
+  ;; --- Foyers ---
+  ask foyers [
+    let new-space nobody
+    if cattle-herd != nobody [
+      set new-space (patch-set new-space (([known-space] of cattle-herd) with [not member? self [known-space] of myself]))
+    ]
+    if sheep-herd != nobody [
+      set new-space (patch-set new-space (([known-space] of sheep-herd) with [not member? self [known-space] of myself]))
+    ]
+    ;; Nouveaux patches = ceux que le foyer n’a pas déjà
+    if any? new-space [
+      set known-space (patch-set known-space new-space)
+    ]
+    set close-known-space known-space with [distance myself <= radius-close]
+    set distant-known-space known-space who-are-not close-known-space
+  ]
+
+  ;; --- Troupeaux ---
+  update-herd-known-space cattles
+  update-herd-known-space sheeps
+end
+
+to update-herd-known-space [herd]
+  ask herd [
+    let home-patch current-home-patch
+    let new-space nobody
+    set new-space ([known-space] of foyer-owner) with [not member? self [known-space] of myself]
+    ;; Nouveaux patches = ceux que le foyer n’a pas déjà
+    if any? new-space [
+      set known-space (patch-set known-space new-space)
+    ]
+    if is-transhumant = false [
+      ifelse current-home-patch != prev-home-patch [
+        let original-camp-home-patch original-home-patch
+        set original-camp-known-space known-space with [distance original-camp-home-patch <= radius-close]
+      ] [
+        set original-camp-known-space known-space with [distance home-patch <= radius-close]
+      ]
+    ]
+    set close-known-space known-space with [distance home-patch <= radius-close]
+    set distant-known-space known-space who-are-not close-known-space
+
+    set prev-home-patch current-home-patch
+  ]
+end
+
+
+
+to renew-known-space
+
+  ; Agents (Rappel des agents et remise à jour de l'espace connu)
+  ask foyers [
+    set far-exploration-count 0                 ; Compteur d'exploration au loin
+    set known-space patches in-radius 3         ; Remise à 0
+  ]
+  ask cattles [set known-space [known-space] of foyer-owner]
+  ask sheeps [set known-space [known-space] of foyer-owner]
+
+end
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Gestion de l'eau ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;
+
+to manage-water-points
+  ask patches with [water-point = true] [
+    set water-point false
+  ]
+  ask n-of 5 patches [
+    set water-point true
+  ]
+end
+
+
+
+
+
+;;;;;;;;;;;;;
+;; Visuels ;;
+;;;;;;;;;;;;;
+
+
+; Qualité de l'herbe
+to display-grass-quality
+
+  ask patches [
+    let max-q 1
+    if grass-quality = "good" [
+      ; set plabel grass-quality
+      set pcolor scale-color green q max-q 0
+    ]
+    if grass-quality = "average" [
+      ; set plabel grass-quality
+      set pcolor scale-color green q max-q 0
+    ]
+    if grass-quality = "poor" [
+      ; set plabel grass-quality
+      set pcolor scale-color green q max-q 0
+    ]
+  ]
+end
+
+
+; Espace connu
+to display-knownSpace
+  ask patches [set pcolor white]
+  ask foyers [
+    ask known-space [set pcolor [who] of myself]
+  ]
+  ask cattles [
+    ask known-space [set pcolor [who] of myself]
+  ]
+  ask sheeps [
+    ask known-space [set pcolor [who] of myself]
+  ]
+end
+to color-grass  ;; patch procedure
+  set pcolor scale-color yellow current-grass max-grass 0
+end
+
+;to display-labels
+ ; ask turtles [set label ""]
+  ;ask turtles [set label head]
+
+;end
+
+
+; Plot Nombre d'éleveurs par taille
+to update-plot
+  let _typeF (list "petit" "moyen" "grand")
+  let _listString  [herder-type] of foyers
+  set listValueHerdeType (map [x ->
+    ifelse-value (x = "petit") [1]
+    [ifelse-value (x = "moyen") [2]
+      [ifelse-value (x = "grand") [3]
+        [0]]]] _listString)
+
+end
+
+; Visualisation des arbres
+to update-tree-visualisation
+  ;; Supprimer les anciennes icônes
+  ask mature-tree-nutritive-pops [ die ]
+  ask mature-tree-less-nutritive-pops [ die ]
+  ask mature-tree-fruity-pops [ die ]
+  ;; Créer de nouvelles icônes pour les arbres matures
+  ask patches [
+    let mature-tree-populations tree-populations-here with [tree-pop-age >= 8]
+    let mature-tree-nutritive-populations tree-populations-here with [(tree-pop-age >= 8) and (tree-type = "nutritive")]
+    if any? mature-tree-nutritive-populations [
+      let total-nutritive-population sum [population-size] of mature-tree-nutritive-populations
+      sprout-mature-tree-nutritive-pops 1 [
+        set shape "tree"
+        set color green
+        set size calculate-tree-icon-size total-nutritive-population
+        set xcor xcor + (random-float 0.9 - 0.45)
+        set ycor ycor + (random-float 0.9 - 0.45)
+      ]
+    ]
+    let mature-tree-less-nutritive-populations tree-populations-here with [(tree-pop-age >= 8) and (tree-type = "lessNutritive")]
+    if any? mature-tree-less-nutritive-populations [
+      let total-less-nutritive-population sum [population-size] of mature-tree-less-nutritive-populations
+      sprout-mature-tree-less-nutritive-pops 1 [
+        set shape "tree-less"
+        set color green
+        set size calculate-tree-icon-size total-less-nutritive-population
+        set xcor xcor + (random-float 0.9 - 0.45)
+        set ycor ycor + (random-float 0.9 - 0.45)
+      ]
+    ]
+    let mature-tree-fruity-populations tree-populations-here with [(tree-pop-age >= 8) and (tree-type = "fruity")]
+    if any? mature-tree-fruity-populations [
+      let total-fruity-population sum [population-size] of mature-tree-fruity-populations
+      sprout-mature-tree-fruity-pops 1 [
+        set shape "tree-fruit"
+        set color green
+        set size calculate-tree-icon-size total-fruity-population
+        set xcor xcor + (random-float 0.9 - 0.45)
+        set ycor ycor + (random-float 0.9 - 0.45)
+      ]
+    ]
+  ]
+end]]></code>
+  <widgets>
+    <view x="191" wrappingAllowedX="false" y="11" frameRate="30.0" minPycor="-11" height="510" showTickCounter="true" patchSize="22.0" fontSize="1" wrappingAllowedY="false" width="510" tickCounterLabel="ticks" maxPycor="11" updateMode="1" maxPxcor="11" minPxcor="-11"></view>
+    <note x="415" y="915" backgroundDark="0" fontSize="12" width="315" markdown="false" height="45" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Savane arborée sur sol limoneux (Caangol)              
+</note>
+    <note x="415" y="970" backgroundDark="0" fontSize="12" width="315" markdown="false" height="40" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Savane arbustive à arborée sur sol sablonneux (Baldiol)</note>
+    <note x="415" y="1020" backgroundDark="0" fontSize="12" width="315" markdown="false" height="45" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Savane arbustive à arborée sur sol argileux, cuirassé (Sangre)</note>
+    <note x="415" y="1210" backgroundDark="0" fontSize="12" width="320" markdown="false" height="55" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Proportion de temps minimal de présence satisfaisant pour les transhumant par rapport à la durée prévue initialement</note>
+    <note x="415" y="740" backgroundDark="0" fontSize="12" width="60" markdown="false" height="26" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Ovins</note>
+    <note x="415" y="680" backgroundDark="0" fontSize="12" width="55" markdown="false" height="26" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Bovins</note>
+    <slider x="191" step="1" y="670" max="5" width="205" display="CattleNECSatifactionIndex" height="50" min="0" direction="Horizontal" default="2.0" variable="CattleNECSatifactionIndex"></slider>
+    <slider x="191" step="1" y="730" max="5" width="205" display="SheepNECSatifactionIndex" height="50" min="0" direction="Horizontal" default="2.0" variable="SheepNECSatifactionIndex"></slider>
+    <slider x="190" step="1" y="910" max="150" width="205" display="SatisfactionMeanTreesInCaangol" height="50" min="50" direction="Horizontal" default="50.0" variable="SatisfactionMeanTreesInCaangol"></slider>
+    <slider x="190" step="1" y="965" max="100" width="205" display="SatisfactionMeanTreesInBaldiol" height="50" min="0" direction="Horizontal" default="50.0" variable="SatisfactionMeanTreesInBaldiol"></slider>
+    <slider x="190" step="1" y="1020" max="100" width="205" display="SatisfactionMeanTreesInSangre" height="50" min="0" direction="Horizontal" default="50.0" variable="SatisfactionMeanTreesInSangre"></slider>
+    <slider x="190" step="0.1" y="1080" max="1" width="205" display="treshold-tree-satisfaction" height="50" min="0.1" direction="Horizontal" default="1.0" variable="treshold-tree-satisfaction"></slider>
+    <note x="415" y="1080" backgroundDark="0" fontSize="12" width="315" markdown="false" height="55" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Proportion de surface par type de sol pour laquelle le critère de satisfaction des arbres doit être atteint</note>
+    <button x="80" y="230" height="45" disableUntilTicks="true" forever="false" kind="Observer" width="55" display="GO 10"><![CDATA[while [ticks < 3650] [go]
+]]></button>
+    <slider x="191" step="1" y="1210" max="100" width="210" display="min-time-ratio" height="50" min="0" direction="Horizontal" default="50.0" variable="min-time-ratio"></slider>
+    <slider x="193" step="0.1" y="1440" max="1" width="205" display="FUtility" height="50" min="0" direction="Horizontal" default="1.0" variable="FUtility"></slider>
+    <note x="415" y="1440" backgroundDark="0" fontSize="12" width="320" markdown="false" height="80" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Valeur de la Fonction d'Utilité Linéaire (Von Neumann) pour définir l'équilibre entre qualité et quantité dans la recherche de pâturage d'un "bon" berger</note>
+    <button x="35" y="400" height="40" disableUntilTicks="false" forever="false" kind="Observer" width="130" display="Changer Visu">  update-visualization</button>
+    <button x="35" y="510" height="40" disableUntilTicks="false" forever="false" kind="Patch" width="130" display="Cacher arbres">ask tree-populations-here [hide-turtle]</button>
+    <chooser x="35" y="445" height="60" variable="visualization-mode" current="1" width="130" display="visualization-mode">
+      <choice type="string" value="soil-type"></choice>
+      <choice type="string" value="tree-cover"></choice>
+      <choice type="string" value="grass-cover"></choice>
+      <choice type="string" value="grass-quality"></choice>
+      <choice type="string" value="known-space"></choice>
+    </chooser>
+    <note x="70" y="41" backgroundDark="0" fontSize="12" width="75" markdown="false" height="20" textColorDark="-1" textColorLight="-5298144" backgroundLight="-4079321">Lancement</note>
+    <monitor x="775" precision="17" y="70" height="60" fontSize="11" width="100" display="Total Foyers">totalFoyers</monitor>
+    <monitor x="775" precision="17" y="200" height="60" fontSize="11" width="100" display="Total Bovins">totalCattles</monitor>
+    <monitor x="775" precision="17" y="265" height="60" fontSize="11" width="100" display="Total UBT">sum-UBT</monitor>
+    <monitor x="775" precision="17" y="135" height="60" fontSize="11" width="100" display="Total Ovins">totalSheeps</monitor>
+    <note x="930" y="591" backgroundDark="0" fontSize="12" width="270" markdown="false" height="61" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Proportions d'éleveurs de taille moyenne sur la population totale (de 5 a 29 bovins et/ou entre 30 et 99 ovins)</note>
+    <note x="930" y="522" backgroundDark="0" fontSize="12" width="270" markdown="false" height="60" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Proportions de grands éleveurs sur la population totale (plus de 30 bovins et/ou de 100 ovins)</note>
+    <note x="930" y="466" backgroundDark="0" fontSize="12" width="270" markdown="false" height="50" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Moyenne d'Unité de Bétail Tropical (UBT) par campement</note>
+    <note x="930" y="411" backgroundDark="0" fontSize="12" width="270" markdown="false" height="50" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Nombre de campements</note>
+    <slider x="776" step="1" y="523" max="100" width="150" display="proportion-big-herders" height="60" min="0" direction="Horizontal" default="11.0" variable="proportion-big-herders"></slider>
+    <slider x="776" step="1" y="591" max="100" width="150" display="proportion-medium-herders" height="50" min="0" direction="Horizontal" default="50.0" variable="proportion-medium-herders"></slider>
+    <slider x="776" step="5" y="466" max="100" width="150" display="avg-UBT-per-camp" height="50" min="10" direction="Horizontal" default="50.0" variable="avg-UBT-per-camp"></slider>
+    <note x="45" y="205" backgroundDark="0" fontSize="12" width="125" markdown="false" height="25" textColorDark="-1" textColorLight="-5298144" backgroundLight="-4079321">Lancement 10 ans</note>
+    <note x="775" y="345" backgroundDark="0" fontSize="18" width="425" markdown="false" height="35" textColorDark="-1" textColorLight="-16777216" backgroundLight="-13840069">Variables d'entrées - Hypothèses partagées</note>
+    <slider x="776" step="1" y="661" max="100" width="150" display="retard-jours" height="50" min="0" direction="Horizontal" default="50.0" variable="retard-jours"></slider>
+    <slider x="780" step="1" y="761" max="100" width="150" display="influx-Ceetcelde" height="50" min="0" direction="Horizontal" default="34.0" variable="influx-Ceetcelde"></slider>
+    <slider x="780" step="1" y="871" max="100" width="150" display="influx-Nduungu" height="50" min="0" direction="Horizontal" default="0.0" variable="influx-Nduungu"></slider>
+    <slider x="780" step="1" y="816" max="100" width="150" display="influx-Ceedu" height="50" min="0" direction="Horizontal" default="0.0" variable="influx-Ceedu"></slider>
+    <slider x="780" step="1" y="1010" max="100" width="150" display="good-shepherd-percentage" height="50" min="0" direction="Horizontal" default="50.0" variable="good-shepherd-percentage"></slider>
+    <note x="935" y="816" backgroundDark="0" fontSize="12" width="270" markdown="false" height="46" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Nb de transhumants arrivés en saison séche froide</note>
+    <note x="935" y="871" backgroundDark="0" fontSize="12" width="270" markdown="false" height="46" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Nb de transhumants arrivés en saison des pluies</note>
+    <note x="935" y="761" backgroundDark="0" fontSize="12" width="270" markdown="false" height="50" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Nb de transhumants arrivés en saison séche chaude</note>
+    <note x="935" y="1010" backgroundDark="0" fontSize="12" width="270" markdown="false" height="45" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Proportion de bons bergers dans les troupeaux</note>
+    <note x="775" y="380" backgroundDark="0" fontSize="12" width="425" markdown="false" height="31" textColorDark="-1" textColorLight="-16777216" backgroundLight="-11085214">Gestion de la démographie pastorale semi-sédentarisée </note>
+    <note x="15" y="335" backgroundDark="0" fontSize="12" width="165" markdown="false" height="60" textColorDark="-1" textColorLight="-16777216" backgroundLight="-4079321">Points de vue
+-
+Diversité des perceptions</note>
+    <slider x="776" step="1" y="411" max="150" width="150" display="number-of-camps" height="50" min="1" direction="Horizontal" default="72.0" variable="number-of-camps"></slider>
+    <note x="190" y="565" backgroundDark="0" fontSize="16" width="540" markdown="false" height="55" textColorDark="-1" textColorLight="-16777216" backgroundLight="-11221820">Indicateurs situés - Mesurer l'équilibre et négocier les valeurs minimales d'acceptabilité
+</note>
+    <note x="190" y="630" backgroundDark="0" fontSize="12" width="540" markdown="false" height="40" textColorDark="-1" textColorLight="-16777216" backgroundLight="-8990512">Critères de satisfaction sur l'état de santé du bétail sur la base de la Note d'Etat Corporel (NEC) - Perspective Éleveurs locaux</note>
+    <note x="190" y="815" backgroundDark="0" fontSize="12" width="540" markdown="false" height="40" textColorDark="-1" textColorLight="-16777216" backgroundLight="-8990512">Critères de satistaction du nombre d'arbres (+ de 4 ans) par hectare et par type de sol - Perspective Forestiers
+</note>
+    <slider x="190" step="1" y="855" max="50" width="205" display="SatisfactionMeanTreesInSeeno" height="50" min="12" direction="Horizontal" default="50.0" variable="SatisfactionMeanTreesInSeeno"></slider>
+    <note x="190" y="1165" backgroundDark="0" fontSize="12" width="545" markdown="false" height="45" textColorDark="-1" textColorLight="-16777216" backgroundLight="-8990512">Critères de satistaction - temps d'installation des transhumants dans l'UP - Perspective Éleveurs transhumants</note>
+    <note x="190" y="1305" backgroundDark="0" fontSize="12" width="545" markdown="false" height="45" textColorDark="-1" textColorLight="-16777216" backgroundLight="-8990512">Sensibilité dans l'incertitude - Négocier entre savoirs locaux et scientifiques</note>
+    <note x="780" y="730" backgroundDark="0" fontSize="12" width="425" markdown="false" height="31" textColorDark="-1" textColorLight="-16777216" backgroundLight="-11085214">Gestion de la démographie pastorale mobile</note>
+    <slider x="780" step="1" y="1062" max="100" width="150" display="good-shepherd-trans-percentage" height="50" min="0" direction="Horizontal" default="50.0" variable="good-shepherd-trans-percentage"></slider>
+    <note x="936" y="1120" backgroundDark="0" fontSize="12" width="165" markdown="false" height="30" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Parcelles de reforestation</note>
+    <note x="935" y="1063" backgroundDark="0" fontSize="12" width="270" markdown="false" height="50" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Proportion de bons bergers parmi les éleveurs transhumants</note>
+    <slider x="193" step="1" y="1350" max="100" width="205" display="decreasing-factor" height="50" min="0" direction="Horizontal" default="50.0" variable="decreasing-factor"></slider>
+    <note x="415" y="855" backgroundDark="0" fontSize="12" width="315" markdown="false" height="45" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Steppe arbustive sur sol sablonneux (Seeno)</note>
+    <note x="415" y="1350" backgroundDark="0" fontSize="12" width="320" markdown="false" height="60" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Multiplicateur de décroissance de la biomasse herbacée pour la variation de la vitesse de décroissance durant la saison sèche.</note>
+    <note x="2030" y="319" backgroundDark="0" fontSize="22" width="620" markdown="false" height="40" textColorDark="-1" textColorLight="-14439633" backgroundLight="0">Indicateurs Santé du troupeau - Perspective Éleveurs</note>
+    <plot x="2350" autoPlotX="true" yMax="1.0" autoPlotY="true" yAxis="MST NEC" y="945" xMin="0.0" height="175" legend="true" xMax="1.0" yMin="0.0" width="300" xAxis="Jours" display="MST NEC Transhumants">
+      <setup></setup>
+      <update></update>
+      <pen interval="1.0" mode="0" display="Ovins" color="-12345184" legend="true">
+        <setup></setup>
+        <update>plot MSTTransSheep-NEC</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="Bovins" color="-16777216" legend="true">
+        <setup></setup>
+        <update>plot MSTTransCattle-NEC</update>
+      </pen>
+    </plot>
+    <plot x="2030" autoPlotX="true" yMax="1.0" autoPlotY="true" yAxis="Kg Poids Vif" y="565" xMin="0.0" height="189" legend="true" xMax="10.0" yMin="-1.0" width="620" xAxis="jours" display="Gain poids vif">
+      <setup></setup>
+      <update></update>
+      <pen interval="1.0" mode="0" display="Vaches" color="-16777216" legend="true">
+        <setup></setup>
+        <update>plot cattlesWeightGain</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="Moutons" color="-5516827" legend="true">
+        <setup></setup>
+        <update>plot sheepsWeightGain</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="0" color="-5298144" legend="true">
+        <setup></setup>
+        <update>plot 0</update>
+      </pen>
+    </plot>
+    <plot x="2340" autoPlotX="true" yMax="10.0" autoPlotY="true" yAxis="Kg de Poids Vif" y="375" xMin="0.0" height="190" legend="true" xMax="10.0" yMin="0.0" width="310" xAxis="Jours" display="Moyenne du poids vif par tête - Ovins">
+      <setup></setup>
+      <update></update>
+      <pen interval="1.0" mode="0" display="Moyenne" color="-16777216" legend="true">
+        <setup></setup>
+        <update>plot meanSheepsLiveWeight</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="Max" color="-2674135" legend="true">
+        <setup></setup>
+        <update>plot maxSheepsLiveWeight</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="Min" color="-13791810" legend="true">
+        <setup></setup>
+        <update>plot minSheepsLiveWeight</update>
+      </pen>
+    </plot>
+    <plot x="2030" autoPlotX="true" yMax="10.0" autoPlotY="true" yAxis="Kg de Poids Vif" y="376" xMin="0.0" height="189" legend="true" xMax="10.0" yMin="0.0" width="310" xAxis="Jours" display="Moyenne du poids vif par tête - Bovins">
+      <setup></setup>
+      <update></update>
+      <pen interval="1.0" mode="0" display="Moyenne" color="-16777216" legend="true">
+        <setup></setup>
+        <update>plot meanCattlesLiveWeight</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="Max" color="-2674135" legend="true">
+        <setup></setup>
+        <update>plot maxCattlesLiveWeight</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="Min" color="-13791810" legend="true">
+        <setup></setup>
+        <update>plot minCattlesLiveWeight</update>
+      </pen>
+    </plot>
+    <plot x="1240" autoPlotX="true" yMax="10.0" autoPlotY="true" yAxis="nb moyen d'individu" y="379" xMin="0.0" height="225" legend="true" xMax="10.0" yMin="0.0" width="350" xAxis="Jours" display="Nombre moyen d'arbres par Hectare">
+      <setup></setup>
+      <update></update>
+      <pen interval="1.0" mode="0" display="Caangol" color="-16777216" legend="true">
+        <setup></setup>
+        <update>plot meanTreesInCaangol</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="Baldiol" color="-7500403" legend="true">
+        <setup></setup>
+        <update>plot meanTreesInBaldiol</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="Seeno" color="-2674135" legend="true">
+        <setup></setup>
+        <update>plot meanTreesInSeeno</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="Sangre" color="-955883" legend="true">
+        <setup></setup>
+        <update>plot meanTreesInSangre</update>
+      </pen>
+    </plot>
+    <plot x="1240" autoPlotX="true" yMax="10.0" autoPlotY="true" yAxis="nb moyen d'arbres / Ha" y="605" xMin="0.0" height="280" legend="true" xMax="10.0" yMin="0.0" width="350" xAxis="Jours" display="Moyennes des populations d'arbres par ages et par surface">
+      <setup></setup>
+      <update></update>
+      <pen interval="1.0" mode="0" display="7 Y" color="-7500403" legend="true">
+        <setup></setup>
+        <update>plot meanTrees7yearsByPatch</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="6 Y" color="-2674135" legend="true">
+        <setup></setup>
+        <update>plot meanTrees6yearsByPatch</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="5 Y" color="-955883" legend="true">
+        <setup></setup>
+        <update>plot meanTrees5yearsByPatch</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="4 Y" color="-6459832" legend="true">
+        <setup></setup>
+        <update>plot meanTrees4yearsByPatch</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="3 Y" color="-1184463" legend="true">
+        <setup></setup>
+        <update>plot meanTrees3yearsByPatch</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="2 Y" color="-10899396" legend="true">
+        <setup></setup>
+        <update>plot meanTrees2yearsByPatch</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="8 Y and beyond" color="-16777216" legend="true">
+        <setup></setup>
+        <update>plot meanTrees8yearsByPatch</update>
+      </pen>
+    </plot>
+    <plot x="1590" autoPlotX="true" yMax="10.0" autoPlotY="true" yAxis="Somme cumulée d'individus" y="605" xMin="0.0" height="245" legend="false" xMax="10.0" yMin="0.0" width="360" xAxis="Jours" display="Somme cumulée des arbres tués (piétinement et coupe)">
+      <setup></setup>
+      <update></update>
+      <pen interval="1.0" mode="0" display="default" color="-16777216" legend="true">
+        <setup></setup>
+        <update>plot trees-killed</update>
+      </pen>
+    </plot>
+    <plot x="1590" autoPlotX="true" yMax="1.0" autoPlotY="true" yAxis="MST-Tree" y="380" xMin="0.0" height="225" legend="true" xMax="10.0" yMin="0.0" width="360" xAxis="Days" display="MST-tree par type de sol">
+      <setup></setup>
+      <update></update>
+      <pen interval="1.0" mode="0" display="Seeno" color="-2674135" legend="true">
+        <setup></setup>
+        <update>plot MST-Seeno</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="Baldiol" color="-7500403" legend="true">
+        <setup></setup>
+        <update>plot MST-Baldiol</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="Sangre" color="-955883" legend="true">
+        <setup></setup>
+        <update>plot MST-Sangre</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="Caangol" color="-16777216" legend="true">
+        <setup></setup>
+        <update>plot MST-Caangol</update>
+      </pen>
+    </plot>
+    <plot x="1240" autoPlotX="true" yMax="10.0" autoPlotY="true" yAxis="Kg MS" y="885" xMin="0.0" height="215" legend="true" xMax="10.0" yMin="0.0" width="710" xAxis="Jours" display="Moyenne de consommation des ressources issues des arbres par tête de bétail">
+      <setup></setup>
+      <update></update>
+      <pen interval="1.0" mode="0" display="fruits par les bovins" color="-2674135" legend="true">
+        <setup></setup>
+        <update>plot meanFruitsConsumedCattle</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="feuilles par les bovins" color="-12087248" legend="true">
+        <setup></setup>
+        <update>plot meanLeavesConsumedCattle</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="fruits par les ovins" color="-612749" legend="true">
+        <setup></setup>
+        <update>plot meanFruitsConsumedSheep</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="feuilles par les ovins" color="-5509967" legend="true">
+        <setup></setup>
+        <update>plot meanLeavesConsumedSheep</update>
+      </pen>
+    </plot>
+    <button x="80" y="112" height="40" disableUntilTicks="false" forever="false" kind="Observer" width="55">go</button>
+    <button x="80" y="157" height="40" disableUntilTicks="false" forever="true" kind="Observer" width="55">go</button>
+    <note x="2790" y="320" backgroundDark="0" fontSize="22" width="570" markdown="false" height="40" textColorDark="-1" textColorLight="-14439633" backgroundLight="0">Indicateurs Mobilité - Perspective Éleveurs</note>
+    <plot x="2790" autoPlotX="true" yMax="10.0" autoPlotY="true" yAxis="Nb de troupeaux" y="365" xMin="0.0" height="175" legend="true" xMax="10.0" yMin="0.0" width="305" xAxis="Jours" display="Troupeaux locaux partis en demi transhumance">
+      <setup></setup>
+      <update></update>
+      <pen interval="1.0" mode="0" display="Ovins" color="-5516827" legend="true">
+        <setup></setup>
+        <update>plot sheepsTempCamp</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="Bovins" color="-16449023" legend="true">
+        <setup></setup>
+        <update>plot cattlesTempCamp</update>
+      </pen>
+    </plot>
+    <plot x="3095" autoPlotX="true" yMax="10.0" autoPlotY="true" yAxis="Nb de cellules" y="365" xMin="0.0" height="175" legend="true" xMax="10.0" yMin="0.0" width="265" xAxis="Jours" display="Espace connu + de 5 km ( moyenne locaux)">
+      <setup></setup>
+      <update></update>
+      <pen interval="1.0" mode="0" display="Ovins" color="-11221820" legend="true">
+        <setup></setup>
+        <update>plot meanDistantKnownSpaceSheeps</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="Bovins" color="-16777216" legend="true">
+        <setup></setup>
+        <update>plot meanDistantKnownSpaceCattles</update>
+      </pen>
+    </plot>
+    <plot x="2790" autoPlotX="true" yMax="10.0" autoPlotY="true" yAxis="Nb de troupeaux" y="540" xMin="0.0" height="175" legend="true" xMax="10.0" yMin="0.0" width="305" xAxis="Jours" display="Troupeaux locaux ayant quitté l'Unité Pastorale">
+      <setup></setup>
+      <update></update>
+      <pen interval="1.0" mode="0" display="Ovins" color="-5516827" legend="true">
+        <setup></setup>
+        <update>plot sheepsHaveLeft</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="Bovins" color="-16777216" legend="true">
+        <setup></setup>
+        <update>plot cattlesHaveLeft</update>
+      </pen>
+    </plot>
+    <plot x="1960" autoPlotX="true" yMax="10.0" autoPlotY="true" yAxis="Kg MS / Ha" y="60" xMin="0.0" height="205" legend="true" xMax="10.0" yMin="0.0" width="365" xAxis="Jours" display="Moyenne de la Biomasse herbacée par hectare">
+      <setup></setup>
+      <update></update>
+      <pen interval="1.0" mode="0" display="default" color="-13840069" legend="true">
+        <setup></setup>
+        <update>plot meanGrass / 100</update>
+      </pen>
+    </plot>
+    <plot x="1610" autoPlotX="true" yMax="10.0" autoPlotY="true" yAxis="Kg MS" y="60" xMin="0.0" height="205" legend="true" xMax="10.0" yMin="0.0" width="345" xAxis="Jours" display="Biomasse moyenne consommé par tëte de bétail (troupeaux locaux)">
+      <setup></setup>
+      <update></update>
+      <pen interval="1.0" mode="0" display="Moutons" color="-8990512" legend="true">
+        <setup></setup>
+        <update>plot meanSheepsGrassEaten</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="Vaches" color="-16777216" legend="true">
+        <setup></setup>
+        <update>plot meanCattlesGrassEaten</update>
+      </pen>
+    </plot>
+    <note x="1240" y="315" backgroundDark="0" fontSize="22" width="450" markdown="false" height="40" textColorDark="-1" textColorLight="-14439633" backgroundLight="0">Indicateurs Arbres - Perspective forestiers</note>
+    <note x="1610" y="15" backgroundDark="0" fontSize="22" width="715" markdown="false" height="66" textColorDark="-1" textColorLight="-14439633" backgroundLight="0">Vérification et validation - Consommation et disponibilité biomasse</note>
+    <note x="780" y="980" backgroundDark="0" fontSize="12" width="425" markdown="false" height="31" textColorDark="-1" textColorLight="-16777216" backgroundLight="-11085214">Formation et gestion des dispositifs de restauration</note>
+    <note x="780" y="1270" backgroundDark="0" fontSize="12" width="425" markdown="false" height="31" textColorDark="-1" textColorLight="-16777216" backgroundLight="-11085214">Partage des usages des eaux de surfaces - a exploiter
+</note>
+    <slider x="780" step="1" y="1120" max="20" width="150" display="reforestation-plots-number" height="50" min="0" direction="Horizontal" default="20.0" variable="reforestation-plots-number"></slider>
+    <slider x="780" step="1" y="1175" max="10" width="150" display="COGES-camps" height="50" min="2" direction="Horizontal" default="10.0" variable="COGES-camps"></slider>
+    <slider x="780" step="1" y="1355" max="10" width="165" display="max-ponds-5-months" height="50" min="0" direction="Horizontal" default="10.0" variable="max-ponds-5-months"></slider>
+    <slider x="780" step="1" y="1411" max="10" width="165" display="max-ponds-6-months" height="50" min="0" direction="Horizontal" default="10.0" variable="max-ponds-6-months"></slider>
+    <slider x="779" step="1" y="1300" max="10" width="165" display="max-ponds-4-months" height="50" min="0" direction="Horizontal" default="7.0" variable="max-ponds-4-months"></slider>
+    <note x="950" y="1300" backgroundDark="0" fontSize="12" width="255" markdown="false" height="50" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Nombre de mares capables de tenir 4 mois de saison sèche</note>
+    <note x="950" y="1355" backgroundDark="0" fontSize="12" width="255" markdown="false" height="50" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Nombre de mares capables de tenir 5 mois de saison sèche</note>
+    <monitor x="780" precision="17" y="1467" height="60" fontSize="11" width="165">waterStock</monitor>
+    <note x="950" y="1467" backgroundDark="0" fontSize="12" width="255" markdown="false" height="50" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Volume equivalent en mètres cube de la somme des mares présentes</note>
+    <note x="950" y="1410" backgroundDark="0" fontSize="12" width="255" markdown="false" height="50" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Nombre de mares capables de tenir 6 mois de saison sèche</note>
+    <note x="1285" y="110" backgroundDark="0" fontSize="30" width="215" markdown="true" height="101" textColorDark="-1" textColorLight="-10899396" backgroundLight="0"># Sorties</note>
+    <monitor x="900" precision="17" y="70" height="60" fontSize="11" width="100" display="Année">year-index</monitor>
+    <monitor x="1110" precision="17" y="70" height="60" fontSize="11" width="100" display="Saison">current-season</monitor>
+    <monitor x="1005" precision="17" y="70" height="60" fontSize="11" width="100" display="Type">current-year-type</monitor>
+    <plot x="900" autoPlotX="true" yMax="10.0" autoPlotY="true" yAxis="Nombre d'éleveurs" y="140" xMin="0.0" height="185" legend="false" xMax="10.0" yMin="0.0" width="310" xAxis="petit       moyen         grand" display="Types d'éleveurs">
+      <setup>set-plot-x-range 0 5
+set-plot-y-range 0 100
+set-histogram-num-bars 5</setup>
+      <update></update>
+      <pen interval="1.0" mode="1" display="" color="-16777216" legend="true">
+        <setup></setup>
+        <update>histogram listValueHerdeType</update>
+      </pen>
+    </plot>
+    <note x="775" y="10" backgroundDark="0" fontSize="18" width="100" markdown="true" height="60" textColorDark="-1" textColorLight="-16777216" backgroundLight="-4079321">Entrées</note>
+    <note x="936" y="1175" backgroundDark="0" fontSize="12" width="270" markdown="false" height="61" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Nombre de campements par Comité de Gestion de Parcelles de restauration (COGES)</note>
+    <plot x="3095" autoPlotX="true" yMax="1.0" autoPlotY="true" yAxis="Percent" y="715" xMin="0.0" height="175" legend="false" xMax="10.0" yMin="0.0" width="265" xAxis="Jours" display="Transhumants satisfait sur total Trans par an">
+      <setup></setup>
+      <update></update>
+      <pen interval="1.0" mode="0" display="default" color="-16777216" legend="true">
+        <setup></setup>
+        <update>plot percent-satisfied-year</update>
+      </pen>
+    </plot>
+    <plot x="2350" autoPlotX="true" yMax="1.0" autoPlotY="true" yAxis="MST NEC" y="755" xMin="0.0" height="190" legend="true" xMax="10.0" yMin="0.0" width="300" xAxis="Jours" display="MST NEC des troupeaux locaux">
+      <setup></setup>
+      <update></update>
+      <pen interval="1.0" mode="0" display="Ovins" color="-13791810" legend="true">
+        <setup></setup>
+        <update>plot  MSTSheep-NEC</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="Bovins" color="-16777216" legend="true">
+        <setup></setup>
+        <update>plot  MSTCattle-NEC</update>
+      </pen>
+    </plot>
+    <plot x="2030" autoPlotX="true" yMax="5.0" autoPlotY="true" yAxis="Valeur NEC" y="755" xMin="0.0" height="190" legend="true" xMax="10.0" yMin="0.0" width="320" xAxis="Jours" display="NEC moyenne">
+      <setup></setup>
+      <update></update>
+      <pen interval="1.0" mode="0" display="Bovins" color="-16777216" legend="true">
+        <setup></setup>
+        <update>plot meanCattlesNEC</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="Ovins" color="-8275240" legend="true">
+        <setup></setup>
+        <update>plot meanSheepsNEC</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="Valeur de satisfaction" color="-2674135" legend="true">
+        <setup></setup>
+        <update>plot SheepNECSatifactionIndex</update>
+      </pen>
+    </plot>
+    <button x="60" y="65" height="40" disableUntilTicks="false" forever="false" kind="Observer" width="95">setup</button>
+    <plot x="2030" autoPlotX="true" yMax="5.0" autoPlotY="true" yAxis="Valeur NEC" y="945" xMin="0.0" height="175" legend="true" xMax="5.0" yMin="0.0" width="320" xAxis="Jours" display="NEC Moyenne Transhumants">
+      <setup></setup>
+      <update></update>
+      <pen interval="1.0" mode="0" display="Bovins" color="-16777216" legend="true">
+        <setup></setup>
+        <update>plot meanTransCattlesNEC</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="Ovins" color="-8990512" legend="true">
+        <setup></setup>
+        <update>plot meanTransSheepsNEC</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="Valeur de satisfaction" color="-2674135" legend="true">
+        <setup></setup>
+        <update>plot CattleNECSatifactionIndex</update>
+      </pen>
+    </plot>
+    <plot x="2790" autoPlotX="true" yMax="1.0" autoPlotY="true" yAxis="MST Temps passé" y="715" xMin="0.0" height="175" legend="false" xMax="10.0" yMin="0.0" width="305" xAxis="Jours" display="MST Temps passé des éleveurs mobiles">
+      <setup></setup>
+      <update></update>
+      <pen interval="1.0" mode="0" display="default" color="-16777216" legend="true">
+        <setup></setup>
+        <update>plot mst-temps-passe-simu</update>
+      </pen>
+    </plot>
+  </widgets>
+  <info>## WHAT IS IT?
+
+(a general understanding of what the model is trying to show or explain)
+
+## HOW IT WORKS
+
+(what rules the agents use to create the overall behavior of the model)
+
+## HOW TO USE IT
+
+(how to use the model, including a description of each of the items in the Interface tab)
+
+## THINGS TO NOTICE
+
+(suggested things for the user to notice while running the model)
+
+## THINGS TO TRY
+
+(suggested things for the user to try to do (move sliders, switches, etc.) with the model)
+
+## EXTENDING THE MODEL
+
+(suggested things to add or change in the Code tab to make the model more complicated, detailed, accurate, etc.)
+
+## NETLOGO FEATURES
+
+(interesting or unusual features of NetLogo that the model uses, particularly in the Code tab; or where workarounds were needed for missing features)
+
+## RELATED MODELS
+
+(models in the NetLogo Models Library and elsewhere which are of related interest)
+
+## CREDITS AND REFERENCES
+
+(a reference to the model's URL on the web if it has one, as well as any other necessary credits, citations, and links)</info>
+  <turtleShapes>
+    <shape name="default" rotatable="true" editableColorIndex="0">
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="150" y="5"></point>
+        <point x="40" y="250"></point>
+        <point x="150" y="205"></point>
+        <point x="260" y="250"></point>
+      </polygon>
+    </shape>
+    <shape name="airplane" rotatable="true" editableColorIndex="0">
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="150" y="0"></point>
+        <point x="135" y="15"></point>
+        <point x="120" y="60"></point>
+        <point x="120" y="105"></point>
+        <point x="15" y="165"></point>
+        <point x="15" y="195"></point>
+        <point x="120" y="180"></point>
+        <point x="135" y="240"></point>
+        <point x="105" y="270"></point>
+        <point x="120" y="285"></point>
+        <point x="150" y="270"></point>
+        <point x="180" y="285"></point>
+        <point x="210" y="270"></point>
+        <point x="165" y="240"></point>
+        <point x="180" y="180"></point>
+        <point x="285" y="195"></point>
+        <point x="285" y="165"></point>
+        <point x="180" y="105"></point>
+        <point x="180" y="60"></point>
+        <point x="165" y="15"></point>
+      </polygon>
+    </shape>
+    <shape name="arrow" rotatable="true" editableColorIndex="0">
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="150" y="0"></point>
+        <point x="0" y="150"></point>
+        <point x="105" y="150"></point>
+        <point x="105" y="293"></point>
+        <point x="195" y="293"></point>
+        <point x="195" y="150"></point>
+        <point x="300" y="150"></point>
+      </polygon>
+    </shape>
+    <shape name="box" rotatable="false" editableColorIndex="0">
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="150" y="285"></point>
+        <point x="285" y="225"></point>
+        <point x="285" y="75"></point>
+        <point x="150" y="135"></point>
+      </polygon>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="150" y="135"></point>
+        <point x="15" y="75"></point>
+        <point x="150" y="15"></point>
+        <point x="285" y="75"></point>
+      </polygon>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="15" y="75"></point>
+        <point x="15" y="225"></point>
+        <point x="150" y="285"></point>
+        <point x="150" y="135"></point>
+      </polygon>
+      <line endX="150" startY="285" marked="false" color="255" endY="135" startX="150"></line>
+      <line endX="15" startY="135" marked="false" color="255" endY="75" startX="150"></line>
+      <line endX="285" startY="135" marked="false" color="255" endY="75" startX="150"></line>
+    </shape>
+    <shape name="bug" rotatable="true" editableColorIndex="0">
+      <circle x="96" y="182" marked="true" color="-1920102913" diameter="108" filled="true"></circle>
+      <circle x="110" y="127" marked="true" color="-1920102913" diameter="80" filled="true"></circle>
+      <circle x="110" y="75" marked="true" color="-1920102913" diameter="80" filled="true"></circle>
+      <line endX="80" startY="100" marked="true" color="-1920102913" endY="30" startX="150"></line>
+      <line endX="220" startY="100" marked="true" color="-1920102913" endY="30" startX="150"></line>
+    </shape>
+    <shape name="butterfly" rotatable="true" editableColorIndex="0">
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="150" y="165"></point>
+        <point x="209" y="199"></point>
+        <point x="225" y="225"></point>
+        <point x="225" y="255"></point>
+        <point x="195" y="270"></point>
+        <point x="165" y="255"></point>
+        <point x="150" y="240"></point>
+      </polygon>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="150" y="165"></point>
+        <point x="89" y="198"></point>
+        <point x="75" y="225"></point>
+        <point x="75" y="255"></point>
+        <point x="105" y="270"></point>
+        <point x="135" y="255"></point>
+        <point x="150" y="240"></point>
+      </polygon>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="139" y="148"></point>
+        <point x="100" y="105"></point>
+        <point x="55" y="90"></point>
+        <point x="25" y="90"></point>
+        <point x="10" y="105"></point>
+        <point x="10" y="135"></point>
+        <point x="25" y="180"></point>
+        <point x="40" y="195"></point>
+        <point x="85" y="194"></point>
+        <point x="139" y="163"></point>
+      </polygon>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="162" y="150"></point>
+        <point x="200" y="105"></point>
+        <point x="245" y="90"></point>
+        <point x="275" y="90"></point>
+        <point x="290" y="105"></point>
+        <point x="290" y="135"></point>
+        <point x="275" y="180"></point>
+        <point x="260" y="195"></point>
+        <point x="215" y="195"></point>
+        <point x="162" y="165"></point>
+      </polygon>
+      <polygon color="255" filled="true" marked="false">
+        <point x="150" y="255"></point>
+        <point x="135" y="225"></point>
+        <point x="120" y="150"></point>
+        <point x="135" y="120"></point>
+        <point x="150" y="105"></point>
+        <point x="165" y="120"></point>
+        <point x="180" y="150"></point>
+        <point x="165" y="225"></point>
+      </polygon>
+      <circle x="135" y="90" marked="false" color="255" diameter="30" filled="true"></circle>
+      <line endX="195" startY="105" marked="false" color="255" endY="60" startX="150"></line>
+      <line endX="105" startY="105" marked="false" color="255" endY="60" startX="150"></line>
+    </shape>
+    <shape name="car" rotatable="false" editableColorIndex="0">
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="300" y="180"></point>
+        <point x="279" y="164"></point>
+        <point x="261" y="144"></point>
+        <point x="240" y="135"></point>
+        <point x="226" y="132"></point>
+        <point x="213" y="106"></point>
+        <point x="203" y="84"></point>
+        <point x="185" y="63"></point>
+        <point x="159" y="50"></point>
+        <point x="135" y="50"></point>
+        <point x="75" y="60"></point>
+        <point x="0" y="150"></point>
+        <point x="0" y="165"></point>
+        <point x="0" y="225"></point>
+        <point x="300" y="225"></point>
+        <point x="300" y="180"></point>
+      </polygon>
+      <circle x="180" y="180" marked="false" color="255" diameter="90" filled="true"></circle>
+      <circle x="30" y="180" marked="false" color="255" diameter="90" filled="true"></circle>
+      <polygon color="255" filled="true" marked="false">
+        <point x="162" y="80"></point>
+        <point x="132" y="78"></point>
+        <point x="134" y="135"></point>
+        <point x="209" y="135"></point>
+        <point x="194" y="105"></point>
+        <point x="189" y="96"></point>
+        <point x="180" y="89"></point>
+      </polygon>
+      <circle x="47" y="195" marked="true" color="-1920102913" diameter="58" filled="true"></circle>
+      <circle x="195" y="195" marked="true" color="-1920102913" diameter="58" filled="true"></circle>
+    </shape>
+    <shape name="circle" rotatable="false" editableColorIndex="0">
+      <circle x="0" y="0" marked="true" color="-1920102913" diameter="300" filled="true"></circle>
+    </shape>
+    <shape name="circle 2" rotatable="false" editableColorIndex="0">
+      <circle x="0" y="0" marked="true" color="-1920102913" diameter="300" filled="true"></circle>
+      <circle x="30" y="30" marked="false" color="255" diameter="240" filled="true"></circle>
+    </shape>
+    <shape name="cow" rotatable="false" editableColorIndex="0">
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="200" y="193"></point>
+        <point x="197" y="249"></point>
+        <point x="179" y="249"></point>
+        <point x="177" y="196"></point>
+        <point x="166" y="187"></point>
+        <point x="140" y="189"></point>
+        <point x="93" y="191"></point>
+        <point x="78" y="179"></point>
+        <point x="72" y="211"></point>
+        <point x="49" y="209"></point>
+        <point x="48" y="181"></point>
+        <point x="37" y="149"></point>
+        <point x="25" y="120"></point>
+        <point x="25" y="89"></point>
+        <point x="45" y="72"></point>
+        <point x="103" y="84"></point>
+        <point x="179" y="75"></point>
+        <point x="198" y="76"></point>
+        <point x="252" y="64"></point>
+        <point x="272" y="81"></point>
+        <point x="293" y="103"></point>
+        <point x="285" y="121"></point>
+        <point x="255" y="121"></point>
+        <point x="242" y="118"></point>
+        <point x="224" y="167"></point>
+      </polygon>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="73" y="210"></point>
+        <point x="86" y="251"></point>
+        <point x="62" y="249"></point>
+        <point x="48" y="208"></point>
+      </polygon>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="25" y="114"></point>
+        <point x="16" y="195"></point>
+        <point x="9" y="204"></point>
+        <point x="23" y="213"></point>
+        <point x="25" y="200"></point>
+        <point x="39" y="123"></point>
+      </polygon>
+    </shape>
+    <shape name="cylinder" rotatable="false" editableColorIndex="0">
+      <circle x="0" y="0" marked="true" color="-1920102913" diameter="300" filled="true"></circle>
+    </shape>
+    <shape name="dot" rotatable="false" editableColorIndex="0">
+      <circle x="90" y="90" marked="true" color="-1920102913" diameter="120" filled="true"></circle>
+    </shape>
+    <shape name="face happy" rotatable="false" editableColorIndex="0">
+      <circle x="8" y="8" marked="true" color="-1920102913" diameter="285" filled="true"></circle>
+      <circle x="60" y="75" marked="false" color="255" diameter="60" filled="true"></circle>
+      <circle x="180" y="75" marked="false" color="255" diameter="60" filled="true"></circle>
+      <polygon color="255" filled="true" marked="false">
+        <point x="150" y="255"></point>
+        <point x="90" y="239"></point>
+        <point x="62" y="213"></point>
+        <point x="47" y="191"></point>
+        <point x="67" y="179"></point>
+        <point x="90" y="203"></point>
+        <point x="109" y="218"></point>
+        <point x="150" y="225"></point>
+        <point x="192" y="218"></point>
+        <point x="210" y="203"></point>
+        <point x="227" y="181"></point>
+        <point x="251" y="194"></point>
+        <point x="236" y="217"></point>
+        <point x="212" y="240"></point>
+      </polygon>
+    </shape>
+    <shape name="face neutral" rotatable="false" editableColorIndex="0">
+      <circle x="8" y="7" marked="true" color="-1920102913" diameter="285" filled="true"></circle>
+      <circle x="60" y="75" marked="false" color="255" diameter="60" filled="true"></circle>
+      <circle x="180" y="75" marked="false" color="255" diameter="60" filled="true"></circle>
+      <rectangle endX="240" startY="195" marked="false" color="255" endY="225" startX="60" filled="true"></rectangle>
+    </shape>
+    <shape name="face sad" rotatable="false" editableColorIndex="0">
+      <circle x="8" y="8" marked="true" color="-1920102913" diameter="285" filled="true"></circle>
+      <circle x="60" y="75" marked="false" color="255" diameter="60" filled="true"></circle>
+      <circle x="180" y="75" marked="false" color="255" diameter="60" filled="true"></circle>
+      <polygon color="255" filled="true" marked="false">
+        <point x="150" y="168"></point>
+        <point x="90" y="184"></point>
+        <point x="62" y="210"></point>
+        <point x="47" y="232"></point>
+        <point x="67" y="244"></point>
+        <point x="90" y="220"></point>
+        <point x="109" y="205"></point>
+        <point x="150" y="198"></point>
+        <point x="192" y="205"></point>
+        <point x="210" y="220"></point>
+        <point x="227" y="242"></point>
+        <point x="251" y="229"></point>
+        <point x="236" y="206"></point>
+        <point x="212" y="183"></point>
+      </polygon>
+    </shape>
+    <shape name="fish" rotatable="false" editableColorIndex="0">
+      <polygon color="-1" filled="true" marked="false">
+        <point x="44" y="131"></point>
+        <point x="21" y="87"></point>
+        <point x="15" y="86"></point>
+        <point x="0" y="120"></point>
+        <point x="15" y="150"></point>
+        <point x="0" y="180"></point>
+        <point x="13" y="214"></point>
+        <point x="20" y="212"></point>
+        <point x="45" y="166"></point>
+      </polygon>
+      <polygon color="-1" filled="true" marked="false">
+        <point x="135" y="195"></point>
+        <point x="119" y="235"></point>
+        <point x="95" y="218"></point>
+        <point x="76" y="210"></point>
+        <point x="46" y="204"></point>
+        <point x="60" y="165"></point>
+      </polygon>
+      <polygon color="-1" filled="true" marked="false">
+        <point x="75" y="45"></point>
+        <point x="83" y="77"></point>
+        <point x="71" y="103"></point>
+        <point x="86" y="114"></point>
+        <point x="166" y="78"></point>
+        <point x="135" y="60"></point>
+      </polygon>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="30" y="136"></point>
+        <point x="151" y="77"></point>
+        <point x="226" y="81"></point>
+        <point x="280" y="119"></point>
+        <point x="292" y="146"></point>
+        <point x="292" y="160"></point>
+        <point x="287" y="170"></point>
+        <point x="270" y="195"></point>
+        <point x="195" y="210"></point>
+        <point x="151" y="212"></point>
+        <point x="30" y="166"></point>
+      </polygon>
+      <circle x="215" y="106" marked="false" color="255" diameter="30" filled="true"></circle>
+    </shape>
+    <shape name="flag" rotatable="false" editableColorIndex="0">
+      <rectangle endX="75" startY="15" marked="true" color="-1920102913" endY="300" startX="60" filled="true"></rectangle>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="90" y="150"></point>
+        <point x="270" y="90"></point>
+        <point x="90" y="30"></point>
+      </polygon>
+      <line endX="90" startY="135" marked="true" color="-1920102913" endY="135" startX="75"></line>
+      <line endX="90" startY="45" marked="true" color="-1920102913" endY="45" startX="75"></line>
+    </shape>
+    <shape name="flower" rotatable="false" editableColorIndex="0">
+      <polygon color="1504722175" filled="true" marked="false">
+        <point x="135" y="120"></point>
+        <point x="165" y="165"></point>
+        <point x="180" y="210"></point>
+        <point x="180" y="240"></point>
+        <point x="150" y="300"></point>
+        <point x="165" y="300"></point>
+        <point x="195" y="240"></point>
+        <point x="195" y="195"></point>
+        <point x="165" y="135"></point>
+      </polygon>
+      <circle x="85" y="132" marked="true" color="-1920102913" diameter="38" filled="true"></circle>
+      <circle x="130" y="147" marked="true" color="-1920102913" diameter="38" filled="true"></circle>
+      <circle x="192" y="85" marked="true" color="-1920102913" diameter="38" filled="true"></circle>
+      <circle x="85" y="40" marked="true" color="-1920102913" diameter="38" filled="true"></circle>
+      <circle x="177" y="40" marked="true" color="-1920102913" diameter="38" filled="true"></circle>
+      <circle x="177" y="132" marked="true" color="-1920102913" diameter="38" filled="true"></circle>
+      <circle x="70" y="85" marked="true" color="-1920102913" diameter="38" filled="true"></circle>
+      <circle x="130" y="25" marked="true" color="-1920102913" diameter="38" filled="true"></circle>
+      <circle x="96" y="51" marked="true" color="-1920102913" diameter="108" filled="true"></circle>
+      <circle x="113" y="68" marked="false" color="255" diameter="74" filled="true"></circle>
+      <polygon color="1504722175" filled="true" marked="false">
+        <point x="189" y="233"></point>
+        <point x="219" y="188"></point>
+        <point x="249" y="173"></point>
+        <point x="279" y="188"></point>
+        <point x="234" y="218"></point>
+      </polygon>
+      <polygon color="1504722175" filled="true" marked="false">
+        <point x="180" y="255"></point>
+        <point x="150" y="210"></point>
+        <point x="105" y="210"></point>
+        <point x="75" y="240"></point>
+        <point x="135" y="240"></point>
+      </polygon>
+    </shape>
+    <shape name="house" rotatable="false" editableColorIndex="0">
+      <rectangle endX="255" startY="120" marked="true" color="-1920102913" endY="285" startX="45" filled="true"></rectangle>
+      <rectangle endX="180" startY="210" marked="false" color="255" endY="285" startX="120" filled="true"></rectangle>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="15" y="120"></point>
+        <point x="150" y="15"></point>
+        <point x="285" y="120"></point>
+      </polygon>
+      <line endX="270" startY="120" marked="false" color="255" endY="120" startX="30"></line>
+    </shape>
+    <shape name="lander" rotatable="false" editableColorIndex="0">
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="45" y="75"></point>
+        <point x="150" y="30"></point>
+        <point x="255" y="75"></point>
+        <point x="285" y="225"></point>
+        <point x="240" y="225"></point>
+        <point x="240" y="195"></point>
+        <point x="210" y="195"></point>
+        <point x="210" y="225"></point>
+        <point x="165" y="225"></point>
+        <point x="165" y="195"></point>
+        <point x="135" y="195"></point>
+        <point x="135" y="225"></point>
+        <point x="90" y="225"></point>
+        <point x="90" y="195"></point>
+        <point x="60" y="195"></point>
+        <point x="60" y="225"></point>
+        <point x="15" y="225"></point>
+        <point x="45" y="75"></point>
+      </polygon>
+    </shape>
+    <shape name="leaf" rotatable="false" editableColorIndex="0">
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="150" y="210"></point>
+        <point x="135" y="195"></point>
+        <point x="120" y="210"></point>
+        <point x="60" y="210"></point>
+        <point x="30" y="195"></point>
+        <point x="60" y="180"></point>
+        <point x="60" y="165"></point>
+        <point x="15" y="135"></point>
+        <point x="30" y="120"></point>
+        <point x="15" y="105"></point>
+        <point x="40" y="104"></point>
+        <point x="45" y="90"></point>
+        <point x="60" y="90"></point>
+        <point x="90" y="105"></point>
+        <point x="105" y="120"></point>
+        <point x="120" y="120"></point>
+        <point x="105" y="60"></point>
+        <point x="120" y="60"></point>
+        <point x="135" y="30"></point>
+        <point x="150" y="15"></point>
+        <point x="165" y="30"></point>
+        <point x="180" y="60"></point>
+        <point x="195" y="60"></point>
+        <point x="180" y="120"></point>
+        <point x="195" y="120"></point>
+        <point x="210" y="105"></point>
+        <point x="240" y="90"></point>
+        <point x="255" y="90"></point>
+        <point x="263" y="104"></point>
+        <point x="285" y="105"></point>
+        <point x="270" y="120"></point>
+        <point x="285" y="135"></point>
+        <point x="240" y="165"></point>
+        <point x="240" y="180"></point>
+        <point x="270" y="195"></point>
+        <point x="240" y="210"></point>
+        <point x="180" y="210"></point>
+        <point x="165" y="195"></point>
+      </polygon>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="135" y="195"></point>
+        <point x="135" y="240"></point>
+        <point x="120" y="255"></point>
+        <point x="105" y="255"></point>
+        <point x="105" y="285"></point>
+        <point x="135" y="285"></point>
+        <point x="165" y="240"></point>
+        <point x="165" y="195"></point>
+      </polygon>
+    </shape>
+    <shape name="line" rotatable="true" editableColorIndex="0">
+      <line endX="150" startY="0" marked="true" color="-1920102913" endY="300" startX="150"></line>
+    </shape>
+    <shape name="line half" rotatable="true" editableColorIndex="0">
+      <line endX="150" startY="0" marked="true" color="-1920102913" endY="150" startX="150"></line>
+    </shape>
+    <shape name="pentagon" rotatable="false" editableColorIndex="0">
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="150" y="15"></point>
+        <point x="15" y="120"></point>
+        <point x="60" y="285"></point>
+        <point x="240" y="285"></point>
+        <point x="285" y="120"></point>
+      </polygon>
+    </shape>
+    <shape name="person" rotatable="false" editableColorIndex="0">
+      <circle x="110" y="5" marked="true" color="-1920102913" diameter="80" filled="true"></circle>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="105" y="90"></point>
+        <point x="120" y="195"></point>
+        <point x="90" y="285"></point>
+        <point x="105" y="300"></point>
+        <point x="135" y="300"></point>
+        <point x="150" y="225"></point>
+        <point x="165" y="300"></point>
+        <point x="195" y="300"></point>
+        <point x="210" y="285"></point>
+        <point x="180" y="195"></point>
+        <point x="195" y="90"></point>
+      </polygon>
+      <rectangle endX="172" startY="79" marked="true" color="-1920102913" endY="94" startX="127" filled="true"></rectangle>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="195" y="90"></point>
+        <point x="240" y="150"></point>
+        <point x="225" y="180"></point>
+        <point x="165" y="105"></point>
+      </polygon>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="105" y="90"></point>
+        <point x="60" y="150"></point>
+        <point x="75" y="180"></point>
+        <point x="135" y="105"></point>
+      </polygon>
+    </shape>
+    <shape name="plant" rotatable="false" editableColorIndex="0">
+      <rectangle endX="165" startY="90" marked="true" color="-1920102913" endY="300" startX="135" filled="true"></rectangle>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="135" y="255"></point>
+        <point x="90" y="210"></point>
+        <point x="45" y="195"></point>
+        <point x="75" y="255"></point>
+        <point x="135" y="285"></point>
+      </polygon>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="165" y="255"></point>
+        <point x="210" y="210"></point>
+        <point x="255" y="195"></point>
+        <point x="225" y="255"></point>
+        <point x="165" y="285"></point>
+      </polygon>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="135" y="180"></point>
+        <point x="90" y="135"></point>
+        <point x="45" y="120"></point>
+        <point x="75" y="180"></point>
+        <point x="135" y="210"></point>
+      </polygon>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="165" y="180"></point>
+        <point x="165" y="210"></point>
+        <point x="225" y="180"></point>
+        <point x="255" y="120"></point>
+        <point x="210" y="135"></point>
+      </polygon>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="135" y="105"></point>
+        <point x="90" y="60"></point>
+        <point x="45" y="45"></point>
+        <point x="75" y="105"></point>
+        <point x="135" y="135"></point>
+      </polygon>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="165" y="105"></point>
+        <point x="165" y="135"></point>
+        <point x="225" y="105"></point>
+        <point x="255" y="45"></point>
+        <point x="210" y="60"></point>
+      </polygon>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="135" y="90"></point>
+        <point x="120" y="45"></point>
+        <point x="150" y="15"></point>
+        <point x="180" y="45"></point>
+        <point x="165" y="90"></point>
+      </polygon>
+    </shape>
+    <shape name="sheep" rotatable="false" editableColorIndex="15">
+      <circle x="203" y="65" marked="true" color="-1" diameter="88" filled="true"></circle>
+      <circle x="70" y="65" marked="true" color="-1" diameter="162" filled="true"></circle>
+      <circle x="150" y="105" marked="true" color="-1" diameter="120" filled="true"></circle>
+      <polygon color="-1920102913" filled="true" marked="false">
+        <point x="218" y="120"></point>
+        <point x="240" y="165"></point>
+        <point x="255" y="165"></point>
+        <point x="278" y="120"></point>
+      </polygon>
+      <circle x="214" y="72" marked="false" color="-1920102913" diameter="67" filled="true"></circle>
+      <rectangle endX="179" startY="223" marked="true" color="-1" endY="298" startX="164" filled="true"></rectangle>
+      <polygon color="-1" filled="true" marked="true">
+        <point x="45" y="285"></point>
+        <point x="30" y="285"></point>
+        <point x="30" y="240"></point>
+        <point x="15" y="195"></point>
+        <point x="45" y="210"></point>
+      </polygon>
+      <circle x="3" y="83" marked="true" color="-1" diameter="150" filled="true"></circle>
+      <rectangle endX="80" startY="221" marked="true" color="-1" endY="296" startX="65" filled="true"></rectangle>
+      <polygon color="-1" filled="true" marked="true">
+        <point x="195" y="285"></point>
+        <point x="210" y="285"></point>
+        <point x="210" y="240"></point>
+        <point x="240" y="210"></point>
+        <point x="195" y="210"></point>
+      </polygon>
+      <polygon color="-1920102913" filled="true" marked="false">
+        <point x="276" y="85"></point>
+        <point x="285" y="105"></point>
+        <point x="302" y="99"></point>
+        <point x="294" y="83"></point>
+      </polygon>
+      <polygon color="-1920102913" filled="true" marked="false">
+        <point x="219" y="85"></point>
+        <point x="210" y="105"></point>
+        <point x="193" y="99"></point>
+        <point x="201" y="83"></point>
+      </polygon>
+    </shape>
+    <shape name="square" rotatable="false" editableColorIndex="0">
+      <rectangle endX="270" startY="30" marked="true" color="-1920102913" endY="270" startX="30" filled="true"></rectangle>
+    </shape>
+    <shape name="square 2" rotatable="false" editableColorIndex="0">
+      <rectangle endX="270" startY="30" marked="true" color="-1920102913" endY="270" startX="30" filled="true"></rectangle>
+      <rectangle endX="240" startY="60" marked="false" color="255" endY="240" startX="60" filled="true"></rectangle>
+    </shape>
+    <shape name="star" rotatable="false" editableColorIndex="0">
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="151" y="1"></point>
+        <point x="185" y="108"></point>
+        <point x="298" y="108"></point>
+        <point x="207" y="175"></point>
+        <point x="242" y="282"></point>
+        <point x="151" y="216"></point>
+        <point x="59" y="282"></point>
+        <point x="94" y="175"></point>
+        <point x="3" y="108"></point>
+        <point x="116" y="108"></point>
+      </polygon>
+    </shape>
+    <shape name="target" rotatable="false" editableColorIndex="0">
+      <circle x="0" y="0" marked="true" color="-1920102913" diameter="300" filled="true"></circle>
+      <circle x="30" y="30" marked="false" color="255" diameter="240" filled="true"></circle>
+      <circle x="60" y="60" marked="true" color="-1920102913" diameter="180" filled="true"></circle>
+      <circle x="90" y="90" marked="false" color="255" diameter="120" filled="true"></circle>
+      <circle x="120" y="120" marked="true" color="-1920102913" diameter="60" filled="true"></circle>
+    </shape>
+    <shape name="tree" rotatable="false" editableColorIndex="0">
+      <circle x="118" y="3" marked="true" color="-1920102913" diameter="94" filled="true"></circle>
+      <rectangle endX="180" startY="195" marked="false" color="-1653716737" endY="300" startX="120" filled="true"></rectangle>
+      <circle x="65" y="21" marked="true" color="-1920102913" diameter="108" filled="true"></circle>
+      <circle x="116" y="41" marked="true" color="-1920102913" diameter="127" filled="true"></circle>
+      <circle x="45" y="90" marked="true" color="-1920102913" diameter="120" filled="true"></circle>
+      <circle x="104" y="74" marked="true" color="-1920102913" diameter="152" filled="true"></circle>
+    </shape>
+    <shape name="tree-fruit" rotatable="false" editableColorIndex="0">
+      <circle x="118" y="3" marked="true" color="-1920102913" diameter="94" filled="true"></circle>
+      <rectangle endX="180" startY="195" marked="false" color="-1653716737" endY="300" startX="120" filled="true"></rectangle>
+      <circle x="65" y="21" marked="true" color="-1920102913" diameter="108" filled="true"></circle>
+      <circle x="116" y="41" marked="true" color="-1920102913" diameter="127" filled="true"></circle>
+      <circle x="45" y="90" marked="true" color="-1920102913" diameter="120" filled="true"></circle>
+      <circle x="104" y="74" marked="true" color="-1920102913" diameter="152" filled="true"></circle>
+      <circle x="135" y="150" marked="false" color="-684578305" diameter="30" filled="true"></circle>
+      <circle x="195" y="165" marked="false" color="-684578305" diameter="30" filled="true"></circle>
+      <circle x="75" y="120" marked="false" color="-684578305" diameter="30" filled="true"></circle>
+      <circle x="60" y="180" marked="false" color="-684578305" diameter="30" filled="true"></circle>
+      <circle x="90" y="45" marked="false" color="-684578305" diameter="30" filled="true"></circle>
+      <circle x="165" y="45" marked="false" color="-684578305" diameter="30" filled="true"></circle>
+      <circle x="195" y="105" marked="false" color="-684578305" diameter="30" filled="true"></circle>
+      <circle x="135" y="90" marked="false" color="-684578305" diameter="30" filled="true"></circle>
+    </shape>
+    <shape name="tree-less" rotatable="false" editableColorIndex="0">
+      <circle x="90" y="135" marked="true" color="-1920102913" diameter="60" filled="true"></circle>
+      <circle x="165" y="105" marked="true" color="-1920102913" diameter="60" filled="true"></circle>
+      <circle x="135" y="120" marked="true" color="-1920102913" diameter="60" filled="true"></circle>
+      <circle x="225" y="120" marked="true" color="-1920102913" diameter="60" filled="true"></circle>
+      <circle x="25" y="105" marked="true" color="-1920102913" diameter="70" filled="true"></circle>
+      <circle x="125" y="55" marked="true" color="-1920102913" diameter="80" filled="true"></circle>
+      <rectangle endX="165" startY="165" marked="false" color="-1653716737" endY="300" startX="135" filled="true"></rectangle>
+      <circle x="118" y="44" marked="true" color="-1920102913" diameter="32" filled="true"></circle>
+      <rectangle endX="255" startY="165" marked="false" color="-1653716737" endY="180" startX="165" filled="true"></rectangle>
+      <rectangle endX="135" startY="165" marked="false" color="-1653716737" endY="180" startX="60" filled="true"></rectangle>
+      <rectangle endX="75" startY="105" marked="false" color="-1653716737" endY="165" startX="60" filled="true"></rectangle>
+      <rectangle endX="60" startY="150" marked="false" color="-1653716737" endY="165" startX="15" filled="true"></rectangle>
+      <rectangle endX="135" startY="105" marked="false" color="-1653716737" endY="165" startX="120" filled="true"></rectangle>
+      <rectangle endX="255" startY="105" marked="false" color="-1653716737" endY="165" startX="240" filled="true"></rectangle>
+      <rectangle endX="285" startY="165" marked="false" color="-1653716737" endY="180" startX="240" filled="true"></rectangle>
+      <rectangle endX="195" startY="105" marked="false" color="-1653716737" endY="165" startX="180" filled="true"></rectangle>
+      <rectangle endX="300" startY="105" marked="false" color="-1653716737" endY="120" startX="240" filled="true"></rectangle>
+      <rectangle endX="225" startY="90" marked="false" color="-1653716737" endY="105" startX="180" filled="true"></rectangle>
+      <circle x="210" y="90" marked="true" color="-1920102913" diameter="30" filled="true"></circle>
+      <circle x="165" y="60" marked="true" color="-1920102913" diameter="60" filled="true"></circle>
+      <circle x="135" y="30" marked="true" color="-1920102913" diameter="60" filled="true"></circle>
+      <circle x="90" y="60" marked="true" color="-1920102913" diameter="60" filled="true"></circle>
+      <circle x="60" y="90" marked="true" color="-1920102913" diameter="60" filled="true"></circle>
+      <circle x="35" y="70" marked="true" color="-1920102913" diameter="50" filled="true"></circle>
+      <circle x="15" y="90" marked="true" color="-1920102913" diameter="30" filled="true"></circle>
+      <circle x="0" y="135" marked="true" color="-1920102913" diameter="30" filled="true"></circle>
+      <circle x="225" y="90" marked="true" color="-1920102913" diameter="60" filled="true"></circle>
+      <circle x="15" y="120" marked="true" color="-1920102913" diameter="30" filled="true"></circle>
+      <circle x="210" y="105" marked="true" color="-1920102913" diameter="30" filled="true"></circle>
+      <circle x="210" y="150" marked="true" color="-1920102913" diameter="30" filled="true"></circle>
+      <circle x="270" y="105" marked="true" color="-1920102913" diameter="30" filled="true"></circle>
+      <circle x="270" y="150" marked="true" color="-1920102913" diameter="30" filled="true"></circle>
+      <circle x="90" y="120" marked="true" color="-1920102913" diameter="60" filled="true"></circle>
+    </shape>
+    <shape name="triangle" rotatable="false" editableColorIndex="0">
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="150" y="30"></point>
+        <point x="15" y="255"></point>
+        <point x="285" y="255"></point>
+      </polygon>
+    </shape>
+    <shape name="triangle 2" rotatable="false" editableColorIndex="0">
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="150" y="30"></point>
+        <point x="15" y="255"></point>
+        <point x="285" y="255"></point>
+      </polygon>
+      <polygon color="255" filled="true" marked="false">
+        <point x="151" y="99"></point>
+        <point x="225" y="223"></point>
+        <point x="75" y="224"></point>
+      </polygon>
+    </shape>
+    <shape name="truck" rotatable="false" editableColorIndex="0">
+      <rectangle endX="195" startY="45" marked="true" color="-1920102913" endY="187" startX="4" filled="true"></rectangle>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="296" y="193"></point>
+        <point x="296" y="150"></point>
+        <point x="259" y="134"></point>
+        <point x="244" y="104"></point>
+        <point x="208" y="104"></point>
+        <point x="207" y="194"></point>
+      </polygon>
+      <rectangle endX="195" startY="60" marked="false" color="-1" endY="105" startX="195" filled="true"></rectangle>
+      <polygon color="255" filled="true" marked="false">
+        <point x="238" y="112"></point>
+        <point x="252" y="141"></point>
+        <point x="219" y="141"></point>
+        <point x="218" y="112"></point>
+      </polygon>
+      <circle x="234" y="174" marked="false" color="255" diameter="42" filled="true"></circle>
+      <rectangle endX="214" startY="185" marked="true" color="-1920102913" endY="194" startX="181" filled="true"></rectangle>
+      <circle x="144" y="174" marked="false" color="255" diameter="42" filled="true"></circle>
+      <circle x="24" y="174" marked="false" color="255" diameter="42" filled="true"></circle>
+      <circle x="24" y="174" marked="true" color="-1920102913" diameter="42" filled="false"></circle>
+      <circle x="144" y="174" marked="true" color="-1920102913" diameter="42" filled="false"></circle>
+      <circle x="234" y="174" marked="true" color="-1920102913" diameter="42" filled="false"></circle>
+    </shape>
+    <shape name="turtle" rotatable="true" editableColorIndex="0">
+      <polygon color="1504722175" filled="true" marked="false">
+        <point x="215" y="204"></point>
+        <point x="240" y="233"></point>
+        <point x="246" y="254"></point>
+        <point x="228" y="266"></point>
+        <point x="215" y="252"></point>
+        <point x="193" y="210"></point>
+      </polygon>
+      <polygon color="1504722175" filled="true" marked="false">
+        <point x="195" y="90"></point>
+        <point x="225" y="75"></point>
+        <point x="245" y="75"></point>
+        <point x="260" y="89"></point>
+        <point x="269" y="108"></point>
+        <point x="261" y="124"></point>
+        <point x="240" y="105"></point>
+        <point x="225" y="105"></point>
+        <point x="210" y="105"></point>
+      </polygon>
+      <polygon color="1504722175" filled="true" marked="false">
+        <point x="105" y="90"></point>
+        <point x="75" y="75"></point>
+        <point x="55" y="75"></point>
+        <point x="40" y="89"></point>
+        <point x="31" y="108"></point>
+        <point x="39" y="124"></point>
+        <point x="60" y="105"></point>
+        <point x="75" y="105"></point>
+        <point x="90" y="105"></point>
+      </polygon>
+      <polygon color="1504722175" filled="true" marked="false">
+        <point x="132" y="85"></point>
+        <point x="134" y="64"></point>
+        <point x="107" y="51"></point>
+        <point x="108" y="17"></point>
+        <point x="150" y="2"></point>
+        <point x="192" y="18"></point>
+        <point x="192" y="52"></point>
+        <point x="169" y="65"></point>
+        <point x="172" y="87"></point>
+      </polygon>
+      <polygon color="1504722175" filled="true" marked="false">
+        <point x="85" y="204"></point>
+        <point x="60" y="233"></point>
+        <point x="54" y="254"></point>
+        <point x="72" y="266"></point>
+        <point x="85" y="252"></point>
+        <point x="107" y="210"></point>
+      </polygon>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="119" y="75"></point>
+        <point x="179" y="75"></point>
+        <point x="209" y="101"></point>
+        <point x="224" y="135"></point>
+        <point x="220" y="225"></point>
+        <point x="175" y="261"></point>
+        <point x="128" y="261"></point>
+        <point x="81" y="224"></point>
+        <point x="74" y="135"></point>
+        <point x="88" y="99"></point>
+      </polygon>
+    </shape>
+    <shape name="wheel" rotatable="false" editableColorIndex="0">
+      <circle x="3" y="3" marked="true" color="-1920102913" diameter="294" filled="true"></circle>
+      <circle x="30" y="30" marked="false" color="255" diameter="240" filled="true"></circle>
+      <line endX="150" startY="285" marked="true" color="-1920102913" endY="15" startX="150"></line>
+      <line endX="285" startY="150" marked="true" color="-1920102913" endY="150" startX="15"></line>
+      <circle x="120" y="120" marked="true" color="-1920102913" diameter="60" filled="true"></circle>
+      <line endX="79" startY="40" marked="true" color="-1920102913" endY="269" startX="216"></line>
+      <line endX="269" startY="84" marked="true" color="-1920102913" endY="221" startX="40"></line>
+      <line endX="269" startY="216" marked="true" color="-1920102913" endY="79" startX="40"></line>
+      <line endX="221" startY="40" marked="true" color="-1920102913" endY="269" startX="84"></line>
+    </shape>
+    <shape name="wolf" rotatable="false" editableColorIndex="0">
+      <polygon color="255" filled="true" marked="false">
+        <point x="253" y="133"></point>
+        <point x="245" y="131"></point>
+        <point x="245" y="133"></point>
+      </polygon>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="2" y="194"></point>
+        <point x="13" y="197"></point>
+        <point x="30" y="191"></point>
+        <point x="38" y="193"></point>
+        <point x="38" y="205"></point>
+        <point x="20" y="226"></point>
+        <point x="20" y="257"></point>
+        <point x="27" y="265"></point>
+        <point x="38" y="266"></point>
+        <point x="40" y="260"></point>
+        <point x="31" y="253"></point>
+        <point x="31" y="230"></point>
+        <point x="60" y="206"></point>
+        <point x="68" y="198"></point>
+        <point x="75" y="209"></point>
+        <point x="66" y="228"></point>
+        <point x="65" y="243"></point>
+        <point x="82" y="261"></point>
+        <point x="84" y="268"></point>
+        <point x="100" y="267"></point>
+        <point x="103" y="261"></point>
+        <point x="77" y="239"></point>
+        <point x="79" y="231"></point>
+        <point x="100" y="207"></point>
+        <point x="98" y="196"></point>
+        <point x="119" y="201"></point>
+        <point x="143" y="202"></point>
+        <point x="160" y="195"></point>
+        <point x="166" y="210"></point>
+        <point x="172" y="213"></point>
+        <point x="173" y="238"></point>
+        <point x="167" y="251"></point>
+        <point x="160" y="248"></point>
+        <point x="154" y="265"></point>
+        <point x="169" y="264"></point>
+        <point x="178" y="247"></point>
+        <point x="186" y="240"></point>
+        <point x="198" y="260"></point>
+        <point x="200" y="271"></point>
+        <point x="217" y="271"></point>
+        <point x="219" y="262"></point>
+        <point x="207" y="258"></point>
+        <point x="195" y="230"></point>
+        <point x="192" y="198"></point>
+        <point x="210" y="184"></point>
+        <point x="227" y="164"></point>
+        <point x="242" y="144"></point>
+        <point x="259" y="145"></point>
+        <point x="284" y="151"></point>
+        <point x="277" y="141"></point>
+        <point x="293" y="140"></point>
+        <point x="299" y="134"></point>
+        <point x="297" y="127"></point>
+        <point x="273" y="119"></point>
+        <point x="270" y="105"></point>
+      </polygon>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="-1" y="195"></point>
+        <point x="14" y="180"></point>
+        <point x="36" y="166"></point>
+        <point x="40" y="153"></point>
+        <point x="53" y="140"></point>
+        <point x="82" y="131"></point>
+        <point x="134" y="133"></point>
+        <point x="159" y="126"></point>
+        <point x="188" y="115"></point>
+        <point x="227" y="108"></point>
+        <point x="236" y="102"></point>
+        <point x="238" y="98"></point>
+        <point x="268" y="86"></point>
+        <point x="269" y="92"></point>
+        <point x="281" y="87"></point>
+        <point x="269" y="103"></point>
+        <point x="269" y="113"></point>
+      </polygon>
+    </shape>
+    <shape name="x" rotatable="false" editableColorIndex="0">
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="270" y="75"></point>
+        <point x="225" y="30"></point>
+        <point x="30" y="225"></point>
+        <point x="75" y="270"></point>
+      </polygon>
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="30" y="75"></point>
+        <point x="75" y="30"></point>
+        <point x="270" y="225"></point>
+        <point x="225" y="270"></point>
+      </polygon>
+    </shape>
+  </turtleShapes>
+  <linkShapes>
+    <shape name="default" curviness="0.0">
+      <lines>
+        <line x="-0.2" visible="false">
+          <dash value="0.0"></dash>
+          <dash value="1.0"></dash>
+        </line>
+        <line x="0.0" visible="true">
+          <dash value="1.0"></dash>
+          <dash value="0.0"></dash>
+        </line>
+        <line x="0.2" visible="false">
+          <dash value="0.0"></dash>
+          <dash value="1.0"></dash>
+        </line>
+      </lines>
+      <indicator>
+        <shape name="link direction" rotatable="true" editableColorIndex="0">
+          <line endX="90" startY="150" marked="true" color="-1920102913" endY="180" startX="150"></line>
+          <line endX="210" startY="150" marked="true" color="-1920102913" endY="180" startX="150"></line>
+        </shape>
+      </indicator>
+    </shape>
+  </linkShapes>
+  <previewCommands>setup repeat 75 [ go ]</previewCommands>
+  <experiments>
+    <experiment name="oat_pierre" repetitions="1" sequentialRunOrder="true" runMetricsEveryStep="false">
+      <setup>setup</setup>
+      <go>go</go>
+      <exitCondition>ticks = 3650</exitCondition>
+      <metrics>
+        <metric>totalFoyers</metric>
+        <metric>totalSheeps</metric>
+        <metric>totalCattles</metric>
+        <metric>waterStock</metric>
+        <metric>sheepsTempCamp</metric>
+        <metric>cattlesTempCamp</metric>
+        <metric>sheepsHaveLeft</metric>
+        <metric>cattlesHaveLeft</metric>
+        <metric>sheepsWeightGain</metric>
+        <metric>cattlesWeightGain</metric>
+        <metric>meanSheepsLiveWeight</metric>
+        <metric>maxSheepsLiveWeight</metric>
+        <metric>minSheepsLiveWeight</metric>
+        <metric>meanCattlesLiveWeight</metric>
+        <metric>maxCattlesLiveWeight</metric>
+        <metric>minCattlesLiveWeight</metric>
+        <metric>meanSheepsNEC</metric>
+        <metric>meanCattlesNEC</metric>
+        <metric>MSTSheep-NEC</metric>
+        <metric>MSTCattle-NEC</metric>
+        <metric>totalTrees8years</metric>
+        <metric>totalTrees7years</metric>
+        <metric>totalTrees6years</metric>
+        <metric>totalTrees5years</metric>
+        <metric>totalTrees4years</metric>
+        <metric>totalTrees3years</metric>
+        <metric>totalTrees2years</metric>
+        <metric>totalTrees1years</metric>
+        <metric>totalTreesOldes</metric>
+        <metric>totalTreesYoung</metric>
+        <metric>traj-trees</metric>
+        <metric>MST-trees</metric>
+        <metric>meanTreesInCaangol</metric>
+        <metric>meanTreesInSangre</metric>
+        <metric>meanTreesInBaldiol</metric>
+        <metric>meanTreesInSeeno</metric>
+        <metric>traj-satisfaction-Seeno</metric>
+        <metric>traj-satisfaction-Baldiol</metric>
+        <metric>traj-satisfaction-Sangre</metric>
+        <metric>traj-satisfaction-Caangol</metric>
+        <metric>MST-Seeno</metric>
+        <metric>MST-Baldiol</metric>
+        <metric>MST-Sangre</metric>
+        <metric>MST-Caangol</metric>
+        <metric>totalGrass</metric>
+        <metric>totalTrees</metric>
+        <metric>meanGrass</metric>
+        <metric>meanFruitsConsumedCattle</metric>
+        <metric>meanLeavesConsumedCattle</metric>
+        <metric>meanFruitsConsumedSheep</metric>
+        <metric>meanLeavesConsumedSheep</metric>
+        <metric>sumSmallHerder</metric>
+        <metric>sumMediumHerder</metric>
+        <metric>sumLargeHerder</metric>
+      </metrics>
+      <constants>
+        <enumeratedValueSet variable="SatisfactionMeanTreesInCaangol">
+          <value value="93"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="max-ponds-5-months">
+          <value value="0"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="visualization-mode">
+          <value value="&quot;grass-cover&quot;"></value>
+        </enumeratedValueSet>
+        <steppedValueSet variable="good-shepherd-percentage" first="0" step="10" last="100"></steppedValueSet>
+        <enumeratedValueSet variable="SatisfactionMeanTreesInBaldiol">
+          <value value="40"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="max-ponds-6-months">
+          <value value="0"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="SheepNECSatifactionIndex">
+          <value value="3"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="SatisfactionMeanTreesInSeeno">
+          <value value="50"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="CattleNECSatifactionIndex">
+          <value value="3"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="number-of-camps">
+          <value value="1"></value>
+          <value value="10"></value>
+          <value value="50"></value>
+          <value value="100"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="TreeDensitySatisfaction-olds">
+          <value value="6010"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="max-ponds-4-months">
+          <value value="4"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="proportion-big-herders">
+          <value value="34"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="SatisfactionMeanTreesInSangre">
+          <value value="50"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="proportion-medium-herders">
+          <value value="33"></value>
+        </enumeratedValueSet>
+      </constants>
+    </experiment>
+  </experiments>
+</model>
