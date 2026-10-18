@@ -269,11 +269,15 @@ to update-tree-age
   ; Si une année s'est écoulée
   let advancing-populations []
   ; 2. Incrémenter l'âge de toutes les populations d'arbres
+  
+  
+  
   ask tree-populations [
+    
+    let soil-types [soil-type] of patch-here
     ifelse tree-pop-age < 5 [
       set tree-pop-age tree-pop-age + 1
-      set population-size round (population-size * young-regen-rate / 100)
-      let soil-types [soil-type] of patch-here
+      set population-size survivors population-size (young-regen-rate / 100)
       ; Mettre à jour les stocks maximaux pour le nouvel âge
       ifelse population-size > 0 [
         let age-data get-age-data soil-types tree-type tree-pop-age          
@@ -296,8 +300,7 @@ to update-tree-age
       
       ] [ if tree-pop-age >= 5 and tree-pop-age < 8 [
         set tree-pop-age tree-pop-age + 1
-        let soil-types [soil-type] of patch-here
-        set population-size round (population-size * 0.95)
+        set population-size survivors population-size 0.95
         ; Mettre à jour les stocks maximaux pour le nouvel âge       
         ifelse population-size > 0 [
           let age-data get-age-data soil-types tree-type tree-pop-age          
@@ -317,13 +320,31 @@ to update-tree-age
           die
         ]
         if tree-pop-age = 8 and population-size > 0 [
-          set advancing-populations lput (list patch-here tree-type population-size current-fruit-stock current-leaf-stock current-wood-stock fruit-nb seed-nb) advancing-populations
+          set advancing-populations lput (list patch-here tree-type population-size current-fruit-stock current-leaf-stock current-wood-stock fruit-nb seed-nb soil-current-fruit-stock germinated-seed-nb) advancing-populations
           die
         ]
       ]
     ]
   ]
   
+   ask tree-populations with [tree-pop-age >= 8] [
+
+    let soil-types [soil-type] of patch-here
+    set population-size survivors population-size 0.99
+    let age-data get-age-data soil-types tree-type tree-pop-age          
+    let max-leaf item 0 age-data
+    let max-fruit item 1 age-data
+    let max-wood item 2 age-data
+    let accessible item 3 age-data
+    let max-fruits-nb item 4 age-data
+    
+    set max-wood-stock max-wood * population-size
+    set max-fruit-stock max-fruit * population-size
+    set max-leaf-stock max-leaf * population-size
+    set max-fruit-nb max-fruits-nb * population-size
+    set leaves-percent-accessible accessible
+    set fruits-percent-accessible accessible
+  ]
   ; Traiter les populations avancées
 
   foreach advancing-populations [ any-adv-population ->
@@ -334,13 +355,14 @@ to update-tree-age
     let adv-leaf-stock item 4 any-adv-population
     let adv-wood-stock item 5 any-adv-population
     let adv-fruit-nb item 6 any-adv-population
+    let adv-soil-fruit-stock item 8 any-adv-population
+    let adv-germinated-seed-nb item 9 any-adv-population
     let existing-population one-of tree-populations with [
       patch-here = adv-patch and tree-type = adv-tree-type and tree-pop-age = 8
     ]
     ifelse existing-population != nobody [
       ; Ajouter la taille de la population qui passe à l'âge 8
       ask existing-population [
-        set population-size round (population-size * 0.99)
         set population-size population-size + adv-pop-size
         let soil-types [soil-type] of patch-here
         ; Mettre à jour les stocks maximaux
@@ -360,8 +382,9 @@ to update-tree-age
         
         set current-fruit-stock min (list (current-fruit-stock + adv-fruit-stock) max-fruit-stock)
         set current-leaf-stock min (list (current-leaf-stock + adv-leaf-stock) max-leaf-stock)
-        set current-wood-stock min (list (current-wood-stock + adv-wood-stock) max-wood-stock)
-        set soil-current-fruit-stock 0
+        set current-wood-stock min (list (current-wood-stock + adv-wood-stock) max-wood-stock)        
+        set soil-current-fruit-stock soil-current-fruit-stock + adv-soil-fruit-stock
+        set germinated-seed-nb germinated-seed-nb + adv-germinated-seed-nb
         set fruit-nb min (list (current-fruit-stock / one-fruit-weight) max-fruit-nb)
         set seed-nb fruit-nb * seed-nb-per-fruit
 
@@ -412,8 +435,9 @@ to update-tree-age
           
           set current-fruit-stock min (list adv-fruit-stock max-fruit-stock)
           set current-leaf-stock min (list adv-leaf-stock max-leaf-stock)
-          set current-wood-stock min (list adv-wood-stock max-wood-stock)
-          set soil-current-fruit-stock 0
+          set current-wood-stock min (list adv-wood-stock max-wood-stock)        
+          set soil-current-fruit-stock adv-soil-fruit-stock
+          set germinated-seed-nb adv-germinated-seed-nb
           set fruit-nb min (list (current-fruit-stock / one-fruit-weight) max-fruit-nb)
           set seed-nb fruit-nb * seed-nb-per-fruit
           

@@ -322,11 +322,11 @@ to create-herds-for-me
     set head my-cattle-count
     if head = 0 [ die ]
     set UBT-size 1
-    set corporal-condition 5
-    set initial-live-weight 250 * UBT-size * head
+    set initial-live-weight 250 * head
     set live-weight initial-live-weight
-    set max-live-weight 350 * head 
-    set min-live-weight 66 * head
+    set max-live-weight 391 * head 
+    set min-live-weight 149 * head
+    set corporal-condition (live-weight - (148.99 * head)) / (48.6 * head) ; NEC 2,08
     set ticks-left-year 0
     
     ; caractéristiques visuelles
@@ -391,11 +391,11 @@ to create-herds-for-me
     set head my-sheep-count
     if head = 0 [ die ]
     set UBT-size 0.16
-    set corporal-condition 5
     set initial-live-weight 250 * UBT-size * head
     set live-weight initial-live-weight
-    set max-live-weight 80 * head
+    set max-live-weight 50 * head
     set min-live-weight 21 * head
+    set corporal-condition (live-weight - (21.21 * head)) / (5.75 * head)
     set ticks-left-year 0
     
     ; caractéristiques visuelles

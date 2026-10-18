@@ -29,7 +29,7 @@ to-report growth-fruit-logistic [current-fruit max-fruit status season]
   ifelse  max-fruit <= 0.0001 [
     report 0  ; Pas de croissance si max-fruit est zéro
   ] [
-    ifelse status = "au sol" [
+    ifelse status = "sol" [
       report (- current-fruit)
     ] [
       if status = "chute" [
@@ -210,7 +210,14 @@ to-report get-age-data [soil-types trees-type ages]
   ]
 end
 
-
+to-report nutrition-factor [ingested need max-ingestible]
+  ;; 0 sans ingestion, 0,25 à l'entretien, 0,5 à l'ingestion maximale
+  ifelse ingested <= need [
+    report 0.25 * (max (list 0 ingested)) / need
+  ] [
+    report 0.25 + 0.25 * min (list 1 ((ingested - need) / (max-ingestible - need)))
+  ]
+end
 
 
 to-report get-tree-nutritional-data [trees-type soil season]
@@ -373,55 +380,31 @@ end
 
 
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;; herds reporters ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;
 
-
-; Trouver le meilleur patch : d'abord la qualité, ensuite la quantité, enfin la proximité
+;; Trouver les meilleurs patchs : utilité qualité/quantité, normalisées entre 0 et 1
 to-report find-best-patches [known-spaces my-shepherd seasons UtilityFactor current-home]
-
-  let viable-patches known-spaces with [current-grass > 100 and is-fenced = false and (count camps-on self) < 2 and distance current-home < 12 ]
-  if seasons = "Nduungu" [ set viable-patches viable-patches with [soil-type != "Caangol"]]
-  if [is-transhumant = true] of foyer-owner [
-    set viable-patches viable-patches with [has-camps = false]
+  let viable-patches known-spaces with [
+    current-grass > 100 and is-fenced = false and (count camps-on self) < 2 and distance current-home < 12
   ]
-  let n 5
-  let v count viable-patches
-  ;; nombre que vous souhaitez
-  let max-v min (list n v)             ;; k ≤ n et ≤ taille du set
-  ifelse max-v > 0 [
-    ifelse my-shepherd = "bon" [
-      
-      ; Sélectionner le(s) patch(es) ayant la plus haute valeur d'utilité.
-      let good-patches  max-n-of max-v viable-patches
-            [ (UtilityFactor * q) + ((1 - UtilityFactor) * current-grass) ]
-      report good-patches
-      ifelse any? good-patches [
-        ; Étape 3 : Choisir le patch le plus proche parmi ceux avec la meilleure qualité et la plus grande quantité d'herbe
-        report good-patches
-      ] [
-        
-        ; Étape 2 : Parmi les patches avec la meilleure qualité, sélectionner ceux avec la plus grande quantité d'herbe
-        let max-grass-patches max-n-of max-v viable-patches [current-grass]
-        
-        ; Étape 3 : Choisir le patch le plus proche parmi ceux avec la meilleure qualité et la plus grande quantité d'herbe
-        report max-grass-patches
-      ]
-    ] [
-      
-      ; Étape 2 : Parmi les patches avec la meilleure qualité, sélectionner ceux avec la plus grande quantité d'herbe
-      let max-grass-patches max-n-of max-v viable-patches [current-grass]
-      
-      ; Étape 3 : Choisir le patch le plus proche parmi ceux avec la meilleure qualité et la plus grande quantité d'herbe
-      report max-grass-patches
-      ; Si aucun patch viable n'est trouvé
+  if seasons = "Nduungu" [ set viable-patches viable-patches with [soil-type != "Caangol"] ]
+  if [is-transhumant] of foyer-owner [ set viable-patches viable-patches with [has-camps = false] ]
+
+  let max-v min (list 5 (count viable-patches))
+  if max-v = 0 [ report no-patches ]
+
+  ifelse my-shepherd = "bon" [
+    let grass-ref max [current-grass] of viable-patches
+    report max-n-of max-v viable-patches [
+      (UtilityFactor * ((q - 0.5) / 0.5)) + ((1 - UtilityFactor) * (current-grass / grass-ref))
     ]
   ] [
-    report no-patches
-      ]
+    report max-n-of max-v viable-patches [current-grass]
+  ]
 end
+
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -516,6 +499,12 @@ to-report patches-between [ p1 p2 ]
   ] [
     report no-patches
   ]
+end
+
+;; Nombre de survivants : partie entière + tirage aléatoire de la fraction
+to-report survivors [n rate]
+  let expected n * rate
+  report floor expected + ifelse-value (random-float 1 < (expected - floor expected)) [1] [0]
 end
 
 

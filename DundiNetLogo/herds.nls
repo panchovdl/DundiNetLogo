@@ -9,22 +9,6 @@ to setup-herds ; Valeurs à définir
   ]
 end
 
-to recalcul-herd-parameters
-  set initial-live-weight 250 * UBT-size * head
-  set live-weight initial-live-weight
-  set max-live-weight 350 * head * UBT-size
-  set min-live-weight 66 * head * UBT-size
-
-  set max-daily-DM-ingestible-per-head 6.25 * UBT-size
-  set daily-min-UF-needed-head 0.45 * max-daily-DM-ingestible-per-head
-  set daily-min-MAD-needed-head 25  * max-daily-DM-ingestible-per-head
-  set daily-water-consumption 22 * head * UBT-size
-  set size calculate-herd-size head
-  set label head
-end
-
-
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Comportement spatial du troupeau ;;;
@@ -359,161 +343,149 @@ end
 ;;; Procédure d'ingestion des feuilles et fruits  ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-
 to consume-tree-resources [patch-of-grass-eaten remaining-needs] ;; contexte troupeau
-                                                                 ;; Obtenir les populations d'arbres matures sur le patch
-  let all-trees tree-populations-on patch-of-grass-eaten
-  let consumption-treshold 0
-  let wood-reduction-per-kg-MS 0; Cf Hiernaux 1994
-                                ;; Arbres de plus de 5 ans
-  set all-trees all-trees with [population-size > 0 and current-leaf-stock > 0 and current-fruit-stock > 0]
-  let mature-trees all-trees with [tree-pop-age >= 6]
-  let good-trees []
-  ;; Déterminer les arbres ciblés en fonction du type de troupeau
-  if shepherd-type = "bon" [
-    set consumption-treshold 0.1 ; portion du stock maximal que le berger va prélever dans la population d'arbres
-    ;; Priorité aux types "nutritive" et "fruity"
-    set good-trees mature-trees with [ tree-type = "nutritive" or tree-type = "fruity" ]
-    if not any? good-trees [
-      ;; Si pas d'arbres "nutritive" ou "fruity", prendre les "less-nutritive"
-      set consumption-treshold 0.4
-      set wood-reduction-per-kg-MS 0.1
-      set good-trees mature-trees
+  let all-trees (tree-populations-on patch-of-grass-eaten) with [population-size > 0]
+  let needs remaining-needs
+
+  ;;------------------------------------------------------------------
+  ;; 1. Fruits au sol : prélevés en premier, accès libre.
+  ;;    Ni le type de berger, ni l'âge, ni le type d'arbre, ni le statut
+  ;;    phénologique de la population ne limitent ce prélèvement.
+  ;;------------------------------------------------------------------
+  let ground-trees all-trees with [soil-current-fruit-stock > 0 and fruits-UF-per-kg-MS > 0]
+  let total-ground-ingestible sum [soil-current-fruit-stock * ratio-consumable] of ground-trees
+
+  if needs > 0 and total-ground-ingestible > 0 [
+    ;; part du stock au sol ramassée, identique pour toutes les populations du patch
+    let share-taken min (list 1 (needs / total-ground-ingestible))
+    foreach sort ground-trees [ pop ->
+      let picked [soil-current-fruit-stock] of pop * share-taken      ;; fruits ramassés (kg MS)
+      let ingested picked * [ratio-consumable] of pop                ;; part ingérée
+      ask pop [
+        set soil-current-fruit-stock max (list 0 (soil-current-fruit-stock - picked))
+        set germinated-seed-nb germinated-seed-nb + (ingested * seed-nb-per-fruit / one-fruit-weight)
+      ]
+      set fruits-eaten fruits-eaten + ingested
+      set total-DM-ingested-from-trees total-DM-ingested-from-trees + ingested
+      set total-UF-ingested-from-trees total-UF-ingested-from-trees + ingested * [fruits-UF-per-kg-MS] of pop
+      set total-MAD-ingested-from-trees total-MAD-ingested-from-trees + ingested * [fruits-MAD-per-kg-MS] of pop
     ]
+    set needs needs - total-DM-ingested-from-trees
   ]
-  if shepherd-type = "mauvais" [    ;; Tous les arbres, pas de distinction
-    set consumption-treshold 0.6
-    set wood-reduction-per-kg-MS 0.3
-    set good-trees all-trees
-  ]
-  if any? good-trees [
-    ; Créer une liste des populations consommables et leurs max-consumable
-      ;; Filtrer les arbres en fonction de la disponibilité des ressources
-      set good-trees good-trees with [
-        (current-leaf-stock >= (consumption-treshold * max-leaf-stock)) or (current-fruit-stock >= (consumption-treshold * max-fruit-stock))
-    ]  
-      let tree-max-consumable []
+
+  ;;------------------------------------------------------------------
+  ;; 2. Feuilles et fruits sur l'arbre : complément du besoin restant,
+  ;;    selon le type de berger.
+  ;;------------------------------------------------------------------
+  if needs > 0 [
+    let consumption-treshold 0
+    let wood-reduction-per-kg-MS 0        ; Cf Hiernaux 1994
+    let mature-trees all-trees with [tree-pop-age >= 6]
+    let good-trees no-turtles
+
+    if shepherd-type = "bon" [
+      set consumption-treshold 0.1        ; portion du stock maximal que le berger va prélever
+      set good-trees mature-trees with [tree-type = "nutritive" or tree-type = "fruity"]
+      if not any? good-trees [            ; à défaut, les arbres peu nutritifs
+        set consumption-treshold 0.4
+        set wood-reduction-per-kg-MS 0.1
+        set good-trees mature-trees
+      ]
+    ]
+    if shepherd-type = "mauvais" [        ; tous les arbres, sans distinction
+      set consumption-treshold 0.6
+      set wood-reduction-per-kg-MS 0.3
+      set good-trees all-trees
+    ]
+
+    set good-trees good-trees with [
+      (current-leaf-stock >= consumption-treshold * max-leaf-stock) or
+      (current-fruit-stock >= consumption-treshold * max-fruit-stock)
+    ]
+
+    ;; Quantités prélevables par population
+    ;; entrée : [population  fruits-prélevables  fruits-ingérables  feuilles-prélevables]
+    let tree-max-consumable []
     let total-available 0
     ask good-trees [
-      if current-leaf-stock >= 0.1 and current-fruit-stock >= 0.1 [
-        let max-leaves-consumable 0
-        let max-fruits-consumable 0
-        if leaves-status = "dispo" or leaves-status = "croissance" [
-          set max-leaves-consumable min (list current-leaf-stock (max-leaf-stock * max (list leaves-percent-accessible consumption-treshold)))
-        ]
-        if leaves-status = "chute" or leaves-status = "au sol" [
-          set max-leaves-consumable min (list current-leaf-stock max-leaf-stock)
-        ]
-        if fruits-status = "dispo" or fruits-status = "croissance" [
-          set max-fruits-consumable min (list current-fruit-stock (max-fruit-stock * max (list fruits-percent-accessible consumption-treshold)))
-        ]
-        if fruits-status = "chute" [     
-          set max-fruits-consumable max (list current-fruit-stock max-fruit-stock)
-        ]
-        if fruits-status = "au sol" [
-          set max-fruits-consumable soil-current-fruit-stock 
-        ]
-        if fruits-UF-per-kg-MS = 0 [
-          set max-fruits-consumable 0]
-           
-        let max_consumable (max-fruits-consumable + max-leaves-consumable)
+      let max-leaves-consumable 0
+      let max-fruits-consumable 0
+      if leaves-status = "dispo" or leaves-status = "croissance" [
+        set max-leaves-consumable min (list current-leaf-stock (max-leaf-stock * max (list leaves-percent-accessible consumption-treshold)))
+      ]
+      if leaves-status = "chute" or leaves-status = "sol" [
+        set max-leaves-consumable min (list current-leaf-stock max-leaf-stock)
+      ]
+      if fruits-status = "dispo" or fruits-status = "croissance" [
+        set max-fruits-consumable min (list current-fruit-stock (max-fruit-stock * max (list fruits-percent-accessible consumption-treshold)))
+      ]
+      if fruits-status = "chute" [
+        set max-fruits-consumable min (list current-fruit-stock max-fruit-stock)
+      ]
+      ;; statut "sol" : plus de fruits sur l'arbre, le stock au sol est traité au point 1
+      if fruits-UF-per-kg-MS = 0 [ set max-fruits-consumable 0 ]
 
-        if max_consumable > 0 [
-          set tree-max-consumable lput (list self max-fruits-consumable max-leaves-consumable) tree-max-consumable
-          set total-available total-available + max_consumable
-        ]
+      let fruits-ingestible max-fruits-consumable * ratio-consumable
+      if (fruits-ingestible + max-leaves-consumable) > 0 [
+        set tree-max-consumable lput (list self max-fruits-consumable fruits-ingestible max-leaves-consumable) tree-max-consumable
+        set total-available total-available + fruits-ingestible + max-leaves-consumable
       ]
     ]
-    ; Déterminer la quantité à consommer
-    let amount-to-consume min list remaining-needs total-available
-    if amount-to-consume <= 0 [ set amount-to-consume 0 ]
 
-    ;; Distribuer la consommation proportionnellement dans les arbres
-    foreach tree-max-consumable [ [i] ->
-      let one-tree-population item 0 i
-      let max-fruits-consumable item 1 i
-      let max-leaves-consumable item 2 i
-      
-      let share_fruit (max-fruits-consumable / total-available)
-      let share_leaf  (max-leaves-consumable / total-available)
-      let denom share_fruit + share_leaf
-      if denom > 0 [
-        set share_fruit share_fruit / denom
-        set share_leaf  share_leaf  / denom
-      ]
-      let amount-consumed-fruit (amount-to-consume * share_fruit)
-      let amount-consumed-leaf (amount-to-consume * share_leaf)
+    let amount-to-consume min (list needs total-available)
+    let tree-DM 0                                     ; MS prélevée sur l'arbre uniquement
 
-      let total_available_this_tree ([max-fruits-consumable] of one-tree-population + [max-leaves-consumable] of one-tree-population)
+    if amount-to-consume > 0 [
+      ;; même fraction du disponible prélevée dans chaque population
+      let ratio-taken amount-to-consume / total-available
+      foreach tree-max-consumable [ entry ->
+        let one-pop item 0 entry
+        let fruits-picked (item 1 entry) * ratio-taken
+        let fruits-consumed (item 2 entry) * ratio-taken
+        let leaves-consumed (item 3 entry) * ratio-taken
 
-      if total_available_this_tree > 1 [
-        let leaves_share ([max-leaves-consumable] of one-tree-population / total_available_this_tree)
-        let fruits_share ([max-fruits-consumable] of one-tree-population / total_available_this_tree)
-        let leaves-consumed amount-consumed-leaf * leaves_share
-        set leaves-eaten leaves-consumed
-        let fruits-consumed amount-consumed-fruit * fruits_share * ([ratio-consumable] of one-tree-population)
-        set fruits-eaten fruits-consumed
-
-        ;; Mettre à jour les stocks dans la population d'arbres + INTEGRER LES GRAINES GERMEES
-        ask one-tree-population [
-          set current-leaf-stock max list (current-leaf-stock - leaves-consumed) 0
-            if leaves-consumed > (max-leaf-stock * leaves-percent-accessible) [
-              set current-wood-stock current-wood-stock - (wood-reduction-per-kg-MS * leaves-consumed)
-            ]
-          ifelse fruits-status = "au sol" [
-            set soil-current-fruit-stock  max (list (soil-current-fruit-stock - fruits-consumed) 0)
-          ] [
-            set current-fruit-stock  max list (current-fruit-stock - fruits-consumed) 0
+        ask one-pop [
+          set current-leaf-stock max (list 1 (current-leaf-stock - leaves-consumed))
+          if leaves-consumed > (max-leaf-stock * leaves-percent-accessible) [
+            set current-wood-stock current-wood-stock - (wood-reduction-per-kg-MS * leaves-consumed)
           ]
+          set current-fruit-stock max (list 1 (current-fruit-stock - fruits-picked))
           set fruit-nb current-fruit-stock / one-fruit-weight
           set seed-nb fruit-nb * seed-nb-per-fruit
           set germinated-seed-nb germinated-seed-nb + (fruits-consumed * seed-nb-per-fruit / one-fruit-weight)
-              if current-leaf-stock <= 0 [ set current-leaf-stock 1 ]
-          if current-fruit-stock <= 0 [ set current-fruit-stock 1 ]
         ]
 
-        ;; Calculer les UF et MAD ingérées depuis cette population
-        ;; Hypothèse : les feuilles et les fruits ont les mêmes valeurs nutritives
-        let UF-ingested-pop ((fruits-consumed * [fruits-UF-per-kg-MS] of one-tree-population) + (leaves-consumed * [leaves-UF-per-kg-MS] of one-tree-population))
-        let MAD-ingested-pop ((fruits-consumed * [fruits-MAD-per-kg-MS] of one-tree-population) + (leaves-consumed * [leaves-MAD-per-kg-MS] of one-tree-population))
-
-        ;; Accumuler les valeurs
-        set total-UF-ingested-from-trees total-UF-ingested-from-trees + UF-ingested-pop
-        set total-MAD-ingested-from-trees total-MAD-ingested-from-trees + MAD-ingested-pop
+        set leaves-eaten leaves-eaten + leaves-consumed
+        set fruits-eaten fruits-eaten + fruits-consumed
+        set tree-DM tree-DM + leaves-consumed + fruits-consumed
         set total-DM-ingested-from-trees total-DM-ingested-from-trees + leaves-consumed + fruits-consumed
-      ] ;; end if
-    ];; end foreach
-     ;; context troupeau
-     ;; Mettre à jour les variables du troupeau
-    set UF-ingested UF-ingested + total-UF-ingested-from-trees
-    set MAD-ingested MAD-ingested + total-MAD-ingested-from-trees
-    set DM-ingested DM-ingested + total-DM-ingested-from-trees
+        set total-UF-ingested-from-trees total-UF-ingested-from-trees
+          + (leaves-consumed * [leaves-UF-per-kg-MS] of one-pop) + (fruits-consumed * [fruits-UF-per-kg-MS] of one-pop)
+        set total-MAD-ingested-from-trees total-MAD-ingested-from-trees
+          + (leaves-consumed * [leaves-MAD-per-kg-MS] of one-pop) + (fruits-consumed * [fruits-MAD-per-kg-MS] of one-pop)
+      ]
+    ]
 
-    let proportion-from-trees (total-DM-ingested-from-trees / DM-ingested)   ; proportion de la ration provenant des arbres
-    if shepherd-type = "mauvais" [
-
-      if proportion-from-trees >= 0.5 [
-        ;; Sélectionner un arbre au hasard parmi les arbres consommables
-        if any? good-trees [
-          let tree-to-kill one-of good-trees
-          ask tree-to-kill [
-            set current-fruit-stock current-fruit-stock - (max-fruit-stock / population-size)
-            set current-leaf-stock current-leaf-stock - (max-leaf-stock / population-size)
-            set current-wood-stock current-wood-stock - (max-wood-stock / population-size)
-            set population-size population-size - 1  ; Supprime un arbre dans la population cible
-            set trees-killed trees-killed + 1
-            if current-leaf-stock <= 0 [ set current-leaf-stock 1 ]
-            if current-fruit-stock <= 0 [ set current-fruit-stock 1 ]
-            if current-wood-stock <= 0 [ set current-wood-stock 1]
-            if population-size <= 0 [
-              die
-              set trees-killed trees-killed + [population-size] of self
-            ]
-          ]
-        ]
+    ;; Sur-émondage : seul le prélèvement sur l'arbre compte (ramasser au sol ne coupe pas de branche)
+    let total-DM DM-ingested + total-DM-ingested-from-trees
+    if shepherd-type = "mauvais" and total-DM > 0 and (tree-DM / total-DM) >= 0.5 and any? good-trees [
+      ask one-of good-trees [
+        set current-fruit-stock max (list 1 (current-fruit-stock - (max-fruit-stock / population-size)))
+        set current-leaf-stock max (list 1 (current-leaf-stock - (max-leaf-stock / population-size)))
+        set current-wood-stock max (list 1 (current-wood-stock - (max-wood-stock / population-size)))
+        set population-size population-size - 1
+        set trees-killed trees-killed + 1
+        if population-size <= 0 [ die ]
       ]
     ]
   ]
+
+  ;;------------------------------------------------------------------
+  ;; 3. Ajout de la part ligneuse (sol + arbre) à l'ingéré du troupeau
+  ;;------------------------------------------------------------------
+  set UF-ingested UF-ingested + total-UF-ingested-from-trees
+  set MAD-ingested MAD-ingested + total-MAD-ingested-from-trees
+  set DM-ingested DM-ingested + total-DM-ingested-from-trees
 end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -534,15 +506,15 @@ to update-corporal-conditions [heads UBT total-UF-ingested total-MAD-ingested da
   ; Calculer le facteur d'énergie
   let energy-factor ((total-UF-ingested - daily-need-UF) / (max-UF-ingestible - daily-need-UF))
   ; Assurer que le facteur est entre 0 et 0.5
-  let energy-factor-total max list 0 (min list energy-factor 0.5)
-
+  let energy-factor-total  nutrition-factor total-UF-ingested  daily-need-UF  max-UF-ingestible
   ; Calculer le facteur du ratio MAD/UF
   let protein-factor ((total-MAD-ingested - daily-need-MAD) / (max-MAD-ingestible - daily-need-MAD))
 
   ; Assurer que le facteur est entre 0 et 0.5
-  let protein-factor-total max list 0 (min list protein-factor 0.5)
+  let protein-factor-total nutrition-factor total-MAD-ingested daily-need-MAD max-MAD-ingestible
   
   ; Calculer le gain de poids potentiel (en grammes par jour), en considérant qu'un UBT peut gagner jusqu'à 700g par jour et perdre autant (Boudet & Rivière, 1968 - Emploi pratique des analyses fourragères pour l'appréciation des pâturages tropicaux) (sans compter la production de lait)
+
   set weight-gain ((protein-factor-total + energy-factor-total) * 1.4 * UBT) - 0.7 * UBT
   
   ; Mettre à jour le poids vif à partir du gain de poids par tête de bétail
@@ -560,10 +532,8 @@ to update-corporal-conditions [heads UBT total-UF-ingested total-MAD-ingested da
   if breed = sheeps [
     set corporal-condition (live-weight - (21.21 * head)) / ( 5.75 * head)
   ]
-
-  ; Assurer que la NEC reste dans des limites raisonnables (par exemple, entre 1 et 5)
-  if corporal-condition < 1 [ set corporal-condition 1 ]
-  if corporal-condition > 5 [ set corporal-condition 5 ]
+  ; Assurer que la NEC reste dans des limites raisonnables (entre 0 et 5)
+    set corporal-condition max (list 0 (min (list corporal-condition 5)))   ; 0 au lieu de 1  
 
 end
 

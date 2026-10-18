@@ -882,7 +882,7 @@ to call-back-herds
   ask cattles with [have-left = true] [
     show-turtle
     set live-weight initial-live-weight  ; Réinitialiser le poids vif
-    set corporal-condition 5             ; NEC maximum
+    set corporal-condition (live-weight - (148.99 * head)) / (48.6 * head) ; NEC 2,08
     set have-left false
     set ticks-left-year 0
   ]
@@ -890,8 +890,8 @@ to call-back-herds
   ;; Retour des troupeaux de moutons
   ask sheeps with [have-left = true] [
     show-turtle
-    set live-weight initial-live-weight  ; Réinitialiser le poids vif
-    set corporal-condition 5             ; NEC maximum
+    set live-weight initial-live-weight  ; Réinitialiser le poids vif 
+    set corporal-condition (live-weight - (21.21 * head)) / (5.75 * head) 
     set have-left false
     set ticks-left-year 0
   ]
@@ -1102,12 +1102,12 @@ end]]></code>
     <note x="415" y="1210" backgroundDark="0" fontSize="12" width="320" markdown="false" height="55" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Proportion de temps minimal de présence satisfaisant pour les transhumant par rapport à la durée prévue initialement</note>
     <note x="415" y="740" backgroundDark="0" fontSize="12" width="60" markdown="false" height="26" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Ovins</note>
     <note x="415" y="680" backgroundDark="0" fontSize="12" width="55" markdown="false" height="26" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Bovins</note>
-    <slider x="191" step="1" y="670" max="5" width="205" display="CattleNECSatifactionIndex" height="50" min="0" direction="Horizontal" default="2.0" variable="CattleNECSatifactionIndex"></slider>
-    <slider x="191" step="1" y="730" max="5" width="205" display="SheepNECSatifactionIndex" height="50" min="0" direction="Horizontal" default="2.0" variable="SheepNECSatifactionIndex"></slider>
-    <slider x="190" step="1" y="910" max="150" width="205" display="SatisfactionMeanTreesInCaangol" height="50" min="50" direction="Horizontal" default="50.0" variable="SatisfactionMeanTreesInCaangol"></slider>
-    <slider x="190" step="1" y="965" max="100" width="205" display="SatisfactionMeanTreesInBaldiol" height="50" min="0" direction="Horizontal" default="50.0" variable="SatisfactionMeanTreesInBaldiol"></slider>
-    <slider x="190" step="1" y="1020" max="100" width="205" display="SatisfactionMeanTreesInSangre" height="50" min="0" direction="Horizontal" default="50.0" variable="SatisfactionMeanTreesInSangre"></slider>
-    <slider x="190" step="0.1" y="1080" max="1" width="205" display="treshold-tree-satisfaction" height="50" min="0.1" direction="Horizontal" default="1.0" variable="treshold-tree-satisfaction"></slider>
+    <slider x="191" step="1" y="670" max="5" width="205" display="CattleNECSatifactionIndex" height="50" min="0" direction="Horizontal" default="3.0" variable="CattleNECSatifactionIndex"></slider>
+    <slider x="191" step="1" y="730" max="5" width="205" display="SheepNECSatifactionIndex" height="50" min="0" direction="Horizontal" default="3.0" variable="SheepNECSatifactionIndex"></slider>
+    <slider x="190" step="1" y="910" max="150" width="205" display="SatisfactionMeanTreesInCaangol" height="50" min="50" direction="Horizontal" default="60.0" variable="SatisfactionMeanTreesInCaangol"></slider>
+    <slider x="190" step="1" y="965" max="100" width="205" display="SatisfactionMeanTreesInBaldiol" height="50" min="0" direction="Horizontal" default="41.0" variable="SatisfactionMeanTreesInBaldiol"></slider>
+    <slider x="190" step="1" y="1020" max="100" width="205" display="SatisfactionMeanTreesInSangre" height="50" min="0" direction="Horizontal" default="21.0" variable="SatisfactionMeanTreesInSangre"></slider>
+    <slider x="190" step="0.1" y="1080" max="1" width="205" display="treshold-tree-satisfaction" height="50" min="0.1" direction="Horizontal" default="0.4" variable="treshold-tree-satisfaction"></slider>
     <note x="415" y="1080" backgroundDark="0" fontSize="12" width="315" markdown="false" height="55" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Proportion de surface par type de sol pour laquelle le critère de satisfaction des arbres doit être atteint</note>
     <button x="80" y="230" height="45" disableUntilTicks="true" forever="false" kind="Observer" width="55" display="GO 10"><![CDATA[while [ticks < 3650] [go]
 ]]></button>
@@ -1116,7 +1116,7 @@ end]]></code>
     <note x="415" y="1440" backgroundDark="0" fontSize="12" width="320" markdown="false" height="80" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Valeur de la Fonction d'Utilité Linéaire (Von Neumann) pour définir l'équilibre entre qualité et quantité dans la recherche de pâturage d'un "bon" berger</note>
     <button x="35" y="400" height="40" disableUntilTicks="false" forever="false" kind="Observer" width="130" display="Changer Visu">  update-visualization</button>
     <button x="35" y="510" height="40" disableUntilTicks="false" forever="false" kind="Patch" width="130" display="Cacher arbres">ask tree-populations-here [hide-turtle]</button>
-    <chooser x="35" y="445" height="60" variable="visualization-mode" current="1" width="130" display="visualization-mode">
+    <chooser x="35" y="445" height="60" variable="visualization-mode" current="0" width="130" display="visualization-mode">
       <choice type="string" value="soil-type"></choice>
       <choice type="string" value="tree-cover"></choice>
       <choice type="string" value="grass-cover"></choice>
@@ -1134,14 +1134,14 @@ end]]></code>
     <note x="930" y="411" backgroundDark="0" fontSize="12" width="270" markdown="false" height="50" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Nombre de campements</note>
     <slider x="776" step="1" y="523" max="100" width="150" display="proportion-big-herders" height="60" min="0" direction="Horizontal" default="11.0" variable="proportion-big-herders"></slider>
     <slider x="776" step="1" y="591" max="100" width="150" display="proportion-medium-herders" height="50" min="0" direction="Horizontal" default="50.0" variable="proportion-medium-herders"></slider>
-    <slider x="776" step="5" y="466" max="100" width="150" display="avg-UBT-per-camp" height="50" min="10" direction="Horizontal" default="50.0" variable="avg-UBT-per-camp"></slider>
+    <slider x="776" step="5" y="466" max="100" width="150" display="avg-UBT-per-camp" height="50" min="10" direction="Horizontal" default="35.0" variable="avg-UBT-per-camp"></slider>
     <note x="45" y="205" backgroundDark="0" fontSize="12" width="125" markdown="false" height="25" textColorDark="-1" textColorLight="-5298144" backgroundLight="-4079321">Lancement 10 ans</note>
     <note x="775" y="345" backgroundDark="0" fontSize="18" width="425" markdown="false" height="35" textColorDark="-1" textColorLight="-16777216" backgroundLight="-13840069">Variables d'entrées - Hypothèses partagées</note>
-    <slider x="776" step="1" y="661" max="100" width="150" display="retard-jours" height="50" min="0" direction="Horizontal" default="50.0" variable="retard-jours"></slider>
-    <slider x="780" step="1" y="761" max="100" width="150" display="influx-Ceetcelde" height="50" min="0" direction="Horizontal" default="34.0" variable="influx-Ceetcelde"></slider>
+    <slider x="776" step="1" y="661" max="100" width="150" display="retard-jours" height="50" min="0" direction="Horizontal" default="4.0" variable="retard-jours"></slider>
+    <slider x="780" step="1" y="761" max="100" width="150" display="influx-Ceetcelde" height="50" min="0" direction="Horizontal" default="0.0" variable="influx-Ceetcelde"></slider>
     <slider x="780" step="1" y="871" max="100" width="150" display="influx-Nduungu" height="50" min="0" direction="Horizontal" default="0.0" variable="influx-Nduungu"></slider>
     <slider x="780" step="1" y="816" max="100" width="150" display="influx-Ceedu" height="50" min="0" direction="Horizontal" default="0.0" variable="influx-Ceedu"></slider>
-    <slider x="780" step="1" y="1010" max="100" width="150" display="good-shepherd-percentage" height="50" min="0" direction="Horizontal" default="50.0" variable="good-shepherd-percentage"></slider>
+    <slider x="780" step="1" y="1010" max="100" width="150" display="good-shepherd-percentage" height="50" min="0" direction="Horizontal" default="0.0" variable="good-shepherd-percentage"></slider>
     <note x="935" y="816" backgroundDark="0" fontSize="12" width="270" markdown="false" height="46" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Nb de transhumants arrivés en saison séche froide</note>
     <note x="935" y="871" backgroundDark="0" fontSize="12" width="270" markdown="false" height="46" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Nb de transhumants arrivés en saison des pluies</note>
     <note x="935" y="761" backgroundDark="0" fontSize="12" width="270" markdown="false" height="50" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Nb de transhumants arrivés en saison séche chaude</note>
@@ -1150,20 +1150,20 @@ end]]></code>
     <note x="15" y="335" backgroundDark="0" fontSize="12" width="165" markdown="false" height="60" textColorDark="-1" textColorLight="-16777216" backgroundLight="-4079321">Points de vue
 -
 Diversité des perceptions</note>
-    <slider x="776" step="1" y="411" max="150" width="150" display="number-of-camps" height="50" min="1" direction="Horizontal" default="72.0" variable="number-of-camps"></slider>
+    <slider x="776" step="1" y="411" max="150" width="150" display="number-of-camps" height="50" min="1" direction="Horizontal" default="1.0" variable="number-of-camps"></slider>
     <note x="190" y="565" backgroundDark="0" fontSize="16" width="540" markdown="false" height="55" textColorDark="-1" textColorLight="-16777216" backgroundLight="-11221820">Indicateurs situés - Mesurer l'équilibre et négocier les valeurs minimales d'acceptabilité
 </note>
     <note x="190" y="630" backgroundDark="0" fontSize="12" width="540" markdown="false" height="40" textColorDark="-1" textColorLight="-16777216" backgroundLight="-8990512">Critères de satisfaction sur l'état de santé du bétail sur la base de la Note d'Etat Corporel (NEC) - Perspective Éleveurs locaux</note>
     <note x="190" y="815" backgroundDark="0" fontSize="12" width="540" markdown="false" height="40" textColorDark="-1" textColorLight="-16777216" backgroundLight="-8990512">Critères de satistaction du nombre d'arbres (+ de 4 ans) par hectare et par type de sol - Perspective Forestiers
 </note>
-    <slider x="190" step="1" y="855" max="50" width="205" display="SatisfactionMeanTreesInSeeno" height="50" min="12" direction="Horizontal" default="50.0" variable="SatisfactionMeanTreesInSeeno"></slider>
+    <slider x="190" step="1" y="855" max="50" width="205" display="SatisfactionMeanTreesInSeeno" height="50" min="12" direction="Horizontal" default="32.0" variable="SatisfactionMeanTreesInSeeno"></slider>
     <note x="190" y="1165" backgroundDark="0" fontSize="12" width="545" markdown="false" height="45" textColorDark="-1" textColorLight="-16777216" backgroundLight="-8990512">Critères de satistaction - temps d'installation des transhumants dans l'UP - Perspective Éleveurs transhumants</note>
     <note x="190" y="1305" backgroundDark="0" fontSize="12" width="545" markdown="false" height="45" textColorDark="-1" textColorLight="-16777216" backgroundLight="-8990512">Sensibilité dans l'incertitude - Négocier entre savoirs locaux et scientifiques</note>
     <note x="780" y="730" backgroundDark="0" fontSize="12" width="425" markdown="false" height="31" textColorDark="-1" textColorLight="-16777216" backgroundLight="-11085214">Gestion de la démographie pastorale mobile</note>
     <slider x="780" step="1" y="1062" max="100" width="150" display="good-shepherd-trans-percentage" height="50" min="0" direction="Horizontal" default="50.0" variable="good-shepherd-trans-percentage"></slider>
     <note x="936" y="1120" backgroundDark="0" fontSize="12" width="165" markdown="false" height="30" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Parcelles de reforestation</note>
     <note x="935" y="1063" backgroundDark="0" fontSize="12" width="270" markdown="false" height="50" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Proportion de bons bergers parmi les éleveurs transhumants</note>
-    <slider x="193" step="1" y="1350" max="100" width="205" display="decreasing-factor" height="50" min="0" direction="Horizontal" default="50.0" variable="decreasing-factor"></slider>
+    <slider x="193" step="1" y="1350" max="100" width="205" display="decreasing-factor" height="50" min="0" direction="Horizontal" default="14.0" variable="decreasing-factor"></slider>
     <note x="415" y="855" backgroundDark="0" fontSize="12" width="315" markdown="false" height="45" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Steppe arbustive sur sol sablonneux (Seeno)</note>
     <note x="415" y="1350" backgroundDark="0" fontSize="12" width="320" markdown="false" height="60" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Multiplicateur de décroissance de la biomasse herbacée pour la variation de la vitesse de décroissance durant la saison sèche.</note>
     <note x="2030" y="319" backgroundDark="0" fontSize="22" width="620" markdown="false" height="40" textColorDark="-1" textColorLight="-14439633" backgroundLight="0">Indicateurs Santé du troupeau - Perspective Éleveurs</note>
@@ -1227,26 +1227,6 @@ Diversité des perceptions</note>
         <update>plot minCattlesLiveWeight</update>
       </pen>
     </plot>
-    <plot x="1240" autoPlotX="true" yMax="10.0" autoPlotY="true" yAxis="nb moyen d'individu" y="379" xMin="0.0" height="225" legend="true" xMax="10.0" yMin="0.0" width="350" xAxis="Jours" display="Nombre moyen d'arbres par Hectare">
-      <setup></setup>
-      <update></update>
-      <pen interval="1.0" mode="0" display="Caangol" color="-16777216" legend="true">
-        <setup></setup>
-        <update>plot meanTreesInCaangol</update>
-      </pen>
-      <pen interval="1.0" mode="0" display="Baldiol" color="-7500403" legend="true">
-        <setup></setup>
-        <update>plot meanTreesInBaldiol</update>
-      </pen>
-      <pen interval="1.0" mode="0" display="Seeno" color="-2674135" legend="true">
-        <setup></setup>
-        <update>plot meanTreesInSeeno</update>
-      </pen>
-      <pen interval="1.0" mode="0" display="Sangre" color="-955883" legend="true">
-        <setup></setup>
-        <update>plot meanTreesInSangre</update>
-      </pen>
-    </plot>
     <plot x="1240" autoPlotX="true" yMax="10.0" autoPlotY="true" yAxis="nb moyen d'arbres / Ha" y="605" xMin="0.0" height="280" legend="true" xMax="10.0" yMin="0.0" width="350" xAxis="Jours" display="Moyennes des populations d'arbres par ages et par surface">
       <setup></setup>
       <update></update>
@@ -1307,28 +1287,7 @@ Diversité des perceptions</note>
         <update>plot MST-Caangol</update>
       </pen>
     </plot>
-    <plot x="1240" autoPlotX="true" yMax="10.0" autoPlotY="true" yAxis="Kg MS" y="885" xMin="0.0" height="215" legend="true" xMax="10.0" yMin="0.0" width="710" xAxis="Jours" display="Moyenne de consommation des ressources issues des arbres par tête de bétail">
-      <setup></setup>
-      <update></update>
-      <pen interval="1.0" mode="0" display="fruits par les bovins" color="-2674135" legend="true">
-        <setup></setup>
-        <update>plot meanFruitsConsumedCattle</update>
-      </pen>
-      <pen interval="1.0" mode="0" display="feuilles par les bovins" color="-12087248" legend="true">
-        <setup></setup>
-        <update>plot meanLeavesConsumedCattle</update>
-      </pen>
-      <pen interval="1.0" mode="0" display="fruits par les ovins" color="-612749" legend="true">
-        <setup></setup>
-        <update>plot meanFruitsConsumedSheep</update>
-      </pen>
-      <pen interval="1.0" mode="0" display="feuilles par les ovins" color="-5509967" legend="true">
-        <setup></setup>
-        <update>plot meanLeavesConsumedSheep</update>
-      </pen>
-    </plot>
     <button x="80" y="112" height="40" disableUntilTicks="false" forever="false" kind="Observer" width="55">go</button>
-    <button x="80" y="157" height="40" disableUntilTicks="false" forever="true" kind="Observer" width="55">go</button>
     <note x="2790" y="320" backgroundDark="0" fontSize="22" width="570" markdown="false" height="40" textColorDark="-1" textColorLight="-14439633" backgroundLight="0">Indicateurs Mobilité - Perspective Éleveurs</note>
     <plot x="2790" autoPlotX="true" yMax="10.0" autoPlotY="true" yAxis="Nb de troupeaux" y="365" xMin="0.0" height="175" legend="true" xMax="10.0" yMin="0.0" width="305" xAxis="Jours" display="Troupeaux locaux partis en demi transhumance">
       <setup></setup>
@@ -1476,6 +1435,47 @@ set-histogram-num-bars 5</setup>
       <pen interval="1.0" mode="0" display="default" color="-16777216" legend="true">
         <setup></setup>
         <update>plot mst-temps-passe-simu</update>
+      </pen>
+    </plot>
+    <plot x="1240" autoPlotX="true" yMax="5.0" autoPlotY="true" yAxis="Kg MS" y="885" xMin="0.0" height="215" legend="true" xMax="5.0" yMin="0.0" width="710" xAxis="Jours" display="Moyenne de consommation des ressources issues des arbres par tête de bétail">
+      <setup></setup>
+      <update></update>
+      <pen interval="1.0" mode="0" display="fruits par les bovins" color="-2674135" legend="true">
+        <setup></setup>
+        <update>plot meanFruitsConsumedCattle</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="feuilles par les bovins" color="-12087248" legend="true">
+        <setup></setup>
+        <update>plot meanLeavesConsumedCattle</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="fruits par les ovins" color="-612749" legend="true">
+        <setup></setup>
+        <update>plot meanFruitsConsumedSheep</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="feuilles par les ovins" color="-5509967" legend="true">
+        <setup></setup>
+        <update>plot meanLeavesConsumedSheep</update>
+      </pen>
+    </plot>
+    <button x="80" y="157" height="40" disableUntilTicks="false" forever="true" kind="Observer" width="55">go</button>
+    <plot x="1240" autoPlotX="true" yMax="10.0" autoPlotY="true" yAxis="nb moyen d'individu" y="379" xMin="0.0" height="225" legend="true" xMax="10.0" yMin="0.0" width="350" xAxis="Jours" display="Nombre moyen d'arbres par Hectare - tous ages confondus">
+      <setup></setup>
+      <update></update>
+      <pen interval="1.0" mode="0" display="Caangol" color="-16777216" legend="true">
+        <setup></setup>
+        <update>plot meanTreesInCaangol</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="Baldiol" color="-7500403" legend="true">
+        <setup></setup>
+        <update>plot meanTreesInBaldiol</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="Seeno" color="-2674135" legend="true">
+        <setup></setup>
+        <update>plot meanTreesInSeeno</update>
+      </pen>
+      <pen interval="1.0" mode="0" display="Sangre" color="-955883" legend="true">
+        <setup></setup>
+        <update>plot meanTreesInSangre</update>
       </pen>
     </plot>
   </widgets>
